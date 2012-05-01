@@ -1,5 +1,11 @@
 #include "simobject.h"
 
+
+/******************************************************************************/
+/******************************************************************************/
+
+bool CSimObject::g_bShuffleChildren = false;
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -20,8 +26,8 @@ CSimObject::CSimObject(const char* pch_name)
 CSimObject::~CSimObject() 
 {
     // Delete children:
-    TSimObjectsListIterator i = m_listSimObjectChildren.begin();
-    for (i = m_listSimObjectChildren.begin(); i != m_listSimObjectChildren.end(); i++)
+    TSimObjectVectorIterator i = m_vecSimObjectChildren.begin();
+    for (i = m_vecSimObjectChildren.begin(); i != m_vecSimObjectChildren.end(); i++)
     {        
         delete (*i);
     }
@@ -44,9 +50,9 @@ const char* CSimObject::GetName() const
 
 void CSimObject::Draw(CRender* pc_render)
 {
-    TSimObjectsListIterator i = m_listSimObjectChildren.begin();
+    TSimObjectVectorIterator i = m_vecSimObjectChildren.begin();
 
-    for (i = m_listSimObjectChildren.begin(); i != m_listSimObjectChildren.end(); i++)
+    for (i = m_vecSimObjectChildren.begin(); i != m_vecSimObjectChildren.end(); i++)
     {
         (*i)->Draw(pc_render);
     }
@@ -57,10 +63,11 @@ void CSimObject::Draw(CRender* pc_render)
 
 void CSimObject::SimulationStep(unsigned int un_step_number)
 {
+    TSimObjectVectorIterator i = m_vecSimObjectChildren.begin();
 
-    TSimObjectsListIterator i = m_listSimObjectChildren.begin();
 
-    for (i = m_listSimObjectChildren.begin(); i != m_listSimObjectChildren.end(); i++)
+
+    for (i = m_vecSimObjectChildren.begin(); i != m_vecSimObjectChildren.end(); i++)
     {
         (*i)->SimulationStep(un_step_number);
     }
@@ -71,9 +78,9 @@ void CSimObject::SimulationStep(unsigned int un_step_number)
 
 void CSimObject::Keypressed(int keycode)
 {
-    TSimObjectsListIterator i = m_listSimObjectChildren.begin();
+    TSimObjectVectorIterator i = m_vecSimObjectChildren.begin();
 
-    for (i = m_listSimObjectChildren.begin(); i != m_listSimObjectChildren.end(); i++)
+    for (i = m_vecSimObjectChildren.begin(); i != m_vecSimObjectChildren.end(); i++)
     {
         (*i)->Keypressed(keycode);
     }
@@ -84,7 +91,7 @@ void CSimObject::Keypressed(int keycode)
 
 void CSimObject::AddChild(CSimObject* pc_child)
 {
-    m_listSimObjectChildren.push_back(pc_child);
+    m_vecSimObjectChildren.push_back(pc_child);
 }
 
 /******************************************************************************/
@@ -92,16 +99,16 @@ void CSimObject::AddChild(CSimObject* pc_child)
 
 void CSimObject::RemoveChild(CSimObject* pc_child)
 {
-    TSimObjectsListIterator i = m_listSimObjectChildren.begin();
+    TSimObjectVectorIterator i = m_vecSimObjectChildren.begin();
 
-    while (i != m_listSimObjectChildren.end() && (*i) != pc_child)
+    while (i != m_vecSimObjectChildren.end() && (*i) != pc_child)
         i++;
 
-    if (i == m_listSimObjectChildren.end())
+    if (i == m_vecSimObjectChildren.end())
     {
         ERROR2("%s tried to remove a non-existing child %s", GetName(), pc_child->GetName());
     } else {
-        m_listSimObjectChildren.erase(i);
+        m_vecSimObjectChildren.erase(i);
     }
 }
 
@@ -118,8 +125,8 @@ void CSimObject::PrintfChildren(unsigned indent)
     else
         printf("NULL\n", GetName());
         
-    TSimObjectsListIterator i = m_listSimObjectChildren.begin();
-    for (i = m_listSimObjectChildren.begin(); i != m_listSimObjectChildren.end(); i++)
+    TSimObjectVectorIterator i = m_vecSimObjectChildren.begin();
+    for (i = m_vecSimObjectChildren.begin(); i != m_vecSimObjectChildren.end(); i++)
     {
         (*i)->PrintfChildren(indent + 2);
     }
@@ -128,9 +135,9 @@ void CSimObject::PrintfChildren(unsigned indent)
 /******************************************************************************/
 /******************************************************************************/
 
-TSimObjectsList* CSimObject::GetChildren()
+TSimObjectVector* CSimObject::GetChildren()
 {
-    return &m_listSimObjectChildren;
+    return &m_vecSimObjectChildren;
 }
 
 /******************************************************************************/

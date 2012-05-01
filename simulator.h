@@ -42,7 +42,7 @@ public:
 
     virtual void AddAgent(CAgent* pc_new_agent);
     virtual void RemoveAgent(CAgent* pc_agent);
-    virtual TAgentList* GetAllAgents();
+    virtual TAgentVector* GetAllAgents();
 
     virtual void AddAgentToDeleteList(CAgent* pc_agent);
     virtual void EndSimulation();
@@ -61,7 +61,7 @@ protected:
 
     static CSimulator* m_pcSimulator;
 
-    TAgentList         m_tAllAgents;
+    TAgentVector       m_tAllAgents;
 
     unsigned int       m_unCurrentSimulationStep;
 };

@@ -106,11 +106,8 @@ void CArena::MoveAgent(CAgent* pc_agent, TPosition* pt_new_position)
 
     if (unOldArrayPosition != unNewArrayPosition)
     {
-        if (pc_agent->IsInteractable()) 
-        {
-            RemoveAgent(pc_agent, unOldArrayPosition);
-            AddAgent(pc_agent, unNewArrayPosition);
-        }
+        RemoveAgent(pc_agent, unOldArrayPosition);
+        AddAgent(pc_agent, unNewArrayPosition);
     }
 }
 

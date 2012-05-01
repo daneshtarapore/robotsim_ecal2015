@@ -79,7 +79,7 @@ void CSimulator::EndSimulation()
 void CSimulator::AddAgent(CAgent* pc_new_agent)
 {
     m_tAllAgents.push_back(pc_new_agent);
-    AddChild(pc_new_agent);
+    m_pcArena->AddChild(pc_new_agent);
 }
 
 /******************************************************************************/
@@ -87,7 +87,7 @@ void CSimulator::AddAgent(CAgent* pc_new_agent)
 
 void CSimulator::RemoveAgent(CAgent* pc_agent)
 {
-    TAgentListIterator i = m_tAllAgents.begin();
+    TAgentVectorIterator i = m_tAllAgents.begin();
     while (i != m_tAllAgents.end() && (*i) != pc_agent)
         i++;
 
@@ -98,14 +98,13 @@ void CSimulator::RemoveAgent(CAgent* pc_agent)
     else
         m_tAllAgents.erase(i);
 
-    RemoveChild(pc_agent);
-
+    m_pcArena->RemoveChild(pc_agent);
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-TAgentList* CSimulator::GetAllAgents()
+TAgentVector* CSimulator::GetAllAgents()
 {
     return &m_tAllAgents;
 }
@@ -125,18 +124,14 @@ void CSimulator::SimulationStep(unsigned int un_step_number)
 {
     m_unCurrentSimulationStep = un_step_number;
     CSimObject::SimulationStep(un_step_number);
-    
-    
+        
     m_tDeleteList.sort();
     m_tDeleteList.unique();
     
     for (TAgentListIterator i = m_tDeleteList.begin(); i != m_tDeleteList.end(); i++)
     {
         RemoveAgent(*i);        
-        if ((*i)->IsInteractable())
-        {
-            m_pcArena->RemoveAgent(*i);
-        }
+        m_pcArena->RemoveAgent(*i);
         delete (*i);
     }
     m_tDeleteList.clear();
