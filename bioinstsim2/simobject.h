@@ -25,8 +25,9 @@ tool for debugging.
 class CSimObject;
 class CRender;
 
-typedef list<CSimObject*>           TSimObjectsList;
-typedef list<CSimObject*>::iterator TSimObjectsListIterator;
+typedef vector<CSimObject*>           TSimObjectVector;
+typedef vector<CSimObject*>::iterator TSimObjectVectorIterator;
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -47,12 +48,13 @@ public:
 
     virtual void PrintfChildren(unsigned indent);
 
-    virtual TSimObjectsList* GetChildren();
+    virtual TSimObjectVector* GetChildren();
+
+    static bool g_bShuffleChildren;
 
 protected:
-    char*             m_pchName;
-    
-    TSimObjectsList m_listSimObjectChildren;
+    char*             m_pchName;    
+    TSimObjectVector  m_vecSimObjectChildren;
 };
 
 /******************************************************************************/

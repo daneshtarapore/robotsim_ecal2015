@@ -60,9 +60,8 @@ protected:
 
     bool m_bOutputStatistics;
 
-    unsigned int m_unNumberOfAPCAgents;
-    unsigned int m_unNumberOfThAgents;
-    unsigned int m_unNumberOfPathogenAgents;
+    unsigned int m_unNumberOfRobotAgents;
+    unsigned int m_unNumberOfLightAgents;
     
     unsigned int        m_unNumberOfColors;
     TColor3f*           m_ptColors;

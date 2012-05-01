@@ -2,6 +2,7 @@
 #define COMMON_H_
 
 #include <list>
+#include <vector>
 using namespace std;
 
 #include <stdio.h>

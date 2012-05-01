@@ -373,33 +373,29 @@ void COpenGLRender::CaptureFrame (int num)
 
 void COpenGLRender::DrawAllAgents()
 {
-    TAgentList* ptAllAgents = CSimulator::GetInstance()->GetAllAgents();
-    TAgentListIterator i;
-    m_unNumberOfAPCAgents      = 0;
-    m_unNumberOfThAgents       = 0;
-    m_unNumberOfPathogenAgents = 0;;
+    TAgentVector* ptAllAgents = CSimulator::GetInstance()->GetAllAgents();
+    TAgentVectorIterator i;
+    m_unNumberOfRobotAgents    = 0;
+    m_unNumberOfLightAgents    = 0;
             
     m_unNumberOfAgents = ptAllAgents->size();
     
     for (i = ptAllAgents->begin(); i != ptAllAgents->end(); i++)
     {
-        if ((*i)->GetType() == APCAGENT) 
-        {
-            m_unNumberOfAPCAgents++;
+        if ((*i)->GetType() == LIGHT) {
+            m_unNumberOfLightAgents++;
             DrawAgent(*i);
-        } else if ((*i)->GetType() == PATHOGENAGENT) {
-            m_unNumberOfPathogenAgents++;
-             DrawAgent(*i);
         }            
 
     }
 
     for (i = ptAllAgents->begin(); i != ptAllAgents->end(); i++)
     {
-        if ((*i)->GetType() == THAGENT) {
-            m_unNumberOfThAgents++;
+        if ((*i)->GetType() == ROBOT) 
+        {
+            m_unNumberOfRobotAgents++;
             DrawAgent(*i);
-        }
+        } 
     }
 }
 
@@ -430,7 +426,7 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
 
     CSimulator::GetInstance()->GetArena()->GetSize(&fArenaSizeX, &fArenaSizeY);
 
-    if (pc_agent->GetType() == THAGENT) 
+    if (pc_agent->GetType() == ROBOT) 
     {
 
         glPointSize((GLfloat) pc_agent->GetSize());
@@ -443,7 +439,7 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
         
         glVertex2d(2 * ptPosition->m_fX / fArenaSizeX, 2 * ptPosition->m_fY / fArenaSizeY);
         glEnd();
-    } else if (pc_agent->GetType() == PATHOGENAGENT) {
+    } else if (pc_agent->GetType() == LIGHT) {
         glBegin(GL_TRIANGLE_FAN);
         double fCenterX = 2.0 * ptPosition->m_fX / fArenaSizeX;
         double fCenterY = 2.0 * ptPosition->m_fY / fArenaSizeY;
@@ -460,10 +456,7 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
         }
 
         glEnd();
-
-    }
-
-    
+    }    
 }
 
 /******************************************************************************/
@@ -471,12 +464,11 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
 
 void COpenGLRender::OutputStatistics(unsigned int un_step_number)
 {
-    printf("\rStep number: %4d, Frame-rate: %2.2f, Agents: (APC: %d, Th: %d, Patho: %d), links: %d, average degree: %2.2f, max. degree: %d   ", 
+    printf("\rStep number: %4d, Frame-rate: %2.2f, Agents: (Robots: %d, lights: %d), links: %d, average degree: %2.2f, max. degree: %d   ", 
            un_step_number, 
            m_fFrameRate, 
-           m_unNumberOfAPCAgents, 
-           m_unNumberOfThAgents, 
-           m_unNumberOfPathogenAgents, 
+           m_unNumberOfRobotAgents, 
+           m_unNumberOfLightAgents, 
            m_unNumberOfPhysicalLinks / 2,  
            (double) m_unNumberOfPhysicalLinks / (double) m_unNumberOfAgents,          
            m_unMaximumNumberOfPhysicalLinks);

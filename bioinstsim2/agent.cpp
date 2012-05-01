@@ -338,31 +338,6 @@ double   CAgent::GetSize()
 /******************************************************************************/
 /******************************************************************************/
 
-void     CAgent::SetInteractable(bool on_off) 
-{
-    if (m_bInteractable && !on_off) 
-    {
-        CSimulator::GetInstance()->GetArena()->RemoveAgent(this);        
-    } 
-    else if (!m_bInteractable && on_off) 
-    {
-        CSimulator::GetInstance()->GetArena()->AddAgent(this, &m_tPosition);
-    } 
-
-    m_bInteractable = on_off;
-}
-
-/******************************************************************************/
-/******************************************************************************/
-
-bool CAgent::IsInteractable() 
-{
-    return m_bInteractable;
-}
-
-/******************************************************************************/
-/******************************************************************************/
-
 unsigned int CAgent::GetIdentification() 
 {
     return m_unIdentification;

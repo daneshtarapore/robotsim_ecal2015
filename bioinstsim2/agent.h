@@ -11,10 +11,14 @@ class CAgent;
 /******************************************************************************/
 /******************************************************************************/
 
-typedef list<CAgent*>           TAgentList;
-typedef list<CAgent*>::iterator TAgentListIterator;
+typedef list<CAgent*>               TAgentList;
+typedef list<CAgent*>::iterator     TAgentListIterator;
 typedef list<TAgentList*>           TAgentListList;
 typedef list<TAgentList*>::iterator TAgentListListIterator;
+
+typedef vector<CAgent*>             TAgentVector;
+typedef vector<CAgent*>::iterator   TAgentVectorIterator;
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -38,15 +42,12 @@ enum EControllerType
 enum EAgentType 
 {
     ANY,
-    THAGENT,
-    APCAGENT,
-    PATHOGENAGENT
+    ROBOT,
+    LIGHT
 };
 
 /******************************************************************************/
 /******************************************************************************/
-
-class CAgent;
 
 class CAgent : public CSimObject
 {
@@ -59,13 +60,7 @@ public:
 
     // Set the current position of the agent:
     virtual void SetPosition(TPosition* pt_new_position);
-    
-    
-    // Set whether other agents may be able to interact with this
-    // agent or not
-    virtual void SetInteractable(bool on_off);
-    virtual bool IsInteractable();
-
+       
     // This method is called if the agent moves to a new arena square.
     // Useful to calculate distances to other agents, update physical
     // links etc.
