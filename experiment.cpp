@@ -120,7 +120,6 @@ void CExperiment::CreateAndAddAgents(CSimulator* pc_simulator)
         PlaceAgentRandomly(pcAgent);
         pc_simulator->AddAgent(pcAgent);
     }
-
 }
 
 /******************************************************************************/

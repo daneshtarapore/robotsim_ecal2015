@@ -35,10 +35,14 @@ void CRobotAgent::SimulationStep(unsigned int n_step_number)
         if (!bControlTaken) 
         {
             bControlTaken = (*i)->TakeControl();
+            if (bControlTaken)
+                (*i)->Action();
         } else {
             (*i)->Suppress();
         }          
     }
+
+    SimulationStepUpdatePosition();
 }
 
 /******************************************************************************/

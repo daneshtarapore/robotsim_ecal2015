@@ -96,6 +96,22 @@ void CAgent::SetPosition(TPosition* pt_new_position)
 /******************************************************************************/
 /******************************************************************************/
 
+const TPosition* CAgent::GetVelocity() const
+{
+    return (const TPosition*) &m_tVelocity;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CAgent::SetVelocity(TPosition* pt_new_velocity)
+{
+    m_tVelocity = (*pt_new_velocity);
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CAgent::SimulationStep(unsigned int un_step_number)
 {
     SimulationStepUpdatePosition();
@@ -112,6 +128,9 @@ void CAgent::SimulationStepUpdatePosition()
 
     double fSpeedFactor = 1;
     
+    // PRINTPOS("Position: ", m_tPosition);
+    // PRINTPOS("Velocity: ", m_tVelocity);
+
     TPosition tNewPosition = { m_tPosition.m_fX + m_tVelocity.m_fX * fSpeedFactor, 
                                m_tPosition.m_fY + m_tVelocity.m_fY * fSpeedFactor };
 
@@ -135,32 +154,32 @@ void CAgent::SimulationStepUpdatePosition()
         CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);
     }
 
-    if (m_eControllerType == RANDOMWALK)
-    {        
-        if (bWallHit || Random::nextDouble() < m_fChangeDirectionProbability)
-        {
-            SetRandomVelocity();
-        } 
-    } 
-    else if (m_eControllerType == RANDOMBOUNCE)
-    {
-        if (bWallHit)
-        {
-            SetRandomVelocity();            
-        } 
-    } 
-    else if (m_eControllerType == REGULARBOUNCE)
-    {
-        if (bVerticalWallHit)
-        {
-            m_tVelocity.m_fX = -m_tVelocity.m_fX;
-        }        
+    // if (m_eControllerType == RANDOMWALK)
+    // {        
+    //     if (bWallHit || Random::nextDouble() < m_fChangeDirectionProbability)
+    //     {
+    //         SetRandomVelocity();
+    //     } 
+    // } 
+    // else if (m_eControllerType == RANDOMBOUNCE)
+    // {
+    //     if (bWallHit)
+    //     {
+    //         SetRandomVelocity();            
+    //     } 
+    // } 
+    // else if (m_eControllerType == REGULARBOUNCE)
+    // {
+    //     if (bVerticalWallHit)
+    //     {
+    //         m_tVelocity.m_fX = -m_tVelocity.m_fX;
+    //     }        
         
-        if (bHorizontalWallHit)
-        {
-            m_tVelocity.m_fY = -m_tVelocity.m_fY;
-        }        
-    }   
+    //     if (bHorizontalWallHit)
+    //     {
+    //         m_tVelocity.m_fY = -m_tVelocity.m_fY;
+    //     }        
+    // }   
 }
 
 /******************************************************************************/
@@ -169,6 +188,14 @@ void CAgent::SimulationStepUpdatePosition()
 void CAgent::SetMaximumSpeed(double f_max_speed)
 {
     m_fMaximumSpeed = f_max_speed;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CAgent::GetMaximumSpeed()
+{
+    return m_fMaximumSpeed;
 }
 
 /******************************************************************************/
@@ -214,34 +241,34 @@ unsigned int CAgent::CountAgentsWithinPhysicalRange(EAgentType e_type)
 /******************************************************************************/
 /******************************************************************************/
 
-CAgent* CAgent::TryToConnectToRandomAgent(EAgentType e_type)
-{
-    CAgent* pcReturn = NULL;
+// CAgent* CAgent::TryToConnectToRandomAgent(EAgentType e_type)
+// {
+//     CAgent* pcReturn = NULL;
     
-    TAgentListList tAgentListList; 
-    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fMaximumPhysicalRange);
-    if (tAgentListList.size() == 0)
-    {
-        ERROR2("This should never happen - the agent list-list is empty - maybe the position of the agent is wrong (%f,%f)", 
-               m_tPosition.m_fX, 
-               m_tPosition.m_fY);
-    }
+//     TAgentListList tAgentListList; 
+//     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fMaximumPhysicalRange);
+//     if (tAgentListList.size() == 0)
+//     {
+//         ERROR2("This should never happen - the agent list-list is empty - maybe the position of the agent is wrong (%f,%f)", 
+//                m_tPosition.m_fX, 
+//                m_tPosition.m_fY);
+//     }
 
-    CAgent* pcAgent = GetRandomAgentWithinRange(&tAgentListList, m_fMaximumPhysicalRange, e_type);
+//     CAgent* pcAgent = GetRandomAgentWithinRange(&tAgentListList, m_fMaximumPhysicalRange, e_type);
 
-    if (pcAgent != NULL && pcAgent != this)
-    {
-        if (pcAgent->AcceptConnections())
-        {
-            pcReturn = pcAgent;
-        }
-    }
+//     if (pcAgent != NULL && pcAgent != this)
+//     {
+//         if (pcAgent->AcceptConnections())
+//         {
+//             pcReturn = pcAgent;
+//         }
+//     }
 
-    return pcReturn;
-}
+//     return pcReturn;
+// }
 
-/******************************************************************************/
-/******************************************************************************/
+// /******************************************************************************/
+// /******************************************************************************/
 
 CAgent* CAgent::GetRandomAgentWithinRange(TAgentListList* pt_agents_list_list, double f_range, EAgentType e_type)
 {
@@ -346,7 +373,7 @@ unsigned int CAgent::GetIdentification()
 /******************************************************************************/
 /******************************************************************************/
 
-void CAgent::MoveAgentTowards(TPosition t_position, double f_max_speed)
+void CAgent::MoveTowards(TPosition t_position, double f_max_speed)
 {    
     CArena* pcArena = CSimulator::GetInstance()->GetArena();
    
@@ -412,6 +439,54 @@ void CAgent::SetColor(unsigned int un_color)
 void CAgent::SetChangeDirectionProbability(double f_prob) 
 {
     m_fChangeDirectionProbability = f_prob;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CAgent::MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type)
+{
+    CountAgentsInAgentListList(ptlist_agent_list_list, f_range, e_type);    
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type)
+{   
+    TAgentListList tAgentListList; 
+    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
+    MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
+    TPosition tCenter = { 0.0, 0.0 };
+
+    TAgentList* ptAgentList  = NULL;
+    CAgent* pcAgentSelected  = NULL;
+    unsigned int unCount     = 0;
+    for (TAgentListListIterator i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    {        
+        for (TAgentListIterator j = (*i)->begin(); j != (*i)->end(); j++) 
+        {
+            if ((*j)->m_bTempWithInRange) 
+            {
+                const TPosition* posAgent = (*j)->GetPosition();
+                tCenter.m_fX += posAgent->m_fX;
+                tCenter.m_fY += posAgent->m_fY;
+                unCount++;
+            }
+        }
+    }
+
+    if (unCount > 0) 
+    {
+        tCenter.m_fX /= (double) unCount;
+        tCenter.m_fY /= (double) unCount;
+        
+        tCenter.m_fX -= m_tPosition.m_fX;
+        tCenter.m_fY -= m_tPosition.m_fY;
+    }
+
+    return tCenter;
+
 }
 
 /******************************************************************************/

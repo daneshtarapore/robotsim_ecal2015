@@ -16,7 +16,7 @@
 
 
 // Experiments:
-//#include "proliferationvsrecruitmentexperiment.h"
+#include "testexperiment.h"
 //#include "proliferationvsinternalcounterexperiment.h"
 //#include "proliferationvsmacromodelexperiment.h"
 //#include "multimacromodelexperiment.h"
@@ -265,10 +265,21 @@ CExperiment* CBioInstSim::CreateExperiment()
                                        m_pcArenaArguments,                                     
                                        m_pcAgentArguments);
         
-    } 
+    } else {
+        const char* pchExperimentName = m_pcExperimentArguments->GetArgumentAsString("name");
+        if (strcmp(pchExperimentName, "TEST") == 0) 
+        {
+            pcExperiment = new CTestExperiment(m_pcExperimentArguments, 
+                                               m_pcArenaArguments,                                     
+                                               m_pcAgentArguments);
+            
+        } 
+    }
+
     return pcExperiment;
 }
 
 /******************************************************************************/
 /******************************************************************************/
+
 

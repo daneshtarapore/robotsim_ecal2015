@@ -24,6 +24,7 @@ extern double GetSquaredDistanceBetweenPositions(const TPosition* pt_pos1, const
 #define EPSILON 1e-10
 
 #define ERRENDL fprintf(stderr, "\n");
+#define PRINTPOS(label, vec) printf("%s, x: %2.6f, y: %2.6f\n", label, vec.m_fX, vec.m_fY);  
 #define PRINTVEC2(label, vec) printf("%s, x: %2.6f, y: %2.6f\n", label, vec.x, vec.y);  
 #define FILEANDLINE                                          { fprintf(stderr, "In %s:%d: ", __FILE__, __LINE__); }
 #define ERROR(s)                                             { FILEANDLINE; fprintf(stderr, s); ERRENDL; }
