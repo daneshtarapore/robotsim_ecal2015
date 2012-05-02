@@ -3,11 +3,13 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments) :
-    CAgent(pch_name, un_identification, pc_arguments)
+CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments, TBehaviorVector vec_behaviors) :
+    CAgent(pch_name, un_identification, pc_arguments), m_vecBehaviors(vec_behaviors)
 {
-
-
+    for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
+    {
+        (*i)->SetAgent(this);
+    }
 }
 
 /******************************************************************************/
@@ -15,7 +17,10 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
 
 CRobotAgent::~CRobotAgent() 
 {
-
+    for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
+    {
+        delete (*i);
+    }
 }
 
 /******************************************************************************/
@@ -23,9 +28,18 @@ CRobotAgent::~CRobotAgent()
 
 void CRobotAgent::SimulationStep(unsigned int n_step_number)
 {
-
+    bool bControlTaken = false;
+    for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
+    {
+        (*i)->SimulationStep();
+        if (!bControlTaken) 
+        {
+            bControlTaken = (*i)->TakeControl();
+        } else {
+            (*i)->Suppress();
+        }          
+    }
 }
-
 
 /******************************************************************************/
 /******************************************************************************/
