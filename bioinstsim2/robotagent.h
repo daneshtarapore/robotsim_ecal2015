@@ -24,7 +24,7 @@ public:
     // links etc.
     virtual void SimulationStep(unsigned int n_step_number);    
     
-    virtual EAgentType   GetType() = 0;   
+    virtual EAgentType   GetType();   
 
 protected:
     TBehaviorVector     m_vecBehaviors;

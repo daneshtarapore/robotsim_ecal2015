@@ -60,6 +60,12 @@ public:
 
     // Set the current position of the agent:
     virtual void SetPosition(TPosition* pt_new_position);
+
+    // Get the current velocity of the agent:
+    virtual const TPosition* GetVelocity() const;
+
+    // Get the current velocity of the agent:
+    virtual void SetVelocity(TPosition* pt_velocity_position);
        
     // This method is called if the agent moves to a new arena square.
     // Useful to calculate distances to other agents, update physical
@@ -67,7 +73,9 @@ public:
     virtual void SimulationStep(unsigned int n_step_number);    
     virtual void SimulationStepUpdatePosition();
 
-    virtual void SetMaximumSpeed(double f_max_speed);
+    virtual void   SetMaximumSpeed(double f_max_speed);
+    virtual double GetMaximumSpeed();
+
     virtual void SetChangeDirectionProbability(double f_prob);
 
     static unsigned int g_unGlobalNumberOfAgentsCreated;
@@ -78,22 +86,21 @@ public:
     virtual double       GetSize(); 
        
     virtual EAgentType   GetType() = 0;
-    virtual bool         AcceptConnections() = 0;
+//    virtual bool         AcceptConnections() = 0;
     
     virtual unsigned int GetIdentification();
 
     bool    m_bTempWithInRange;
-    
-protected:
+        
+    virtual TPosition GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
 
-    virtual CAgent* TryToConnectToRandomAgent(EAgentType type);
-    
+    virtual void         MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual CAgent*      GetRandomAgentWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual unsigned int CountAgentsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual unsigned int CountAgentsWithinPhysicalRange(EAgentType e_type);
  
     virtual void SetRandomVelocity();    
-    virtual void MoveAgentTowards(TPosition t_position, double f_max_speed);
+    virtual void MoveTowards(TPosition t_position, double f_max_speed);
 
 protected:
     TPosition    m_tPosition;
