@@ -8,6 +8,7 @@ class CRobotAgent;
 
 #include "common.h"
 #include "agent.h"
+#include "behavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -15,7 +16,7 @@ class CRobotAgent;
 class CRobotAgent : public CAgent
 {
 public: 
-    CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments);
+    CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments, TBehaviorVector vec_behaviors);
     virtual ~CRobotAgent();
     
     // This method is called if the agent moves to a new arena square.
@@ -24,6 +25,9 @@ public:
     virtual void SimulationStep(unsigned int n_step_number);    
     
     virtual EAgentType   GetType() = 0;   
+
+protected:
+    TBehaviorVector     m_vecBehaviors;
 };
 
 /******************************************************************************/

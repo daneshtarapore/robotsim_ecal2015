@@ -5,9 +5,9 @@ INCLUDES = -I. -I/usr/X11R6/include/ -std=c++0x
 #	  collisions commoninterface emitters
 
 bin_PROGRAMS  = bioinstsim
-bioinstsim_SOURCES = main.cpp simobject.cpp agent.cpp simulator.cpp arena.cpp bioinstsim.cpp random.cpp circulararena.cpp rectangulararena.cpp boundlessarena.cpp common.cpp openglrender.cpp render.cpp arguments.cpp experiment.cpp populationanalyzer.cpp robotagent.cpp
+bioinstsim_SOURCES = main.cpp simobject.cpp agent.cpp simulator.cpp arena.cpp bioinstsim.cpp random.cpp circulararena.cpp rectangulararena.cpp boundlessarena.cpp common.cpp openglrender.cpp render.cpp arguments.cpp experiment.cpp populationanalyzer.cpp robotagent.cpp behavior.cpp
 
 bioinstsim_LDADD   = -lGL -lGLU -lX11  -L/usr/X11R6/lib -L/usr/lib 
 
-EXTRA_DIST = main.h simobject.h agent.h simulator.h arena.h bioinstsim.h random.h circulararena.h rectangulararena.h boundlessarena.h common.h openglrender.h render.h arguments.h experiment.h populationanalyzer.h robotagent.h
+EXTRA_DIST = main.h simobject.h agent.h simulator.h arena.h bioinstsim.h random.h circulararena.h rectangulararena.h boundlessarena.h common.h openglrender.h render.h arguments.h experiment.h populationanalyzer.h robotagent.h behavior.h
 

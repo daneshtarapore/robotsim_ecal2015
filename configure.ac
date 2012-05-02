@@ -1,7 +1,8 @@
 AC_PREREQ(2.50)
 
 AC_INIT(bioinstsim, 0.7.0)
-AM_INIT_AUTOMAKE(bioinstsim, 0.7.0)
+AM_INIT_AUTOMAKE(bioinstsim
+, 0.7.0)
 AM_CONFIG_HEADER(config.h)
 
 dnl AC_CHECK_HEADERS(readline/readline.h, [], AC_MSG_ERROR([You need to install readline.h (probably in a readline-dev package)]))
