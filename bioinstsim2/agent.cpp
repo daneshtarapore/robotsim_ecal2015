@@ -34,10 +34,6 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
     } 
      
     m_fMaximumSpeed                         = pc_arguments->GetArgumentAsDoubleOr("maxspeed",             0.01);
-    m_fMaximumPhysicalRange                 = pc_arguments->GetArgumentAsDoubleOr("range",               10.0);
-    m_fMaximumPhysicalRange_Recruitment     = pc_arguments->GetArgumentAsDoubleOr("recruitment_range",   10.0);
-    m_unMaximumNumberOfPhysicalConnections  = pc_arguments->GetArgumentAsIntOr(   "maxlinks",             0);
-    m_fChangeDirectionProbability           = pc_arguments->GetArgumentAsDoubleOr("changedirectionprob",  0.01);
 
     static bool bHelpDisplayed = false;
 
@@ -45,16 +41,10 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
     {
         printf("Agent help:\n"
                "  controller=[RANDOMWALK,RANDOMBOUNCE,REGULARBOUNCE]\n"
-               "  maxspeed=#.#           Max speed of the agents per time-step [%f]\n"
-               "  range=#.#              Max physical distance, beyond this distance the physical link will break [%f]\n"
-               "  recruitment_range=#.#              Max physical distance for recruitment only [%f]\n"
-               "  maxlinks=#.#           Max number of physical connections for an agent [%d]\n"
-               "  changedirectionprob=#  Probability of changing direction at each time step (for RANDOMWALK)[%f]\n",
+               "  maxspeed=#.#             Max speed of the agents per time-step [%f]\n"
+               "  recruitment_range=#.#    Max physical distance for recruitment only [%f]\n",
                m_fMaximumSpeed,
-               m_fMaximumPhysicalRange,
-               m_fMaximumPhysicalRange_Recruitment,
-               m_unMaximumNumberOfPhysicalConnections,
-               m_fChangeDirectionProbability);
+               m_fMaximumPhysicalRange_Recruitment);
         bHelpDisplayed = true;
     }
 
@@ -226,16 +216,6 @@ unsigned int CAgent::CountAgentsInAgentListList(TAgentListList* ptlist_agent_lis
     }
 
     return unReturn;
-}
-
-/******************************************************************************/
-/******************************************************************************/
-
-unsigned int CAgent::CountAgentsWithinPhysicalRange(EAgentType e_type)
-{
-    TAgentListList tAgentListList; 
-    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fMaximumPhysicalRange);
-    return CountAgentsInAgentListList(&tAgentListList, m_fMaximumPhysicalRange, e_type);
 }
 
 /******************************************************************************/
@@ -436,14 +416,6 @@ void CAgent::SetColor(unsigned int un_color)
 /******************************************************************************/
 /******************************************************************************/
 
-void CAgent::SetChangeDirectionProbability(double f_prob) 
-{
-    m_fChangeDirectionProbability = f_prob;
-}
-
-/******************************************************************************/
-/******************************************************************************/
-
 void CAgent::MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type)
 {
     CountAgentsInAgentListList(ptlist_agent_list_list, f_range, e_type);    
@@ -451,6 +423,17 @@ void CAgent::MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, doubl
 
 /******************************************************************************/
 /******************************************************************************/
+
+unsigned int CAgent::CountAgents(double f_range, EAgentType e_type)
+{
+    TAgentListList tAgentListList; 
+    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
+    return CountAgentsInAgentListList(tAgentListList, f_range, e_type);    
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 
 TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type)
 {   
