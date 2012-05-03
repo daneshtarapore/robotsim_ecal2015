@@ -1,9 +1,9 @@
-#include "aggregatebehavior.h"
+#include "dispersebehavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
 
-CAggregateBehavior::CAggregateBehavior(double f_sensory_radius) : 
+CDisperseBehavior::CDisperseBehavior(double f_sensory_radius) :
     m_fSensoryRadius(f_sensory_radius) 
 {
 }
@@ -11,7 +11,7 @@ CAggregateBehavior::CAggregateBehavior(double f_sensory_radius) :
 /******************************************************************************/
 /******************************************************************************/
     
-bool CAggregateBehavior::TakeControl() 
+bool CDisperseBehavior::TakeControl() 
 {
     return m_tCenterOfMass.m_fX != 0.0 && m_tCenterOfMass.m_fY != 0.0;
 }
@@ -19,7 +19,7 @@ bool CAggregateBehavior::TakeControl()
 /******************************************************************************/
 /******************************************************************************/
 
-void CAggregateBehavior::SimulationStep() 
+void CDisperseBehavior::SimulationStep() 
 {
     m_tCenterOfMass = m_pcAgent->GetCenterOfMassOfSurroundingAgents(m_fSensoryRadius, ANY);
 }
@@ -27,14 +27,14 @@ void CAggregateBehavior::SimulationStep()
 /******************************************************************************/
 /******************************************************************************/
 
-void CAggregateBehavior::Action()
+void CDisperseBehavior::Action()
 {
     if (m_tCenterOfMass.m_fX != 0.0 && m_tCenterOfMass.m_fY != 0.0) 
     {
-        double fDist  = GetDistanceBetweenPositions(&m_tCenterOfMass, m_pcAgent->GetPosition());
-        double fSpeed = min(fDist, m_pcAgent->GetMaximumSpeed());
+        m_tCenterOfMass.m_fX = -m_tCenterOfMass.m_fX;
+        m_tCenterOfMass.m_fY = -m_tCenterOfMass.m_fY;
 
-        m_pcAgent->MoveTowards(m_tCenterOfMass, fSpeed);
+        m_pcAgent->MoveTowards(m_tCenterOfMass, m_pcAgent->GetMaximumSpeed());
     }
 }
 

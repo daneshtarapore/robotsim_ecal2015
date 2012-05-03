@@ -1,5 +1,5 @@
-#ifndef AGGREGATEBEHAVIOR_H_
-#define AGGREGATEBEHAVIOR_H_
+#ifndef DISPERSEBEHAVIOR_H_
+#define DISPERSEBEHAVIOR_H_
 
 /******************************************************************************/
 /******************************************************************************/
@@ -9,18 +9,19 @@
 /******************************************************************************/
 /******************************************************************************/
 
-class CAggregateBehavior : public CBehavior 
+class CDisperseBehavior : public CBehavior 
 {
 public:
-    CAggregateBehavior(double f_sensory_radius);
-    
-    virtual void SimulationStep();
+    CDisperseBehavior(double f_sensory_radius);
+
+    virtual void SimulationStep();    
     virtual bool TakeControl();
     virtual void Action();
 
 protected:
     double     m_fSensoryRadius;
     TPosition  m_tCenterOfMass;
+
 };
 
 

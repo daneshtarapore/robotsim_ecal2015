@@ -93,7 +93,7 @@ public:
     bool    m_bTempWithInRange;
         
     virtual TPosition GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
-
+    virtual TPosition GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type);
     virtual void         MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual CAgent*      GetRandomAgentWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual unsigned int CountAgentsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);

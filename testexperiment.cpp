@@ -2,6 +2,7 @@
 #include "testexperiment.h"
 #include "robotagent.h"
 #include "aggregatebehavior.h"
+#include "dispersebehavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -18,10 +19,13 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
 CAgent* CTestExperiment::CreateAgent() 
 {
     static unsigned int id = 0;
-
-    CAggregateBehavior* pcAggregationBehavior = new CAggregateBehavior();
     vector<CBehavior*> vecBehaviors;
-    vecBehaviors.push_back(pcAggregationBehavior);
+
+    CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(2);
+    vecBehaviors.push_back(pcAggregateBehavior);
+//    CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior();
+//    vecBehaviors.push_back(pcDisperseBehavior);
+
     return new CRobotAgent("robot", id++, m_pcAgentArguments, vecBehaviors);
 
 }
