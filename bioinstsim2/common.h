@@ -13,18 +13,33 @@ using namespace std;
 #include "arguments.h"
 
 typedef struct {
-    double m_fX;
-    double m_fY;
-} TPosition;
+    double x;
+    double y;
+} TVector2d;
 
-extern double GetDistanceBetweenPositions(const TPosition* pt_pos1, const TPosition* pt_pos2);
-extern double GetSquaredDistanceBetweenPositions(const TPosition* pt_pos1, const TPosition* pt_pos2);
+extern double GetDistanceBetweenPositions(const TVector2d* pt_pos1, const TVector2d* pt_pos2);
+extern double GetSquaredDistanceBetweenPositions(const TVector2d* pt_pos1, const TVector2d* pt_pos2);
+
+// Returns the squared length of a vector
+#define Vec2dLengthSquared(vec) (vec.x*vec.x + vec.y*vec.y)
+
+// Returns the length of a vector
+#define Vec2dLength(vec) sqrt(Vec2dLengthSquared(vec))
+
+
+// Multiply a vector by a scalar
+#define dVec2MultiplyScalar(vec, scalar) \
+  {                                      \
+      vec.x *= scalar;                   \
+      vec.y *= scalar;                   \
+  }                            
+
 
 #define PI 3.14159265
 #define EPSILON 1e-10
 
 #define ERRENDL fprintf(stderr, "\n");
-#define PRINTPOS(label, vec) printf("%s, x: %2.6f, y: %2.6f\n", label, vec.m_fX, vec.m_fY);  
+#define PRINTPOS(label, vec) printf("%s, x: %2.6f, y: %2.6f\n", label, vec.x, vec.y);  
 #define PRINTVEC2(label, vec) printf("%s, x: %2.6f, y: %2.6f\n", label, vec.x, vec.y);  
 #define FILEANDLINE                                          { fprintf(stderr, "In %s:%d: ", __FILE__, __LINE__); }
 #define ERROR(s)                                             { FILEANDLINE; fprintf(stderr, s); ERRENDL; }

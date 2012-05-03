@@ -18,12 +18,12 @@ public:
                     unsigned int un_res_x, 
                     unsigned int un_res_y);
 
-    virtual void MoveAgent(CAgent* pc_agent, TPosition* pt_new_position);
+    virtual void MoveAgent(CAgent* pc_agent, TVector2d* pt_new_position);
 
-    virtual bool IsObstacle(TPosition* t_position);
+    virtual bool IsObstacle(TVector2d* t_position);
 
     virtual void GetAgentsCloseTo(TAgentListList* pt_output_list, 
-                                  const TPosition* pt_position,
+                                  const TVector2d* pt_position,
                                   double f_radius);
 };
 

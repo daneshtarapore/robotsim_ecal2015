@@ -19,24 +19,24 @@ CBoundlessArena::CBoundlessArena(const char* pch_name,
 
 
 
-void CBoundlessArena::MoveAgent(CAgent* pc_agent, TPosition* pt_new_position)
+void CBoundlessArena::MoveAgent(CAgent* pc_agent, TVector2d* pt_new_position)
 {
-    if (pt_new_position->m_fX > m_fSizeX / 2)
+    if (pt_new_position->x > m_fSizeX / 2)
     {
-        pt_new_position->m_fX -= m_fSizeX;
+        pt_new_position->x -= m_fSizeX;
     } 
-    else if (pt_new_position->m_fX < -m_fSizeX / 2)
+    else if (pt_new_position->x < -m_fSizeX / 2)
     {
-        pt_new_position->m_fX += m_fSizeX;
+        pt_new_position->x += m_fSizeX;
     }
 
-    if (pt_new_position->m_fY > m_fSizeX / 2)
+    if (pt_new_position->y > m_fSizeX / 2)
     {
-        pt_new_position->m_fY -= m_fSizeY;
+        pt_new_position->y -= m_fSizeY;
     } 
-    else if (pt_new_position->m_fY < -m_fSizeY / 2)
+    else if (pt_new_position->y < -m_fSizeY / 2)
     {
-        pt_new_position->m_fY += m_fSizeY;
+        pt_new_position->y += m_fSizeY;
     }
 
     CArena::MoveAgent(pc_agent, pt_new_position);
@@ -45,12 +45,12 @@ void CBoundlessArena::MoveAgent(CAgent* pc_agent, TPosition* pt_new_position)
 /******************************************************************************/
 /******************************************************************************/
 
-bool CBoundlessArena::IsObstacle(TPosition* t_position)
+bool CBoundlessArena::IsObstacle(TVector2d* t_position)
 {
-    if (t_position->m_fX > m_fSizeX / 2.0 || 
-        t_position->m_fX < -m_fSizeX / 2.0 ||
-        t_position->m_fY > m_fSizeY / 2.0 || 
-        t_position->m_fY < -m_fSizeY / 2.0)
+    if (t_position->x > m_fSizeX / 2.0 || 
+        t_position->x < -m_fSizeX / 2.0 ||
+        t_position->y > m_fSizeY / 2.0 || 
+        t_position->y < -m_fSizeY / 2.0)
         return true;
     else
         return false;
@@ -60,12 +60,12 @@ bool CBoundlessArena::IsObstacle(TPosition* t_position)
 /******************************************************************************/
 
 void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list, 
-                              const TPosition* pt_position,
+                              const TVector2d* pt_position,
                               double f_radius)
 {
     pt_output_list->clear();
 
-    TPosition tTranslatedPosition;
+    TVector2d tTranslatedPosition;
 
     double fCellSizeX = m_fSizeX / (double) m_unResX; 
     double fCellSizeY = m_fSizeY / (double) m_unResY; 
@@ -73,18 +73,18 @@ void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
     f_radius += max(fCellSizeX, fCellSizeY);
 
     // We translate all coordinates to the first quadrant:
-    tTranslatedPosition.m_fX = pt_position->m_fX + (m_fSizeX / 2);
-    tTranslatedPosition.m_fY = pt_position->m_fY + (m_fSizeY / 2);
+    tTranslatedPosition.x = pt_position->x + (m_fSizeX / 2);
+    tTranslatedPosition.y = pt_position->y + (m_fSizeY / 2);
 
-    double fStartCellX = (tTranslatedPosition.m_fX - f_radius) / fCellSizeX;
-    double fStartCellY = (tTranslatedPosition.m_fY - f_radius) / fCellSizeY;
+    double fStartCellX = (tTranslatedPosition.x - f_radius) / fCellSizeX;
+    double fStartCellY = (tTranslatedPosition.y - f_radius) / fCellSizeY;
 
     // Go to the center of the start square:
     double fStartX = (fStartCellX + (double) 0.49) * (double) fCellSizeX;
     double fStartY = (fStartCellY + (double) 0.49) * (double) fCellSizeY;
 
-    double fEndX   = (tTranslatedPosition.m_fX + f_radius) + fCellSizeX / 2;
-    double fEndY   = (tTranslatedPosition.m_fY + f_radius) + fCellSizeY / 2;
+    double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2;
+    double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2;
 
     double fCellY = fStartCellY;
     for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1)
@@ -95,12 +95,12 @@ void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
         
         double fCellX = fStartCellX;
 
-        for (double fX = fStartX; fX < (tTranslatedPosition.m_fX + f_radius) + fCellSizeX / 2 ; fX += fCellSizeX, fCellX += 1)
+        for (double fX = fStartX; fX < (tTranslatedPosition.x + f_radius) + fCellSizeX / 2 ; fX += fCellSizeX, fCellX += 1)
         {                        
-            double fRelativeX = fabs(fX - tTranslatedPosition.m_fX);
+            double fRelativeX = fabs(fX - tTranslatedPosition.x);
             if (fRelativeX > m_fSizeX / 2) fRelativeX -= m_fSizeX / 2;
                 
-            double fRelativeY = fabs(fY - tTranslatedPosition.m_fY);
+            double fRelativeY = fabs(fY - tTranslatedPosition.y);
             if (fRelativeY > m_fSizeY / 2) fRelativeY -= m_fSizeY / 2;
 
 

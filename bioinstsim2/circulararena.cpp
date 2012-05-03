@@ -20,11 +20,11 @@ CCircularArena::~CCircularArena()
 /******************************************************************************/
 /******************************************************************************/
 
-bool CCircularArena::IsObstacle(TPosition* t_position)
+bool CCircularArena::IsObstacle(TVector2d* t_position)
 {
     double fDistanceFromCenter = sqrt(
-        t_position->m_fX * t_position->m_fX +
-        t_position->m_fY * t_position->m_fY
+        t_position->x * t_position->x +
+        t_position->y * t_position->y
         );
 
     if (fDistanceFromCenter <= m_fRadius)

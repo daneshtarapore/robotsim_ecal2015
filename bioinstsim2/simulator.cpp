@@ -80,7 +80,7 @@ void CSimulator::AddAgent(CAgent* pc_new_agent)
 {
     m_tAllAgents.push_back(pc_new_agent);
     m_pcArena->AddChild(pc_new_agent);
-    m_pcArena->AddAgent(pc_new_agent, (TPosition*) pc_new_agent->GetPosition());
+    m_pcArena->AddAgent(pc_new_agent, (TVector2d*) pc_new_agent->GetPosition());
 
 }
 

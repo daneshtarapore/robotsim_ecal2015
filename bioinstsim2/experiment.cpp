@@ -146,14 +146,14 @@ void CExperiment::PlaceAgentRandomly(CAgent* pc_agent)
     double fArenaSizeY;
     m_pcArena->GetSize(&fArenaSizeX, &fArenaSizeY);
 
-    TPosition tPosition;
+    TVector2d tPosition;
     
     // Find the initial position for the agent:
     bool bFreeSpotFound = false;
     do 
     {
-        tPosition.m_fX = Random::nextDouble() * fArenaSizeX - (fArenaSizeX / 2.0f);
-        tPosition.m_fY = Random::nextDouble() * fArenaSizeY - (fArenaSizeY / 2.0f);
+        tPosition.x = Random::nextDouble() * fArenaSizeX - (fArenaSizeX / 2.0f);
+        tPosition.y = Random::nextDouble() * fArenaSizeY - (fArenaSizeY / 2.0f);
         
         bFreeSpotFound = !m_pcArena->IsObstacle(&tPosition);
     } while (!bFreeSpotFound);
@@ -177,7 +177,7 @@ void CExperiment::PlaceAgentRandomly(CAgent* pc_agent,
 
 void CExperiment::PlaceAgentRandomly(CAgent* pc_agent, double f_origin_x, double f_origin_y, double f_inner_radius, double f_outer_radius)
 {
-    TPosition tPosition;
+    TVector2d tPosition;
 
     double fArenaSizeX;
     double fArenaSizeY;
@@ -197,8 +197,8 @@ void CExperiment::PlaceAgentRandomly(CAgent* pc_agent, double f_origin_x, double
             if (!m_pcArena->IsObstacle(&tPosition) && !(fDistance > f_outer_radius || fDistance < f_inner_radius))
             {
                 bFreeSpotFound = true;
-                tPosition.m_fX = fX;
-                tPosition.m_fY = fY;
+                tPosition.x = fX;
+                tPosition.y = fY;
             }
 
         }

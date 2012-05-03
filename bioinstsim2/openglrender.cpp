@@ -419,7 +419,7 @@ void COpenGLRender::DrawAllAgents()
 void COpenGLRender::DrawAgent(CAgent* pc_agent)
 {
 
-    const TPosition* ptPosition = pc_agent->GetPosition();
+    const TVector2d* ptPosition = pc_agent->GetPosition();
 
     double fArenaSizeX;
     double fArenaSizeY;
@@ -437,12 +437,12 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
         
         glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
         
-        glVertex2d(2 * ptPosition->m_fX / fArenaSizeX, 2 * ptPosition->m_fY / fArenaSizeY);
+        glVertex2d(2 * ptPosition->x / fArenaSizeX, 2 * ptPosition->y / fArenaSizeY);
         glEnd();
     } else if (pc_agent->GetType() == LIGHT) {
         glBegin(GL_TRIANGLE_FAN);
-        double fCenterX = 2.0 * ptPosition->m_fX / fArenaSizeX;
-        double fCenterY = 2.0 * ptPosition->m_fY / fArenaSizeY;
+        double fCenterX = 2.0 * ptPosition->x / fArenaSizeX;
+        double fCenterY = 2.0 * ptPosition->y / fArenaSizeY;
         double fRadius  = 0.0015 *  pc_agent->GetSize();
 
         unsigned int unColor = pc_agent->GetColor();

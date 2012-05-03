@@ -25,9 +25,9 @@ CRectangularArena::~CRectangularArena()
 /******************************************************************************/
 /******************************************************************************/
 
-bool CRectangularArena::IsObstacle(TPosition* t_position)
+bool CRectangularArena::IsObstacle(TVector2d* t_position)
 {
-    if (fabs(t_position->m_fX) < m_fSizeX / 2 && fabs(t_position->m_fY) < m_fSizeY / 2)
+    if (fabs(t_position->x) < m_fSizeX / 2 && fabs(t_position->y) < m_fSizeY / 2)
         return false;
     else
         return true;

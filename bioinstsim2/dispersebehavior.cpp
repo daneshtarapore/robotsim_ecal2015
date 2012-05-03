@@ -13,7 +13,7 @@ CDisperseBehavior::CDisperseBehavior(double f_sensory_radius) :
     
 bool CDisperseBehavior::TakeControl() 
 {
-    return m_tCenterOfMass.m_fX != 0.0 && m_tCenterOfMass.m_fY != 0.0;
+    return m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0;
 }
 
 /******************************************************************************/
@@ -29,10 +29,10 @@ void CDisperseBehavior::SimulationStep()
 
 void CDisperseBehavior::Action()
 {
-    if (m_tCenterOfMass.m_fX != 0.0 && m_tCenterOfMass.m_fY != 0.0) 
+    if (m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0) 
     {
-        m_tCenterOfMass.m_fX = -m_tCenterOfMass.m_fX;
-        m_tCenterOfMass.m_fY = -m_tCenterOfMass.m_fY;
+        m_tCenterOfMass.x = -m_tCenterOfMass.x;
+        m_tCenterOfMass.y = -m_tCenterOfMass.y;
 
         m_pcAgent->MoveTowards(m_tCenterOfMass, m_pcAgent->GetMaximumSpeed());
     }
