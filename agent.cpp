@@ -183,7 +183,7 @@ void CAgent::SetMaximumSpeed(double f_max_speed)
 /******************************************************************************/
 /******************************************************************************/
 
-double CAgent::GetMaximumSpeed()
+double CAgent::GetMaximumSpeed() const
 {
     return m_fMaximumSpeed;
 }

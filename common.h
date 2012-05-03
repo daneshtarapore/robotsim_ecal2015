@@ -8,6 +8,7 @@ using namespace std;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "simobject.h"
 #include "arguments.h"
@@ -28,7 +29,7 @@ extern double GetSquaredDistanceBetweenPositions(const TVector2d* pt_pos1, const
 
 
 // Multiply a vector by a scalar
-#define dVec2MultiplyScalar(vec, scalar) \
+#define Vec2dMultiplyScalar(vec, scalar) \
   {                                      \
       vec.x *= scalar;                   \
       vec.y *= scalar;                   \
