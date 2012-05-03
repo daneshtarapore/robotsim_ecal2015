@@ -454,6 +454,11 @@ void CAgent::MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, doubl
 
 TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type)
 {   
+    double fArenaWidth;
+    double fArenaHeight;
+    CArena* pcArena = CSimulator::GetInstance()->GetArena();
+    pcArena->GetSize(&fArenaWidth, &fArenaHeight);
+
     TAgentListList tAgentListList; 
     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
     MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
@@ -468,9 +473,30 @@ TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
         {
             if ((*j)->m_bTempWithInRange) 
             {
-                const TPosition* posAgent = (*j)->GetPosition();
-                tCenter.m_fX += posAgent->m_fX;
-                tCenter.m_fY += posAgent->m_fY;
+                TPosition posAgent = { (*j)->GetPosition()->m_fX, (*j)->GetPosition()->m_fY} ;
+
+                if (fabs(posAgent.m_fX - m_tPosition.m_fX) > fArenaWidth / 2) 
+                {
+                    if (posAgent.m_fX < m_tPosition.m_fX)
+                    {
+                        posAgent.m_fX += fArenaWidth;
+                    } else {
+                        posAgent.m_fX -= fArenaWidth;
+                    }
+                }
+
+                if (fabs(posAgent.m_fY - m_tPosition.m_fY) > fArenaHeight / 2) 
+                {
+                    if (posAgent.m_fY < m_tPosition.m_fY)
+                    {
+                        posAgent.m_fY += fArenaHeight;
+                    } else {
+                        posAgent.m_fY -= fArenaHeight;
+                    }
+                }
+
+                tCenter.m_fX += posAgent.m_fX - m_tPosition.m_fX;
+                tCenter.m_fY += posAgent.m_fY - m_tPosition.m_fY;
                 unCount++;
             }
         }
@@ -486,6 +512,42 @@ TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
     }
 
     return tCenter;
+
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+TPosition CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type)
+{   
+    TAgentListList tAgentListList; 
+    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
+    MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
+    TPosition tVelocity = { 0.0, 0.0 };
+
+    TAgentList* ptAgentList  = NULL;
+    CAgent* pcAgentSelected  = NULL;
+    unsigned int unCount     = 0;
+    for (TAgentListListIterator i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    {        
+        for (TAgentListIterator j = (*i)->begin(); j != (*i)->end(); j++) 
+        {
+            if ((*j)->m_bTempWithInRange) 
+            {
+                tVelocity.m_fX += (*j)->GetVelocity()->m_fX;
+                tVelocity.m_fY += (*j)->GetVelocity()->m_fX;
+                unCount++;
+            }
+        }
+    }
+
+    if (unCount > 0) 
+    {
+        tVelocity.m_fX /= unCount;
+        tVelocity.m_fY /= unCount;;
+    }
+
+    return tVelocity;
 
 }
 
