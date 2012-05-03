@@ -20,7 +20,7 @@ public:
 
 protected:
     double     m_fSensoryRadius;
-    TPosition  m_tCenterOfMass;
+    TVector2d  m_tCenterOfMass;
 
 };
 

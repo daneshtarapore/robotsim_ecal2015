@@ -23,18 +23,18 @@ public:
     virtual void GetSize(double* pf_size_x, double* pf_size_y) const;
     virtual void GetResolution(unsigned int* pun_res_x, unsigned int* pun_res_y) const;
 
-    virtual void GetAgentsCloseTo(TAgentListList* pt_output_list, const TPosition* pt_position, double f_radius);
+    virtual void GetAgentsCloseTo(TAgentListList* pt_output_list, const TVector2d* pt_position, double f_radius);
 
-    virtual void AddAgent(CAgent* pc_agent, TPosition* pt_new_position);
+    virtual void AddAgent(CAgent* pc_agent, TVector2d* pt_new_position);
     virtual void RemoveAgent(CAgent* pc_agent);
-    virtual void MoveAgent(CAgent* pc_agent, TPosition* pt_new_position);
+    virtual void MoveAgent(CAgent* pc_agent, TVector2d* pt_new_position);
 
-    virtual bool IsObstacle(TPosition* t_position) = 0;
+    virtual bool IsObstacle(TVector2d* t_position) = 0;
     
     static bool g_bIsBoundless;
 
 protected:
-    unsigned int XYToArrayPosition(const TPosition* pt_position) const;
+    unsigned int XYToArrayPosition(const TVector2d* pt_position) const;
     unsigned int XYToArrayPosition(double f_x, double f_y) const;
     void         XYToArrayXY(double f_x, double f_y, unsigned int* pun_x, unsigned int* pun_y) const;
 

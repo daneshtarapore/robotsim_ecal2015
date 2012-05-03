@@ -21,7 +21,7 @@ public:
 
     virtual ~CRectangularArena();
 
-    virtual bool IsObstacle(TPosition* t_position);
+    virtual bool IsObstacle(TVector2d* t_position);
 };
 
 /******************************************************************************/

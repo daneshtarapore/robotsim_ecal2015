@@ -15,7 +15,7 @@ public:
     CCircularArena(const char* pch_name, double f_radius, unsigned int un_res_x, unsigned int un_res_y);
     virtual ~CCircularArena();
 
-    virtual bool IsObstacle(TPosition* t_position);
+    virtual bool IsObstacle(TVector2d* t_position);
 
 protected:
     double m_fRadius;

@@ -56,16 +56,16 @@ public:
     virtual ~CAgent();
     
     // Get the current position of the agent:
-    virtual const TPosition* GetPosition() const;
+    virtual const TVector2d* GetPosition() const;
 
     // Set the current position of the agent:
-    virtual void SetPosition(TPosition* pt_new_position);
+    virtual void SetPosition(TVector2d* pt_new_position);
 
     // Get the current velocity of the agent:
-    virtual const TPosition* GetVelocity() const;
+    virtual const TVector2d* GetVelocity() const;
 
     // Get the current velocity of the agent:
-    virtual void SetVelocity(TPosition* pt_velocity_position);
+    virtual void SetVelocity(TVector2d* pt_velocity_position);
        
     // This method is called if the agent moves to a new arena square.
     // Useful to calculate distances to other agents, update physical
@@ -90,19 +90,19 @@ public:
 
     bool    m_bTempWithInRange;
         
-    virtual TPosition    GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
-    virtual TPosition    GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type);
+    virtual TVector2d    GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
+    virtual TVector2d    GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type);
     virtual void         MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual CAgent*      GetRandomAgentWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual unsigned int CountAgentsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual unsigned int CountAgents(double f_range, EAgentType e_type);
  
     virtual void SetRandomVelocity();    
-    virtual void MoveTowards(TPosition t_position, double f_max_speed);
+    virtual void MoveTowards(TVector2d t_position, double f_max_speed);
 
 protected:
-    TPosition    m_tPosition;
-    TPosition    m_tVelocity;
+    TVector2d    m_tPosition;
+    TVector2d    m_tVelocity;
 
     double       m_fMaximumSpeed;
     double       m_fMaximumPhysicalRange_Recruitment;

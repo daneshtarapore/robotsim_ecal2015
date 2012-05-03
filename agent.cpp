@@ -50,8 +50,8 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
 
     g_unGlobalNumberOfAgentsCreated++;
 
-    m_tPosition.m_fX = 0;
-    m_tPosition.m_fY = 0;
+    m_tPosition.x = 0;
+    m_tPosition.y = 0;
     
     m_unIdentification = un_identification;
     m_bInteractable    = false;
@@ -70,15 +70,15 @@ CAgent::~CAgent()
 /******************************************************************************/
 /******************************************************************************/
 
-const TPosition* CAgent::GetPosition() const
+const TVector2d* CAgent::GetPosition() const
 {
-    return (const TPosition*) &m_tPosition;
+    return (const TVector2d*) &m_tPosition;
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-void CAgent::SetPosition(TPosition* pt_new_position)
+void CAgent::SetPosition(TVector2d* pt_new_position)
 {
     m_tPosition = (*pt_new_position);
 }
@@ -86,15 +86,15 @@ void CAgent::SetPosition(TPosition* pt_new_position)
 /******************************************************************************/
 /******************************************************************************/
 
-const TPosition* CAgent::GetVelocity() const
+const TVector2d* CAgent::GetVelocity() const
 {
-    return (const TPosition*) &m_tVelocity;
+    return (const TVector2d*) &m_tVelocity;
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-void CAgent::SetVelocity(TPosition* pt_new_velocity)
+void CAgent::SetVelocity(TVector2d* pt_new_velocity)
 {
     m_tVelocity = (*pt_new_velocity);
 }
@@ -121,21 +121,21 @@ void CAgent::SimulationStepUpdatePosition()
     // PRINTPOS("Position: ", m_tPosition);
     // PRINTPOS("Velocity: ", m_tVelocity);
 
-    TPosition tNewPosition = { m_tPosition.m_fX + m_tVelocity.m_fX * fSpeedFactor, 
-                               m_tPosition.m_fY + m_tVelocity.m_fY * fSpeedFactor };
+    TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x * fSpeedFactor, 
+                               m_tPosition.y + m_tVelocity.y * fSpeedFactor };
 
     if (CSimulator::GetInstance()->GetArena()->IsObstacle(&tNewPosition) && !CSimulator::GetInstance()->GetArena()->g_bIsBoundless)
     {
         bWallHit = true;
       
-        TPosition tHorizontalTestPosition = { m_tPosition.m_fX + m_tVelocity.m_fX, m_tPosition.m_fY };
+        TVector2d tHorizontalTestPosition = { m_tPosition.x + m_tVelocity.x, m_tPosition.y };
         if (CSimulator::GetInstance()->GetArena()->IsObstacle(&tHorizontalTestPosition))
         {
             bVerticalWallHit = true;
         } 
 
 
-        TPosition tVerticalTestPosition = { m_tPosition.m_fX, m_tPosition.m_fY + m_tVelocity.m_fY };
+        TVector2d tVerticalTestPosition = { m_tPosition.x, m_tPosition.y + m_tVelocity.y };
         if (CSimulator::GetInstance()->GetArena()->IsObstacle(&tVerticalTestPosition))
         {
             bHorizontalWallHit = true;
@@ -162,12 +162,12 @@ void CAgent::SimulationStepUpdatePosition()
     // {
     //     if (bVerticalWallHit)
     //     {
-    //         m_tVelocity.m_fX = -m_tVelocity.m_fX;
+    //         m_tVelocity.x = -m_tVelocity.x;
     //     }        
         
     //     if (bHorizontalWallHit)
     //     {
-    //         m_tVelocity.m_fY = -m_tVelocity.m_fY;
+    //         m_tVelocity.y = -m_tVelocity.y;
     //     }        
     // }   
 }
@@ -230,8 +230,8 @@ unsigned int CAgent::CountAgentsInAgentListList(TAgentListList* ptlist_agent_lis
 //     if (tAgentListList.size() == 0)
 //     {
 //         ERROR2("This should never happen - the agent list-list is empty - maybe the position of the agent is wrong (%f,%f)", 
-//                m_tPosition.m_fX, 
-//                m_tPosition.m_fY);
+//                m_tPosition.x, 
+//                m_tPosition.y);
 //     }
 
 //     CAgent* pcAgent = GetRandomAgentWithinRange(&tAgentListList, m_fMaximumPhysicalRange, e_type);
@@ -322,8 +322,8 @@ void CAgent::SetRandomVelocity()
     double fSpeed = m_fMaximumSpeed;    
     double fAngle = Random::nextDouble() * 2 * 3.141592;
 
-    m_tVelocity.m_fX = cos(fAngle) * fSpeed;
-    m_tVelocity.m_fY = sin(fAngle) * fSpeed;
+    m_tVelocity.x = cos(fAngle) * fSpeed;
+    m_tVelocity.y = sin(fAngle) * fSpeed;
 }
 
 /******************************************************************************/
@@ -353,7 +353,7 @@ unsigned int CAgent::GetIdentification()
 /******************************************************************************/
 /******************************************************************************/
 
-void CAgent::MoveTowards(TPosition t_position, double f_max_speed)
+void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
 {    
     CArena* pcArena = CSimulator::GetInstance()->GetArena();
    
@@ -364,41 +364,41 @@ void CAgent::MoveTowards(TPosition t_position, double f_max_speed)
         double fArenaHeight;
         pcArena->GetSize(&fArenaWidth, &fArenaHeight);
 
-        if (fabs(t_position.m_fX - m_tPosition.m_fX) > fArenaWidth / 2) 
+        if (fabs(t_position.x - m_tPosition.x) > fArenaWidth / 2) 
         {
-            if (t_position.m_fX < m_tPosition.m_fX)
+            if (t_position.x < m_tPosition.x)
             {
-                t_position.m_fX += fArenaWidth;
+                t_position.x += fArenaWidth;
             } else {
-                t_position.m_fX -= fArenaWidth;
+                t_position.x -= fArenaWidth;
             }
         }
 
-        if (fabs(t_position.m_fY - m_tPosition.m_fY) > fArenaHeight / 2) 
+        if (fabs(t_position.y - m_tPosition.y) > fArenaHeight / 2) 
         {
-            if (t_position.m_fY < m_tPosition.m_fY)
+            if (t_position.y < m_tPosition.y)
             {
-                t_position.m_fY += fArenaHeight;
+                t_position.y += fArenaHeight;
             } else {
-                t_position.m_fY -= fArenaHeight;
+                t_position.y -= fArenaHeight;
             }
         }
     }
 
-    m_tVelocity.m_fX = (t_position.m_fX - m_tPosition.m_fX);
-    m_tVelocity.m_fY = (t_position.m_fY - m_tPosition.m_fY);
+    m_tVelocity.x = (t_position.x - m_tPosition.x);
+    m_tVelocity.y = (t_position.y - m_tPosition.y);
 
-    double fSpeed = sqrt(m_tVelocity.m_fX * m_tVelocity.m_fX + m_tVelocity.m_fY * m_tVelocity.m_fY);
+    double fSpeed = sqrt(m_tVelocity.x * m_tVelocity.x + m_tVelocity.y * m_tVelocity.y);
 
     if (fSpeed > f_max_speed) 
     {
         double fModifier = fSpeed / f_max_speed;
-        m_tVelocity.m_fX /= fModifier;
-        m_tVelocity.m_fY /= fModifier;
+        m_tVelocity.x /= fModifier;
+        m_tVelocity.y /= fModifier;
     }
                 
-    TPosition tNewPosition = { m_tPosition.m_fX + m_tVelocity.m_fX, 
-                                   m_tPosition.m_fY + m_tVelocity.m_fY };
+    TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x, 
+                                   m_tPosition.y + m_tVelocity.y };
     
     if (!CSimulator::GetInstance()->GetArena()->IsObstacle(&tNewPosition))
         CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);
@@ -428,14 +428,14 @@ unsigned int CAgent::CountAgents(double f_range, EAgentType e_type)
 {
     TAgentListList tAgentListList; 
     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
-    return CountAgentsInAgentListList(tAgentListList, f_range, e_type);    
+    return CountAgentsInAgentListList(&tAgentListList, f_range, e_type);    
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
 
-TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type)
+TVector2d CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type)
 {   
     double fArenaWidth;
     double fArenaHeight;
@@ -445,7 +445,7 @@ TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
     TAgentListList tAgentListList; 
     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
     MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
-    TPosition tCenter = { 0.0, 0.0 };
+    TVector2d tCenter = { 0.0, 0.0 };
 
     TAgentList* ptAgentList  = NULL;
     CAgent* pcAgentSelected  = NULL;
@@ -456,30 +456,30 @@ TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
         {
             if ((*j)->m_bTempWithInRange) 
             {
-                TPosition posAgent = { (*j)->GetPosition()->m_fX, (*j)->GetPosition()->m_fY} ;
+                TVector2d posAgent = { (*j)->GetPosition()->x, (*j)->GetPosition()->y} ;
 
-                if (fabs(posAgent.m_fX - m_tPosition.m_fX) > fArenaWidth / 2) 
+                if (fabs(posAgent.x - m_tPosition.x) > fArenaWidth / 2) 
                 {
-                    if (posAgent.m_fX < m_tPosition.m_fX)
+                    if (posAgent.x < m_tPosition.x)
                     {
-                        posAgent.m_fX += fArenaWidth;
+                        posAgent.x += fArenaWidth;
                     } else {
-                        posAgent.m_fX -= fArenaWidth;
+                        posAgent.x -= fArenaWidth;
                     }
                 }
 
-                if (fabs(posAgent.m_fY - m_tPosition.m_fY) > fArenaHeight / 2) 
+                if (fabs(posAgent.y - m_tPosition.y) > fArenaHeight / 2) 
                 {
-                    if (posAgent.m_fY < m_tPosition.m_fY)
+                    if (posAgent.y < m_tPosition.y)
                     {
-                        posAgent.m_fY += fArenaHeight;
+                        posAgent.y += fArenaHeight;
                     } else {
-                        posAgent.m_fY -= fArenaHeight;
+                        posAgent.y -= fArenaHeight;
                     }
                 }
 
-                tCenter.m_fX += posAgent.m_fX - m_tPosition.m_fX;
-                tCenter.m_fY += posAgent.m_fY - m_tPosition.m_fY;
+                tCenter.x += posAgent.x - m_tPosition.x;
+                tCenter.y += posAgent.y - m_tPosition.y;
                 unCount++;
             }
         }
@@ -487,11 +487,11 @@ TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
 
     if (unCount > 0) 
     {
-        tCenter.m_fX /= (double) unCount;
-        tCenter.m_fY /= (double) unCount;
+        tCenter.x /= (double) unCount;
+        tCenter.y /= (double) unCount;
         
-        tCenter.m_fX -= m_tPosition.m_fX;
-        tCenter.m_fY -= m_tPosition.m_fY;
+        tCenter.x -= m_tPosition.x;
+        tCenter.y -= m_tPosition.y;
     }
 
     return tCenter;
@@ -501,12 +501,12 @@ TPosition CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
 /******************************************************************************/
 /******************************************************************************/
 
-TPosition CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type)
+TVector2d CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type)
 {   
     TAgentListList tAgentListList; 
     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
     MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
-    TPosition tVelocity = { 0.0, 0.0 };
+    TVector2d tVelocity = { 0.0, 0.0 };
 
     TAgentList* ptAgentList  = NULL;
     CAgent* pcAgentSelected  = NULL;
@@ -517,8 +517,8 @@ TPosition CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentTy
         {
             if ((*j)->m_bTempWithInRange) 
             {
-                tVelocity.m_fX += (*j)->GetVelocity()->m_fX;
-                tVelocity.m_fY += (*j)->GetVelocity()->m_fX;
+                tVelocity.x += (*j)->GetVelocity()->x;
+                tVelocity.y += (*j)->GetVelocity()->x;
                 unCount++;
             }
         }
@@ -526,8 +526,8 @@ TPosition CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentTy
 
     if (unCount > 0) 
     {
-        tVelocity.m_fX /= unCount;
-        tVelocity.m_fY /= unCount;;
+        tVelocity.x /= unCount;
+        tVelocity.y /= unCount;;
     }
 
     return tVelocity;
