@@ -76,8 +76,6 @@ public:
     virtual void   SetMaximumSpeed(double f_max_speed);
     virtual double GetMaximumSpeed();
 
-    virtual void SetChangeDirectionProbability(double f_prob);
-
     static unsigned int g_unGlobalNumberOfAgentsCreated;
     
     virtual unsigned int GetColor();
@@ -92,12 +90,12 @@ public:
 
     bool    m_bTempWithInRange;
         
-    virtual TPosition GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
-    virtual TPosition GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type);
+    virtual TPosition    GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
+    virtual TPosition    GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type);
     virtual void         MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual CAgent*      GetRandomAgentWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual unsigned int CountAgentsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
-    virtual unsigned int CountAgentsWithinPhysicalRange(EAgentType e_type);
+    virtual unsigned int CountAgents(double f_range, EAgentType e_type);
  
     virtual void SetRandomVelocity();    
     virtual void MoveTowards(TPosition t_position, double f_max_speed);
@@ -107,14 +105,10 @@ protected:
     TPosition    m_tVelocity;
 
     double       m_fMaximumSpeed;
-    double       m_fMaximumPhysicalRange;
     double       m_fMaximumPhysicalRange_Recruitment;
-
-    unsigned int m_unMaximumNumberOfPhysicalConnections;
 
     EControllerType    m_eControllerType;
     
-    double             m_fChangeDirectionProbability;
     bool               m_bInteractable;
 
     unsigned int       m_unIdentification;
