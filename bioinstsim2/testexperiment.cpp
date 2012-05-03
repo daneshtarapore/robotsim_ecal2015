@@ -25,7 +25,7 @@ CAgent* CTestExperiment::CreateAgent()
     vecBehaviors.push_back(pcDisperseBehavior);
 //    CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(3);
 //    vecBehaviors.push_back(pcAggregateBehavior);
-    CFlockBehavior* pcFlockBehavior = new CFlockBehavior(5);
+    CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3);
     vecBehaviors.push_back(pcFlockBehavior);
 
     return new CRobotAgent("robot", id++, m_pcAgentArguments, vecBehaviors);
