@@ -13,7 +13,7 @@ CDisperseBehavior::CDisperseBehavior(double f_sensory_radius) :
     
 bool CDisperseBehavior::TakeControl() 
 {
-    return m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0;
+    return m_pcAgent->CountAgents(m_fSensoryRadius, ROBOT) > 0;
 }
 
 /******************************************************************************/
@@ -21,7 +21,7 @@ bool CDisperseBehavior::TakeControl()
 
 void CDisperseBehavior::SimulationStep() 
 {
-    m_tCenterOfMass = m_pcAgent->GetCenterOfMassOfSurroundingAgents(m_fSensoryRadius, ANY);
+    m_tCenterOfMass = m_pcAgent->GetCenterOfMassOfSurroundingAgents(m_fSensoryRadius, ROBOT);
 }
 
 /******************************************************************************/
@@ -29,13 +29,10 @@ void CDisperseBehavior::SimulationStep()
 
 void CDisperseBehavior::Action()
 {
-    if (m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0) 
-    {
-        m_tCenterOfMass.x = -m_tCenterOfMass.x;
-        m_tCenterOfMass.y = -m_tCenterOfMass.y;
-
-        m_pcAgent->MoveTowards(m_tCenterOfMass, m_pcAgent->GetMaximumSpeed());
-    }
+    m_tCenterOfMass.x = -m_tCenterOfMass.x;
+    m_tCenterOfMass.y = -m_tCenterOfMass.y;
+   
+    m_pcAgent->MoveTowards(m_tCenterOfMass, m_pcAgent->GetMaximumSpeed());
 }
 
 /******************************************************************************/
