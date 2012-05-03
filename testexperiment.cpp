@@ -3,6 +3,7 @@
 #include "robotagent.h"
 #include "aggregatebehavior.h"
 #include "dispersebehavior.h"
+#include "flockbehavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -20,14 +21,14 @@ CAgent* CTestExperiment::CreateAgent()
 {
     static unsigned int id = 0;
     vector<CBehavior*> vecBehaviors;
-
-    CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(2);
-    vecBehaviors.push_back(pcAggregateBehavior);
-//    CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior();
-//    vecBehaviors.push_back(pcDisperseBehavior);
+    CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(1);
+    vecBehaviors.push_back(pcDisperseBehavior);
+//    CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(3);
+//    vecBehaviors.push_back(pcAggregateBehavior);
+    CFlockBehavior* pcFlockBehavior = new CFlockBehavior(5);
+    vecBehaviors.push_back(pcFlockBehavior);
 
     return new CRobotAgent("robot", id++, m_pcAgentArguments, vecBehaviors);
-
 }
 
 /******************************************************************************/

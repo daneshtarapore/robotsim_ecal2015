@@ -118,9 +118,6 @@ void CAgent::SimulationStepUpdatePosition()
 
     double fSpeedFactor = 1;
     
-    // PRINTPOS("Position: ", m_tPosition);
-    // PRINTPOS("Velocity: ", m_tVelocity);
-
     TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x * fSpeedFactor, 
                                m_tPosition.y + m_tVelocity.y * fSpeedFactor };
 
@@ -203,7 +200,7 @@ unsigned int CAgent::CountAgentsInAgentListList(TAgentListList* ptlist_agent_lis
         TAgentListIterator j;
         for (j = (*i)->begin(); j != (*i)->end(); j++)
         {
-            if ((*j)->GetType() == e_type || e_type == ANY)
+            if (((*j)->GetType() == e_type || e_type == ANY) && (*j) != this)
             {
                 (*j)->m_bTempWithInRange = (GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fSquareRange);
                 if ((*j)->m_bTempWithInRange)
@@ -320,7 +317,7 @@ CAgent* CAgent::GetRandomAgentWithinRange(TAgentListList* pt_agents_list_list, d
 void CAgent::SetRandomVelocity()
 {
     double fSpeed = m_fMaximumSpeed;    
-    double fAngle = Random::nextDouble() * 2 * 3.141592;
+    double fAngle = Random::nextDouble() * 2.0 * 3.141592;
 
     m_tVelocity.x = cos(fAngle) * fSpeed;
     m_tVelocity.y = sin(fAngle) * fSpeed;
@@ -518,7 +515,7 @@ TVector2d CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentTy
             if ((*j)->m_bTempWithInRange) 
             {
                 tVelocity.x += (*j)->GetVelocity()->x;
-                tVelocity.y += (*j)->GetVelocity()->x;
+                tVelocity.y += (*j)->GetVelocity()->y;
                 unCount++;
             }
         }
@@ -526,8 +523,8 @@ TVector2d CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentTy
 
     if (unCount > 0) 
     {
-        tVelocity.x /= unCount;
-        tVelocity.y /= unCount;;
+        tVelocity.x /= (double) unCount;
+        tVelocity.y /= (double) unCount;
     }
 
     return tVelocity;
