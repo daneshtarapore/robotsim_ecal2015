@@ -29,9 +29,13 @@ void CFlockBehavior::SimulationStep()
 
 void CFlockBehavior::Action()
 {    
-    
+    double fVelocityLength = Vec2dLength(m_tVelocity);
+    if (fVelocityLength > 0.000001)
+    {
+        Vec2dMultiplyScalar(m_tVelocity, m_pcAgent->GetMaximumSpeed() / fVelocityLength);
+        m_pcAgent->SetVelocity(&m_tVelocity);
 
-    m_pcAgent->MoveTowards(m_tCenterOfMass, m_pcAgent->GetMaximumSpeed());
+    }
 }
 
 /******************************************************************************/

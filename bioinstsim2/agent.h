@@ -74,7 +74,7 @@ public:
     virtual void SimulationStepUpdatePosition();
 
     virtual void   SetMaximumSpeed(double f_max_speed);
-    virtual double GetMaximumSpeed();
+    virtual double GetMaximumSpeed() const;
 
     static unsigned int g_unGlobalNumberOfAgentsCreated;
     
