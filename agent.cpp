@@ -208,7 +208,6 @@ unsigned int CAgent::CountAgentsInAgentListList(TAgentListList* ptlist_agent_lis
             } else {
                 (*j)->m_bTempWithInRange = false;
             }
-
         }
     }
 
@@ -353,13 +352,12 @@ unsigned int CAgent::GetIdentification()
 void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
 {    
     CArena* pcArena = CSimulator::GetInstance()->GetArena();
-   
-
+    double fArenaWidth;
+    double fArenaHeight;
+    pcArena->GetSize(&fArenaWidth, &fArenaHeight);
+        
     if (CArena::g_bIsBoundless)
     { 
-        double fArenaWidth;
-        double fArenaHeight;
-        pcArena->GetSize(&fArenaWidth, &fArenaHeight);
 
         if (fabs(t_position.x - m_tPosition.x) > fArenaWidth / 2) 
         {
@@ -397,6 +395,18 @@ void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
     TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x, 
                                    m_tPosition.y + m_tVelocity.y };
     
+    if (tNewPosition.x >= fArenaWidth / 2.0)
+        tNewPosition.x -= fArenaWidth;
+
+    if (tNewPosition.x <= -fArenaWidth / 2.0)
+        tNewPosition.x += fArenaWidth;
+
+    if (tNewPosition.y >= fArenaHeight / 2.0)
+        tNewPosition.y -= fArenaHeight;
+
+    if (tNewPosition.x <= -fArenaHeight / 2.0)
+        tNewPosition.x += fArenaHeight;
+
     if (!CSimulator::GetInstance()->GetArena()->IsObstacle(&tNewPosition))
         CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);
     
@@ -487,8 +497,8 @@ TVector2d CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
         tCenter.x /= (double) unCount;
         tCenter.y /= (double) unCount;
         
-        tCenter.x -= m_tPosition.x;
-        tCenter.y -= m_tPosition.y;
+        tCenter.x += m_tPosition.x;
+        tCenter.y += m_tPosition.y;
     }
 
     return tCenter;

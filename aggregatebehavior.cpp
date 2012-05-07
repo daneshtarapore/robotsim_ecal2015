@@ -13,7 +13,7 @@ CAggregateBehavior::CAggregateBehavior(double f_sensory_radius) :
     
 bool CAggregateBehavior::TakeControl() 
 {
-    return m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0;
+    return true; // m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0;
 }
 
 /******************************************************************************/
@@ -29,13 +29,13 @@ void CAggregateBehavior::SimulationStep()
 
 void CAggregateBehavior::Action()
 {
-    if (m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0) 
-    {
+//    if (m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0) 
+//    {
         double fDist  = GetDistanceBetweenPositions(&m_tCenterOfMass, m_pcAgent->GetPosition());
         double fSpeed = min(fDist, m_pcAgent->GetMaximumSpeed());
 
         m_pcAgent->MoveTowards(m_tCenterOfMass, fSpeed);
-    }
+//    }
 }
 
 /******************************************************************************/
