@@ -29,8 +29,11 @@ void CDisperseBehavior::SimulationStep()
 
 void CDisperseBehavior::Action()
 {
-    m_tCenterOfMass.x = -m_tCenterOfMass.x;
-    m_tCenterOfMass.y = -m_tCenterOfMass.y;
+    m_tCenterOfMass.x = m_tCenterOfMass.x - m_pcAgent->GetPosition()->x;
+    m_tCenterOfMass.y = m_tCenterOfMass.y - m_pcAgent->GetPosition()->y;
+
+    m_tCenterOfMass.x = -m_tCenterOfMass.x + m_pcAgent->GetPosition()->x; 
+    m_tCenterOfMass.y = -m_tCenterOfMass.y + m_pcAgent->GetPosition()->y; 
    
     m_pcAgent->MoveTowards(m_tCenterOfMass, m_pcAgent->GetMaximumSpeed());
 }
