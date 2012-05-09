@@ -4,6 +4,8 @@
 #include "aggregatebehavior.h"
 #include "dispersebehavior.h"
 #include "flockbehavior.h"
+#include "homingbehavior.h"
+#include "randomwalkbehavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -20,17 +22,31 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
 CAgent* CTestExperiment::CreateAgent() 
 {
     static unsigned int id = 0;
+    static CAgent* pcPreviousAgent = NULL;
+
     vector<CBehavior*> vecBehaviors;
     CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(1);
     vecBehaviors.push_back(pcDisperseBehavior);
+
+    CHomingBehavior* pcHomingBehavior = new CHomingBehavior(1000, pcPreviousAgent);
+    vecBehaviors.push_back(pcHomingBehavior);
+
+    CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+    vecBehaviors.push_back(pcRandomWalkBehavior);
+
+//    CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(1);
+//    vecBehaviors.push_back(pcAggregateBehavior);
+//    CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(2);
+//    vecBehaviors.push_back(pcDisperseBehavior2);
 //    CFlockBehavior* pcFlockBehavior = new CFlockBehavior(2);
 //    vecBehaviors.push_back(pcFlockBehavior);
-    CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(3);
-    vecBehaviors.push_back(pcAggregateBehavior);
 //    CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3);
 //    vecBehaviors.push_back(pcFlockBehavior);
-
-    return new CRobotAgent("robot", id++, m_pcAgentArguments, vecBehaviors);
+    
+    CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, vecBehaviors);
+//a    if (pcPreviousAgent == NULL)
+        pcPreviousAgent = pcAgent;
+    return pcAgent; //pcPreviousAgent;
 }
 
 /******************************************************************************/
