@@ -1,41 +1,36 @@
-#include "aggregatebehavior.h"
+#include "featurevector.h"
 
 /******************************************************************************/
 /******************************************************************************/
 
-CAggregateBehavior::CAggregateBehavior(double f_sensory_radius) : 
-    m_fSensoryRadius(f_sensory_radius) 
+CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
 {
-}
-
-/******************************************************************************/
-/******************************************************************************/
-    
-bool CAggregateBehavior::TakeControl() 
-{
-    return m_pcAgent->CountAgents(m_fSensoryRadius, ROBOT) > 0;
+    m_unValue  = 0;
+    m_unLength = 6;   
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-void CAggregateBehavior::SimulationStep() 
+unsigned int CFeatureVector::GetValue()
 {
-    m_tCenterOfMass = m_pcAgent->GetCenterOfMassOfSurroundingAgents(m_fSensoryRadius, ANY);
+    return m_unValue;
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-void CAggregateBehavior::Action()
+unsigned int CFeatureVector::GetLength()
 {
-//    if (m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0) 
-//    {
-        double fDist  = GetDistanceBetweenPositions(&m_tCenterOfMass, m_pcAgent->GetPosition());
-        double fSpeed = min(fDist, m_pcAgent->GetMaximumSpeed());
+    return m_unLength;
+}
 
-        m_pcAgent->MoveTowards(m_tCenterOfMass, fSpeed);
-//    }
+/******************************************************************************/
+/******************************************************************************/
+
+unsigned int CFeatureVector::SimulationStep()
+{
+
 }
 
 /******************************************************************************/

@@ -1,41 +1,37 @@
-#include "aggregatebehavior.h"
+#include "homingbehavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
 
-CAggregateBehavior::CAggregateBehavior(double f_sensory_radius) : 
-    m_fSensoryRadius(f_sensory_radius) 
+CHomingBehavior::CHomingBehavior(double f_sensory_radius, CAgent* pc_agent_to_follow) : 
+    m_fSensoryRadius(f_sensory_radius), m_pcAgentToFollow(pc_agent_to_follow)
 {
 }
 
 /******************************************************************************/
 /******************************************************************************/
     
-bool CAggregateBehavior::TakeControl() 
+bool CHomingBehavior::TakeControl() 
 {
-    return m_pcAgent->CountAgents(m_fSensoryRadius, ROBOT) > 0;
+    if (m_pcAgentToFollow == NULL)
+        return false;
+
+    return GetDistanceBetweenPositions(m_pcAgentToFollow->GetPosition(), m_pcAgent->GetPosition()); 
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-void CAggregateBehavior::SimulationStep() 
+void CHomingBehavior::SimulationStep() 
 {
-    m_tCenterOfMass = m_pcAgent->GetCenterOfMassOfSurroundingAgents(m_fSensoryRadius, ANY);
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-void CAggregateBehavior::Action()
+void CHomingBehavior::Action()
 {
-//    if (m_tCenterOfMass.x != 0.0 && m_tCenterOfMass.y != 0.0) 
-//    {
-        double fDist  = GetDistanceBetweenPositions(&m_tCenterOfMass, m_pcAgent->GetPosition());
-        double fSpeed = min(fDist, m_pcAgent->GetMaximumSpeed());
-
-        m_pcAgent->MoveTowards(m_tCenterOfMass, fSpeed);
-//    }
+    m_pcAgent->MoveTowards((*m_pcAgentToFollow->GetPosition()), m_pcAgent->GetMaximumSpeed());
 }
 
 /******************************************************************************/
