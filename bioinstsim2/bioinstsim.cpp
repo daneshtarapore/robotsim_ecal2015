@@ -181,6 +181,10 @@ void CBioInstSim::ParseArguments()
             m_pcAgentArguments    = new CArguments(optarg);
             break;
 
+        case 'M':
+            m_crmArguments        = new CArguments(optarg);
+            break;
+
         case 'Z':
             m_pcPopulationAnalyzerArguments = new CArguments(optarg);
 //            printf("optarg = %d\n", optarg);
