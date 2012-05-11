@@ -10,6 +10,8 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     {
         (*i)->SetAgent(this);
     }
+
+    crminAgent = new CRMinRobotAgent(m_crmArguments);
 }
 
 /******************************************************************************/

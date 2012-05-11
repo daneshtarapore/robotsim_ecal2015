@@ -9,6 +9,7 @@ class CRobotAgent;
 #include "common.h"
 #include "agent.h"
 #include "behavior.h"
+#include "crminrobotagent.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -25,6 +26,8 @@ public:
     virtual void SimulationStep(unsigned int n_step_number);    
     
     virtual EAgentType   GetType();   
+
+    CRMinRobotAgent* crminAgent;
 
 protected:
     TBehaviorVector     m_vecBehaviors;
