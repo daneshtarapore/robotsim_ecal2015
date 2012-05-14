@@ -83,6 +83,8 @@ protected:
     CArguments*         m_pcAgentArguments;
     CArguments*         m_pcArenaArguments;
     CArguments*         m_pcPopulationAnalyzerArguments;
+
+    CArguments*         m_crmArguments;
 };
 
 /******************************************************************************/

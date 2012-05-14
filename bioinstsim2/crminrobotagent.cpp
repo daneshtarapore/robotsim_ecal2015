@@ -3,12 +3,15 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CRMinRobotAgent::CRMinRobotAgent(CArguments* m_crmArguments)
+CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmArguments)
 {
+    robotAgent = ptr_robotAgent;
+
     m_fWeight = 1.0;
 
     static bool bHelpDisplayed = false;
 
+   CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 8);
     currE = m_crmArguments->GetArgumentAsDoubleOr("currE", 10.0);  // : Density of effector cells
     currR = m_crmArguments->GetArgumentAsDoubleOr("currR", 100.0);  // : Density of regulatory cells
     kon   = m_crmArguments->GetArgumentAsDoubleOr("kon", 0.1);   // : Conjugation rate
@@ -67,8 +70,8 @@ CRMinRobotAgent::CRMinRobotAgent(CArguments* m_crmArguments)
 
     m_eCurrentMacroState = NONE;
 
-    //m_unNumberOfReceptors = 1 << (CFeatureVector::NUMBER_OF_FEATURES);
-    m_unNumberOfReceptors = 1 << (CFeatureVector::GetLength());
+    m_unNumberOfReceptors = 1 << (CFeatureVector::NUMBER_OF_FEATURES);
+    //m_unNumberOfReceptors = 1 << (CFeatureVector::GetLength());
 
     m_pbAttack          = new int[m_unNumberOfReceptors];
     m_pfEffectors       = new double[m_unNumberOfReceptors];
@@ -238,7 +241,7 @@ CRMinRobotAgent::MacroState CRMinRobotAgent::GetCurrentMacroState()
 void CRMinRobotAgent::SimulationStepUpdatePosition()
 {
     // Count the number of feature vectors from robot agents in the vicinity
-    Sense(); // Fills m_punFeaturesSensed, m_unNumberOfReceptors
+    Sense(); // Fills m_punFeaturesSensed
 
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
     double integration_t = 0.0;
@@ -295,55 +298,33 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     m_fWeight = m_fWeight * m_fWeight;
 
 
+    CRobotAgent* pcRemoteRobotAgent = robotAgent->TryToConnectToRandomRobotAgentWithWeights();
+    CRMinRobotAgent* crminRemoteRobotAgent = pcRemoteRobotAgent->GetCRMinRobotAgent();
 
 
-    /*if(m_pfAPCs[1] < 2.25)
-    {
-      m_pfRegulators[1] += 100.0;
-    }*/
-    // We only remove links after one cycle in order to get a visual indication that two agents are communicating when running with rendering:
-    //RemoveSelfInitiatedPhysicalLink();
-
-    int communicatingflag = 0;
-    double regulatorsreceived = 0.0;
-    double regwithyou = 0.0;
-    double regwithother = 0.0;
-
-    int clonestotrack = 2;
-
-    if (TryToConnectToRandomAgentWithWeights(THAGENT, m_fExchangeRange))
+    if (crminRemoteRobotAgent)
     {
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
             double currEtoSend = m_pfEffectors[thtype]  * m_fTryExchangeProbability;
             double currRtoSend = m_pfRegulators[thtype] * m_fTryExchangeProbability;
 
-            CRMinRobotAgent* pcRemoteAgent = (CRMinRobotAgent*) GetSelfInitiatedConnectedAgent();
-            double remoteCurrE = pcRemoteAgent->GetCurrE(thtype);
-            double remoteCurrR = pcRemoteAgent->GetCurrR(thtype);
+            //CRMinRobotAgent* pcRemoteAgent = (CRMinRobotAgent*) GetSelfInitiatedConnectedAgent();
+            double remoteCurrE = crminRemoteRobotAgent->GetCurrE(thtype);
+            double remoteCurrR = crminRemoteRobotAgent->GetCurrR(thtype);
 
-            if(thtype == clonestotrack)
-            {
-                regwithother = remoteCurrR;
-                regwithyou = m_pfRegulators[thtype];
-            }
 
             double currEtoReceive = remoteCurrE * m_fTryExchangeProbability;
             double currRtoReceive = remoteCurrR * m_fTryExchangeProbability;
 
-            pcRemoteAgent->SetCurrR(thtype, remoteCurrR + currRtoSend - currRtoReceive);
-            pcRemoteAgent->SetCurrE(thtype, remoteCurrE + currEtoSend - currEtoReceive);
+            crminRemoteRobotAgent->SetCurrR(thtype, remoteCurrR + currRtoSend - currRtoReceive);
+            crminRemoteRobotAgent->SetCurrE(thtype, remoteCurrE + currEtoSend - currEtoReceive);
 
             m_pfRegulators[thtype] += currRtoReceive - currRtoSend;
             m_pfEffectors[thtype]  += currEtoReceive - currEtoSend;
 
-            if(thtype == clonestotrack)
-            {
-                regulatorsreceived = currRtoReceive - currRtoSend;
-            }
         }
 
-        communicatingflag = 1;
     }
 
     UpdateState();
@@ -644,7 +625,6 @@ double CRMinRobotAgent::Hyp(double N, double No, double M, double L)
 
 void CRMinRobotAgent::UpdateState()
 {
-    bool bOnly0StateSeen = true;
     double E, R;
     for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
     {
@@ -662,18 +642,12 @@ void CRMinRobotAgent::UpdateState()
         else if (E > R)
         {
             m_pbAttack[apctype] = 1;
-            bOnly0StateSeen     = false;
         }
         else
         {
             m_pbAttack[apctype] = 2;
-            bOnly0StateSeen     = false;
         }
     }
-
-    if (bOnly0StateSeen)
-        SetColor(GREY);
-
 }
 
 /******************************************************************************/
@@ -687,12 +661,13 @@ void CRMinRobotAgent::Sense()
     }
 
     // Askthe robot you belong to for the number of feature vectors of different types
-
+    // returns in m_punFeaturesSensed
+     double range = robotAgent->GetFeaturesSensed(m_punFeaturesSensed);
 
     for (int i = 0; i < m_unNumberOfReceptors; i++)
     {
         //TODO: We need to read the range variable for the below expression - instead of hardcoding it
-        m_pfAPCs[i] = m_punFeaturesSensed[i]/(3.142 * 1.0 * 1.0);
+        m_pfAPCs[i] = m_punFeaturesSensed[i]/(3.142 * range  * range);
     }
 
 }
@@ -702,15 +677,15 @@ void CRMinRobotAgent::Sense()
 
 double CRMinRobotAgent::NormalizedAffinity(unsigned int v1, unsigned int v2)
 {
-//    /* XOr operation between the 2 feature vectors */
-//    unsigned int unXoredString = (v1 ^ v2);
+    /* XOr operation between the 2 feature vectors */
+    unsigned int unXoredString = (v1 ^ v2);
 
-//    /* Number of 1's from the result of the previous XOR operation,  at positions preset by mask */
-//    /* how do we decide whose mask should be used */
-//    unsigned int unMatching  = CBinaryFeatureVector::GetNumberOfSetBits(unXoredString);
+    /* Number of 1's from the result of the previous XOR operation,  at positions preset by mask */
+    /* how do we decide whose mask should be used */
+    unsigned int unMatching  = GetNumberOfSetBits(unXoredString);
 
-//    //TODO: Have to change affinity computation
-//    return (double) (CFeatureVector::NUMBER_OF_FEATURES - unMatching) / (double) CFeatureVector::NUMBER_OF_FEATURES;
+    //TODO: Have to change affinity computation
+    return (double) (CFeatureVector::NUMBER_OF_FEATURES - unMatching) / (double) CFeatureVector::NUMBER_OF_FEATURES;
 
     return 0.0;
 }
@@ -720,21 +695,21 @@ double CRMinRobotAgent::NormalizedAffinity(unsigned int v1, unsigned int v2)
 
 double CRMinRobotAgent::NegExpDistAffinity(unsigned int v1, unsigned int v2, double k)
 {
-//    /* k is proportional to the level of cross affinity*/
-//    /* k=0.01 affinity of 1 when HD is 0, else 0  */
-//    /* k=inf  affinity of 1 for all HD */
+    /* k is proportional to the level of cross affinity*/
+    /* k=0.01 affinity of 1 when HD is 0, else 0  */
+    /* k=inf  affinity of 1 for all HD */
 
-//    /* XOr operation between the 2 feature vectors */
-//    unsigned int unXoredString = (v1 ^ v2);
+    /* XOr operation between the 2 feature vectors */
+    unsigned int unXoredString = (v1 ^ v2);
 
-//    /* Number of 1's from the result of the previous XOR operation,  at positions preset by mask */
-//    /* how do we decide whose mask should be used */
-//    unsigned int hammingdistance  = CBinaryFeatureVector::GetNumberOfSetBits(unXoredString);
+    /* Number of 1's from the result of the previous XOR operation,  at positions preset by mask */
+    /* how do we decide whose mask should be used */
+    unsigned int hammingdistance  = GetNumberOfSetBits(unXoredString);
 
-//    //return 1.0 * exp(-(1.0/k) * (double)hammingdistance);
-//    // Should we normalize the hammingdistance when input to the exp function, or as above?
+    //return 1.0 * exp(-(1.0/k) * (double)hammingdistance);
+    // Should we normalize the hammingdistance when input to the exp function, or as above?
 
-//    return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
+    return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
 
     return 0.0;
 }
@@ -777,6 +752,22 @@ void CRMinRobotAgent::SetCurrR(unsigned thtype, double f_currR)
 double CRMinRobotAgent::GetWeight()
 {
     return m_fWeight;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+unsigned int GetNumberOfSetBits(unsigned int x)
+{
+    // from http://stackoverflow.com/questions/1639723/ruby-count-the-number-of-1s-in-a-binary-number
+    unsigned int m1 = 0x55555555;
+    unsigned int m2 = 0x33333333;
+    unsigned int m4 = 0x0f0f0f0f;
+    x -= (x >> 1) & m1;
+    x = (x & m2) + ((x >> 2) & m2);
+    x = (x + (x >> 4)) & m4;
+    x += x >> 8;
+    return (x + (x >> 16)) & 0x3f;
 }
 
 /******************************************************************************/

@@ -6,6 +6,14 @@
 
 class CRobotAgent;
 
+/******************************************************************************/
+/******************************************************************************/
+
+class CRMinRobotAgent;
+
+/******************************************************************************/
+/******************************************************************************/
+
 #include "common.h"
 #include "agent.h"
 #include "behavior.h"
@@ -27,10 +35,17 @@ public:
     
     virtual EAgentType   GetType();   
 
-    CRMinRobotAgent* crminAgent;
+    // Gets the number of feature vectors of different types
+    // into m_punFeaturesSensed. Returns the range used to sense the feature vectors
+    virtual double GetFeaturesSensed(unsigned int*  m_punFeaturesSensed);
+
+    virtual CRobotAgent* TryToConnectToRandomRobotAgentWithWeights();
+
+    virtual CRMinRobotAgent* GetCRMinRobotAgent();
 
 protected:
     TBehaviorVector     m_vecBehaviors;
+    CRMinRobotAgent*    crminAgent;
 };
 
 /******************************************************************************/
