@@ -44,6 +44,9 @@ void CRobotAgent::SimulationStep(unsigned int n_step_number)
         }          
     }
 
+    // Update the T-cells of the CRM instance for this robot
+    crminAgent->SimulationStepUpdatePosition();
+
     SimulationStepUpdatePosition();
 }
 
@@ -57,3 +60,28 @@ EAgentType CRobotAgent::GetType()
 
 /******************************************************************************/
 /******************************************************************************/
+
+double CRobotAgent::GetFeaturesSensed(unsigned int*  m_punFeaturesSensed)
+{
+
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+CRobotAgent* CRobotAgent::TryToConnectToRandomRobotAgentWithWeights()
+{
+
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+CRMinRobotAgent* CRobotAgent::GetCRMinRobotAgent()
+{
+    return crminAgent;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+

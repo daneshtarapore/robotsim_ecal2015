@@ -12,6 +12,8 @@ class CFeatureVector
 public:
     CFeatureVector(CAgent* pc_agent);
 
+    static unsigned int NUMBER_OF_FEATURES;
+
     virtual unsigned int GetValue();
     virtual unsigned int GetLength();
 

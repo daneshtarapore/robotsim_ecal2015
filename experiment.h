@@ -39,8 +39,6 @@ protected:
     CArguments*         m_pcAgentArguments;
     CArguments*         m_pcArenaArguments;
 
-    CArguments*         m_crmArguments;
-
     CArena*             m_pcArena;
     CSimulator*         m_pcSimulator;
 

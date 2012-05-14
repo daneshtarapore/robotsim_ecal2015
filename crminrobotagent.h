@@ -10,6 +10,7 @@
 #include "arguments.h"
 #include "featurevector.h"
 #include "random.h"
+#include "robotagent.h"
 
 #define CELLLOWERBOUND 1e-3
 
@@ -21,10 +22,15 @@ class CRMinRobotAgent;
 /******************************************************************************/
 /******************************************************************************/
 
+class CRobotAgent;
+
+/******************************************************************************/
+/******************************************************************************/
+
 class CRMinRobotAgent
 {
 public:
-    CRMinRobotAgent(CArguments* m_crmArguments);
+    CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmArguments);
 
     virtual ~CRMinRobotAgent();
 
@@ -53,12 +59,15 @@ public:
     virtual void ConjugatesQSS(double* E, double* R, double** C);
     virtual void Derivative(double* E, double* R, double** C, double* deltaE, double* deltaR);
 
+    virtual void SimulationStepUpdatePosition();
 
 protected:
+
+    CRobotAgent* robotAgent;
+
     static double NormalizedAffinity(unsigned int v1, unsigned int v2);
     static double NegExpDistAffinity(unsigned int v1, unsigned int v2, double k);
 
-    virtual void SimulationStepUpdatePosition();
     virtual void UpdateState();
 
     virtual void Sense();
@@ -136,6 +145,11 @@ protected:
 
     double          m_fWeight;
 };
+
+/******************************************************************************/
+/******************************************************************************/
+
+unsigned int GetNumberOfSetBits(unsigned int x);
 
 /******************************************************************************/
 /******************************************************************************/
