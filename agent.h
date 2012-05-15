@@ -65,6 +65,9 @@ public:
     virtual const TVector2d* GetVelocity() const;
 
     // Get the current velocity of the agent:
+    virtual const TVector2d* GetAcceleration() const;
+
+    // Get the current velocity of the agent:
     virtual void SetVelocity(TVector2d* pt_velocity_position);
        
     // This method is called if the agent moves to a new arena square.
@@ -91,7 +94,9 @@ public:
     bool    m_bTempWithInRange;
         
     virtual TVector2d    GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
+    virtual double       GetAverageDistanceToSurroundingAgents(double f_range, EAgentType e_type);
     virtual TVector2d    GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type);
+    virtual TVector2d    GetAverageAccelerationOfSurroundingAgents(double f_range, EAgentType e_type);
     virtual void         MarkAgentsWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual CAgent*      GetRandomAgentWithinRange(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
     virtual unsigned int CountAgentsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range, EAgentType e_type);
@@ -103,6 +108,7 @@ public:
 protected:
     TVector2d    m_tPosition;
     TVector2d    m_tVelocity;
+    TVector2d    m_tAcceleration;
 
     double       m_fMaximumSpeed;
     double       m_fMaximumPhysicalRange_Recruitment;

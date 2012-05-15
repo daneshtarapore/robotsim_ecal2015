@@ -35,6 +35,40 @@ extern double GetSquaredDistanceBetweenPositions(const TVector2d* pt_pos1, const
       vec.y *= scalar;                   \
   }                            
 
+#define Vec2dSub(result, A, B)   \
+ {                               \
+     result.x = B.x - A.x;       \
+     result.y = B.y - A.y;       \
+ }
+   
+// Adds two vectors:
+#define Vec2dAdd(result, A, B)   \
+ {                               \
+     result.x = B.x + A.x;       \
+     result.y = B.y + A.y;       \
+ }
+
+// Find the cos to the angle between two vectors
+#define Vec2dCosAngle(vec1, vec2) \
+     ((vec1.x * vec2.x + vec1.y * vec2.y) / (Vec2dLength(vec1) * Vec2dLength(vec2))) 
+
+// Find the angle between two vectors
+#define Vec2dAngle(vec1, vec2) \
+     (acos(Vec2dCosAngle(vec1, vec2)))
+
+// Find the angle of one vector
+#define Vec2dOwnAngle(vec) \
+     (atan2(vec.y, vec.x))
+
+// Returns the normalized angle in the range [0,2*M_PI)
+#define NormalizeAngle(ang) \
+  (ang < 0 ? fmod(ang, 2*M_PI)+2*M_PI : fmod(ang, 2*M_PI))
+
+// Returns the normalized angle in the range [-PI,PI)
+#define NormalizeAngleNegativePIPositivePI(ang) \
+  (NormalizeAngle(ang) > M_PI ? NormalizeAngle(ang) - 2*M_PI : NormalizeAngle(ang))
+
+
 
 #define PI 3.14159265
 #define EPSILON 1e-10
