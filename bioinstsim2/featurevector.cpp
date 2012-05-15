@@ -3,8 +3,9 @@
 /******************************************************************************/
 /******************************************************************************/
 
-unsigned int CFeatureVector::NUMBER_OF_FEATURES    = 8;
-double       CFeatureVector::FEATURE_RANGE         = 5.0;
+unsigned int CFeatureVector::NUMBER_OF_FEATURES        = 6;
+unsigned int CFeatureVector::NUMBER_OF_FEATURE_VECTORS = 0;
+double       CFeatureVector::FEATURE_RANGE             = 5.0;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -12,7 +13,9 @@ double       CFeatureVector::FEATURE_RANGE         = 5.0;
 CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
 {
     m_unValue  = 0;
-    m_unLength = 6;   
+    m_unLength = NUMBER_OF_FEATURES;
+
+    NUMBER_OF_FEATURE_VECTORS = 1 << NUMBER_OF_FEATURES;
 
     m_pfFeatureValues = new float[m_unLength];
     m_pfThresholds    = new float[m_unLength];
@@ -30,7 +33,7 @@ CFeatureVector::~CFeatureVector()
 /******************************************************************************/
 /******************************************************************************/
 
-unsigned int CFeatureVector::GetValue()
+unsigned int CFeatureVector::GetValue() const
 {
     return m_unValue;
 }
@@ -38,7 +41,7 @@ unsigned int CFeatureVector::GetValue()
 /******************************************************************************/
 /******************************************************************************/
 
-unsigned int CFeatureVector::GetLength()
+unsigned int CFeatureVector::GetLength() const
 {
     return m_unLength;
 }
@@ -53,7 +56,7 @@ unsigned int CFeatureVector::SimulationStep()
     
     for (unsigned int i = 0; i < m_unLength; i++)
     {
-        m_unValue += m_pfFeatureValues[0];
+        m_unValue += m_pfFeatureValues[i] > m_pfThresholds[i] ? (1 << i) : 0;
     }
 }
 

@@ -16,10 +16,11 @@ public:
     virtual ~CFeatureVector();
 
     static unsigned int NUMBER_OF_FEATURES;
+    static unsigned int NUMBER_OF_FEATURE_VECTORS;
     static double       FEATURE_RANGE;
 
-    virtual unsigned int GetValue();
-    virtual unsigned int GetLength();
+    virtual unsigned int GetValue() const;
+    virtual unsigned int GetLength() const;
 
     virtual unsigned int SimulationStep();
 
