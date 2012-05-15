@@ -560,8 +560,7 @@ double CAgent::GetAverageDistanceToSurroundingAgents(double f_range, EAgentType 
 {
     TVector2d tCenterOfMass = GetCenterOfMassOfSurroundingAgents(f_range, e_type);    
 
-    Vec2dSub(tCenterOfMass, tCenterOfMass, m_tPosition);
-    return Vec2dLength(tCenterOfMass);
+    return GetDistanceBetweenPositions(&tCenterOfMass, &m_tPosition);
 }
 
 /******************************************************************************/

@@ -11,7 +11,7 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
 
     static bool bHelpDisplayed = false;
 
-   CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 8);
+    CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 6);
     currE = m_crmArguments->GetArgumentAsDoubleOr("currE", 10.0);  // : Density of effector cells
     currR = m_crmArguments->GetArgumentAsDoubleOr("currR", 100.0);  // : Density of regulatory cells
     kon   = m_crmArguments->GetArgumentAsDoubleOr("kon", 0.1);   // : Conjugation rate
@@ -298,31 +298,34 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     m_fWeight = m_fWeight * m_fWeight;
 
 
-    CRobotAgent* pcRemoteRobotAgent = robotAgent->TryToConnectToRandomRobotAgentWithWeights();
-    CRMinRobotAgent* crminRemoteRobotAgent = pcRemoteRobotAgent->GetCRMinRobotAgent();
-
-
-    if (crminRemoteRobotAgent)
+    //TODO: Insert correct range (I have used 5.0):
+    CRobotAgent*     pcRemoteRobotAgent    = robotAgent->GetRandomRobotWithWeights(5.0);
+    if (pcRemoteRobotAgent != NULL)
     {
-        for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+        CRMinRobotAgent* crminRemoteRobotAgent = pcRemoteRobotAgent->GetCRMinRobotAgent();
+                
+        if (crminRemoteRobotAgent)
         {
-            double currEtoSend = m_pfEffectors[thtype]  * m_fTryExchangeProbability;
-            double currRtoSend = m_pfRegulators[thtype] * m_fTryExchangeProbability;
-
-            //CRMinRobotAgent* pcRemoteAgent = (CRMinRobotAgent*) GetSelfInitiatedConnectedAgent();
-            double remoteCurrE = crminRemoteRobotAgent->GetCurrE(thtype);
-            double remoteCurrR = crminRemoteRobotAgent->GetCurrR(thtype);
-
-
-            double currEtoReceive = remoteCurrE * m_fTryExchangeProbability;
-            double currRtoReceive = remoteCurrR * m_fTryExchangeProbability;
-
-            crminRemoteRobotAgent->SetCurrR(thtype, remoteCurrR + currRtoSend - currRtoReceive);
-            crminRemoteRobotAgent->SetCurrE(thtype, remoteCurrE + currEtoSend - currEtoReceive);
-
-            m_pfRegulators[thtype] += currRtoReceive - currRtoSend;
-            m_pfEffectors[thtype]  += currEtoReceive - currEtoSend;
-
+            for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+            {
+                double currEtoSend = m_pfEffectors[thtype]  * m_fTryExchangeProbability;
+                double currRtoSend = m_pfRegulators[thtype] * m_fTryExchangeProbability;
+                
+                //CRMinRobotAgent* pcRemoteAgent = (CRMinRobotAgent*) GetSelfInitiatedConnectedAgent();
+                double remoteCurrE = crminRemoteRobotAgent->GetCurrE(thtype);
+                double remoteCurrR = crminRemoteRobotAgent->GetCurrR(thtype);
+                
+                
+                double currEtoReceive = remoteCurrE * m_fTryExchangeProbability;
+                double currRtoReceive = remoteCurrR * m_fTryExchangeProbability;
+                
+                crminRemoteRobotAgent->SetCurrR(thtype, remoteCurrR + currRtoSend - currRtoReceive);
+                crminRemoteRobotAgent->SetCurrE(thtype, remoteCurrE + currEtoSend - currEtoReceive);
+                
+                m_pfRegulators[thtype] += currRtoReceive - currRtoSend;
+                m_pfEffectors[thtype]  += currEtoReceive - currEtoSend;
+                
+            }
         }
 
     }
@@ -662,12 +665,12 @@ void CRMinRobotAgent::Sense()
 
     // Askthe robot you belong to for the number of feature vectors of different types
     // returns in m_punFeaturesSensed
-     double range = robotAgent->GetFeaturesSensed(m_punFeaturesSensed);
+    m_punFeaturesSensed  = robotAgent->GetFeaturesSensed();
 
     for (int i = 0; i < m_unNumberOfReceptors; i++)
     {
         //TODO: We need to read the range variable for the below expression - instead of hardcoding it
-        m_pfAPCs[i] = m_punFeaturesSensed[i]/(3.142 * range  * range);
+        m_pfAPCs[i] = m_punFeaturesSensed[i]/(3.142 * robotAgent->GetFVSenseRange()  * robotAgent->GetFVSenseRange());
     }
 
 }

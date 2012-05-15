@@ -59,6 +59,7 @@ CBioInstSim::CBioInstSim(int argc, char** argv) :
     m_pcExperimentArguments(NULL),
     m_pcAgentArguments(NULL),
     m_pcArenaArguments(NULL),
+    m_pcCRMArguments(NULL),
     m_pcPopulationAnalyzerArguments(NULL),
     m_bOutputStatistics(true)
 
@@ -218,6 +219,11 @@ void CBioInstSim::ParseArguments()
     if (m_pcArenaArguments == NULL)
     {
         m_pcArenaArguments = new CArguments("");
+    }
+
+    if (m_pcCRMArguments == NULL)
+    {
+        m_pcCRMArguments = new CArguments("");
     }
 
     printf("Setting random-seed to %d\n", m_unRandomSeed);

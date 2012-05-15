@@ -37,15 +37,28 @@ public:
 
     // Gets the number of feature vectors of different types
     // into m_punFeaturesSensed. Returns the range used to sense the feature vectors
-    virtual double GetFeaturesSensed(unsigned int*  m_punFeaturesSensed);
+    virtual unsigned int* GetFeaturesSensed() const;
 
-    virtual CRobotAgent* TryToConnectToRandomRobotAgentWithWeights();
+    virtual CRobotAgent* GetRandomRobotWithWeights(double f_range);
 
     virtual CRMinRobotAgent* GetCRMinRobotAgent();
+    virtual void   SetWeight(double f_weight);
+    virtual double GetWeight() const; 
+    virtual const CFeatureVector* GetFeatureVector() const;
+    virtual void Sense();
+    virtual double GetFVSenseRange() const;
+    
 
 protected:
+    virtual double CountWeightsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range);
+
+    double              m_fFVSenseRange;
+    CFeatureVector*     m_pcFeatureVector;
     TBehaviorVector     m_vecBehaviors;
     CRMinRobotAgent*    crminAgent;
+    double              m_fWeight;
+    unsigned int*       m_punFeaturesSensed;
+    double              m_fBitflipProbabililty;
 };
 
 /******************************************************************************/
