@@ -12,9 +12,11 @@
 
 CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
                                  CArguments* pc_arena_arguments,
-                                 CArguments* pc_agent_arguments) :
-    CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments)
-{}
+                                 CArguments* pc_agent_arguments,
+                                 CArguments* pc_crm_arguments) :
+    CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_crm_arguments)
+{    
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -43,7 +45,7 @@ CAgent* CTestExperiment::CreateAgent()
 //    CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3);
 //    vecBehaviors.push_back(pcFlockBehavior);
     
-    CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, vecBehaviors);
+    CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcCRMArguments, vecBehaviors);
 //a    if (pcPreviousAgent == NULL)
         pcPreviousAgent = pcAgent;
     return pcAgent; //pcPreviousAgent;
