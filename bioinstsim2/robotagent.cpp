@@ -28,7 +28,7 @@ CRobotAgent::~CRobotAgent()
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgent::SimulationStep(unsigned int n_step_number)
+void CRobotAgent::SimulationStepUpdatePosition()
 {
     bool bControlTaken = false;
     for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
@@ -46,8 +46,7 @@ void CRobotAgent::SimulationStep(unsigned int n_step_number)
 
     // Update the T-cells of the CRM instance for this robot
     crminAgent->SimulationStepUpdatePosition();
-
-    SimulationStepUpdatePosition();
+    CAgent::SimulationStepUpdatePosition();
 }
 
 /******************************************************************************/

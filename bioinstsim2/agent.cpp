@@ -94,6 +94,14 @@ const TVector2d* CAgent::GetVelocity() const
 /******************************************************************************/
 /******************************************************************************/
 
+const TVector2d* CAgent::GetAcceleration() const
+{
+    return (const TVector2d*) &m_tAcceleration;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CAgent::SetVelocity(TVector2d* pt_new_velocity)
 {
     m_tVelocity = (*pt_new_velocity);
@@ -104,7 +112,11 @@ void CAgent::SetVelocity(TVector2d* pt_new_velocity)
 
 void CAgent::SimulationStep(unsigned int un_step_number)
 {
+    TVector2d tTemp = m_tVelocity;
     SimulationStepUpdatePosition();
+    m_tAcceleration = m_tVelocity;
+    m_tAcceleration.x -= m_tVelocity.x;
+    m_tAcceleration.y -= m_tVelocity.y;
 }
 
 /******************************************************************************/
@@ -543,3 +555,50 @@ TVector2d CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentTy
 
 /******************************************************************************/
 /******************************************************************************/
+
+double CAgent::GetAverageDistanceToSurroundingAgents(double f_range, EAgentType e_type)
+{
+    TVector2d tCenterOfMass = GetCenterOfMassOfSurroundingAgents(f_range, e_type);    
+
+    Vec2dSub(tCenterOfMass, tCenterOfMass, m_tPosition);
+    return Vec2dLength(tCenterOfMass);
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+TVector2d CAgent::GetAverageAccelerationOfSurroundingAgents(double f_range, EAgentType e_type)
+{
+    TAgentListList tAgentListList; 
+    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
+    MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
+    TVector2d tAcceleration = { 0.0, 0.0 };
+
+    TAgentList* ptAgentList  = NULL;
+    CAgent* pcAgentSelected  = NULL;
+    unsigned int unCount     = 0;
+    for (TAgentListListIterator i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    {        
+        for (TAgentListIterator j = (*i)->begin(); j != (*i)->end(); j++) 
+        {
+            if ((*j)->m_bTempWithInRange) 
+            {
+                tAcceleration.x += (*j)->GetAcceleration()->x;
+                tAcceleration.y += (*j)->GetAcceleration()->y;
+                unCount++;
+            }
+        }
+    }
+
+    if (unCount > 0) 
+    {
+        tAcceleration.x /= (double) unCount;
+        tAcceleration.y /= (double) unCount;
+    }
+
+    return tAcceleration;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+

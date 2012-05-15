@@ -31,7 +31,7 @@ public:
     // This method is called if the agent moves to a new arena square.
     // Useful to calculate distances to other agents, update physical
     // links etc.
-    virtual void SimulationStep(unsigned int n_step_number);    
+    virtual void SimulationStepUpdatePosition();    
     
     virtual EAgentType   GetType();   
 
