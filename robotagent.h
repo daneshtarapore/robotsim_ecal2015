@@ -25,7 +25,7 @@ class CRMinRobotAgent;
 class CRobotAgent : public CAgent
 {
 public: 
-    CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments, TBehaviorVector vec_behaviors);
+    CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_agent_arguments, CArguments* pc_crm_arguments, TBehaviorVector vec_behaviors);
     virtual ~CRobotAgent();
     
     // This method is called if the agent moves to a new arena square.

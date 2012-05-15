@@ -3,7 +3,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments, TBehaviorVector vec_behaviors) :
+CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments, CArguments* pc_crm_arguments, TBehaviorVector vec_behaviors) :
     CAgent(pch_name, un_identification, pc_arguments), m_vecBehaviors(vec_behaviors)
 {
     for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
@@ -11,7 +11,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
         (*i)->SetAgent(this);
     }
 
-    crminAgent = new CRMinRobotAgent(this, m_crmArguments);
+    crminAgent = new CRMinRobotAgent(this, pc_crm_arguments);
 }
 
 /******************************************************************************/

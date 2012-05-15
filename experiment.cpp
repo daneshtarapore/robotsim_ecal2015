@@ -18,10 +18,12 @@
 
 CExperiment::CExperiment(CArguments* pc_experiment_arguments,
                          CArguments* pc_arena_arguments,
-                         CArguments* pc_agent_arguments) :
+                         CArguments* pc_agent_arguments,
+                         CArguments* pc_crm_arguments) :
     m_pcExperimentArguments(pc_experiment_arguments),
     m_pcArenaArguments(pc_arena_arguments),
     m_pcAgentArguments(pc_agent_arguments),
+    m_pcCRMArguments(pc_crm_arguments),
     m_unNumberOfColors(5),
     CSimObject("")
 {

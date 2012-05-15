@@ -16,7 +16,8 @@ class CExperiment : public CSimObject
 public:
     CExperiment(CArguments* pc_experiment_arguments,
                 CArguments* pc_arena_arguments,
-                CArguments* pc_agent_arguments);
+                CArguments* pc_agent_arguments,
+                CArguments* pc_crm_arguments);
     virtual ~CExperiment();
 
     // The following methods creates the various parts of the
@@ -36,8 +37,9 @@ protected:
 
 protected:
     CArguments*         m_pcExperimentArguments;
-    CArguments*         m_pcAgentArguments;
     CArguments*         m_pcArenaArguments;
+    CArguments*         m_pcAgentArguments;
+    CArguments*         m_pcCRMArguments;
 
     CArena*             m_pcArena;
     CSimulator*         m_pcSimulator;

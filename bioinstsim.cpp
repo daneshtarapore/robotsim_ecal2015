@@ -33,8 +33,8 @@ struct option CBioInstSim::m_tLongOptions[] = {
     {"random-seed",      1, 0,              's'},
     {"arena",            1, 0,              'a'},
     {"experiment",       1, 0,              'e'},
-    {"cytokine",         1, 0,              'c'},
-    {"thagent",          1, 0,              'T'},
+    {"agent",            1, 0,              'T'},
+    {"crm",              1, 0,              'C'},
     {"apcagent",         1, 0,              'A'},   
     {"analyzer",         1, 0,              'Z'},
     {"no-rendering",     0, 0,              'z'},
@@ -125,7 +125,7 @@ void CBioInstSim::ParseArguments()
 
     // First parse the options:
     while ((cOption = getopt_long(m_argc, m_argv, 
-                                  "hvs:qa:e:c:T:A:zn:SZ:", 
+                                  "hvs:a:e:T:M:A:zn:SZ:", 
                                   m_tLongOptions, &nOptionIndex)) != -1)
     {
         if (nOptionIndex <= 0)
@@ -182,7 +182,7 @@ void CBioInstSim::ParseArguments()
             break;
 
         case 'M':
-            m_crmArguments        = new CArguments(optarg);
+            m_pcCRMArguments        = new CArguments(optarg);
             break;
 
         case 'Z':
@@ -235,9 +235,8 @@ void CBioInstSim::PrintUsage()
            "-s, --random-seed #                     Set the random seed [%d]\n"
            "-a, --arena                             Set the arena arguments (-a help)\n"
            "-e, --experiment                        Set the experiment arguments (-a help)\n"
-           "-c, --cytokine                          Set the cytokine arguments (-c help)\n"
-           "-T, --thagent                           Set the th-agent arguments (-T help)\n"
-           "-A, --apcagent                          Set the apc-agent arguments (-A help\n"   
+           "-T, --agent                             Set the th-agent arguments (-T help)\n"
+           "-M, --crm                               Set the CRM arguments (-T help)\n"
            "-n, --number-of-cycles                  Number of simulation cycles [%d]\n"
            "-z, --no-rendering                      Disable rendering\n"
            "-Z, --enable-analysis                   Enable agent distribution analysis and set the arguments (e.g. -Z updateperiod=100)\n"
@@ -267,7 +266,8 @@ CExperiment* CBioInstSim::CreateExperiment()
     {
         pcExperiment = new CExperiment(m_pcExperimentArguments, 
                                        m_pcArenaArguments,                                     
-                                       m_pcAgentArguments);
+                                       m_pcAgentArguments,
+                                       m_pcCRMArguments);
         
     } else {
         const char* pchExperimentName = m_pcExperimentArguments->GetArgumentAsString("name");
@@ -275,7 +275,8 @@ CExperiment* CBioInstSim::CreateExperiment()
         {
             pcExperiment = new CTestExperiment(m_pcExperimentArguments, 
                                                m_pcArenaArguments,                                     
-                                               m_pcAgentArguments);
+                                               m_pcAgentArguments,
+                                               m_pcCRMArguments);
             
         } 
     }
