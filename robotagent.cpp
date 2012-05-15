@@ -16,6 +16,8 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     m_pcFeatureVector   = new CFeatureVector(this);
     m_punFeaturesSensed = new unsigned int[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
 
+    m_fWeight = 0;
+
 
     static bool bHelpDisplayed = false;
 
