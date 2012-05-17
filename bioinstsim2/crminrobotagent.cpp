@@ -29,8 +29,6 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateR", 0.6e-3); //1.0e-3 // Source rate of R cell generation
     m_bDumpSensed             = m_crmArguments->GetArgumentIsDefined("dumpsensed");
 
-    m_fBitflipProbabililty    = m_crmArguments->GetArgumentAsDoubleOr("bitflipprob", 0.0);
-
     m_fcross_affinity         = m_crmArguments->GetArgumentAsDoubleOr("cross-affinity", 0.4);
 
 
@@ -47,8 +45,7 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
                "exchangeprob=#.#              Probability of trying to exchange cells with other robots [%f]\n"
                "Source_E=#.#                  Source rate of E cell generation [%f]\n"
                "Source_R=#.#                  Source rate of R cell generation [%f]\n"
-               "dumpsensed                    Enable the output to stdout of the number of sensed features each cycle (for debugging) [%s]\n"
-               "bitflipprob=#.#               Probability of flipping each bit in sensed feature vectors [%2.5f]\n"
+               "dumpsensed                    Enable the output to stdout of the number of sensed features each cycle (for debugging) [%s]\n"               
                "cross-affinity=#.#            Level of cross-affinity (>0) [%2.5f]\n",
                currE,
                currR,
@@ -62,7 +59,6 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
                se,
                sr,
                m_bDumpSensed ? "on" : "off",
-               m_fBitflipProbabililty,
                m_fcross_affinity
                );
         bHelpDisplayed = true;
@@ -91,8 +87,8 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     m_pfDeltaRegulators_k1 = new double[m_unNumberOfReceptors];
 
 
-
-    m_punFeaturesSensed = new unsigned int[m_unNumberOfReceptors];
+    //Allocated and Deleted in RobotAgent class
+    //m_punFeaturesSensed = new unsigned int[m_unNumberOfReceptors];
     m_pfAPCs		      = new double[m_unNumberOfReceptors]; // In this implementation, each type of APC presents one FV.
 
 
@@ -153,7 +149,7 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
         m_pbAttack[i]          = 0;
         m_pfEffectors[i]       = currE;
         m_pfRegulators[i]      = currR;
-        m_punFeaturesSensed[i] = 0;
+        //m_punFeaturesSensed[i] = 0;
         m_pfAPCs[i]            = 0.0;
         m_pfEffectorConjugatesPerAPC[i]  = 0.0;
         m_pfRegulatorConjugatesPerAPC[i] = 0.0;
@@ -164,7 +160,7 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
         for (unsigned int j = 0; j < m_unNumberOfReceptors; j++)
         {
             m_pfAffinities[i][j]              = NegExpDistAffinity(i,j,m_fcross_affinity);
-            printf("\n Af(%d,%d)=%f",i,j,m_pfAffinities[i][j]);
+            //printf("\n Af(%d,%d)=%f",i,j,m_pfAffinities[i][j]);
 
             m_pfConjugates[i][j]              = 0.0;
             m_pfConjugates_tmp[i][j]          = 0.0;
@@ -190,7 +186,9 @@ CRMinRobotAgent::~CRMinRobotAgent()
     delete m_pbAttack;
     delete m_pfEffectors;
     delete m_pfRegulators;
-    delete m_punFeaturesSensed;
+
+    //delete m_punFeaturesSensed; //Allocated and Deleted in RobotAgent class
+
     delete m_pfAPCs;
     delete m_pfEffectorConjugatesPerAPC;
     delete m_pfRegulatorConjugatesPerAPC;
@@ -240,8 +238,8 @@ CRMinRobotAgent::MacroState CRMinRobotAgent::GetCurrentMacroState()
 
 void CRMinRobotAgent::SimulationStepUpdatePosition()
 {
-    // Count the number of feature vectors from robot agents in the vicinity
-    Sense(); // Fills m_punFeaturesSensed
+    // Convert the number of feature vectors from robot agents in the vicinity to APCs for the CRM
+    Sense();
 
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
     double integration_t = 0.0;
@@ -296,10 +294,11 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
         m_fWeight += m_pfEffectors[thtype] + m_pfRegulators[thtype];
     }
     m_fWeight = m_fWeight * m_fWeight;
+    robotAgent->SetWeight(m_fWeight);
 
 
-    //TODO: Insert correct range (I have used 5.0):
-    CRobotAgent*     pcRemoteRobotAgent    = robotAgent->GetRandomRobotWithWeights(5.0);
+    //We set the communication range to be twice that of the FV sensory range
+    CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights(2.0*robotAgent->GetFVSenseRange());
     if (pcRemoteRobotAgent != NULL)
     {
         CRMinRobotAgent* crminRemoteRobotAgent = pcRemoteRobotAgent->GetCRMinRobotAgent();
@@ -311,11 +310,9 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
                 double currEtoSend = m_pfEffectors[thtype]  * m_fTryExchangeProbability;
                 double currRtoSend = m_pfRegulators[thtype] * m_fTryExchangeProbability;
                 
-                //CRMinRobotAgent* pcRemoteAgent = (CRMinRobotAgent*) GetSelfInitiatedConnectedAgent();
                 double remoteCurrE = crminRemoteRobotAgent->GetCurrE(thtype);
                 double remoteCurrR = crminRemoteRobotAgent->GetCurrR(thtype);
-                
-                
+                                
                 double currEtoReceive = remoteCurrE * m_fTryExchangeProbability;
                 double currRtoReceive = remoteCurrR * m_fTryExchangeProbability;
                 
@@ -658,21 +655,20 @@ void CRMinRobotAgent::UpdateState()
 
 void CRMinRobotAgent::Sense()
 {
-    for (int i = 0; i < m_unNumberOfReceptors; i++)
+    /*for (int i = 0; i < m_unNumberOfReceptors; i++)
     {
         m_punFeaturesSensed[i] = 0;
-    }
+    }*/
 
     // Askthe robot you belong to for the number of feature vectors of different types
     // returns in m_punFeaturesSensed
-    m_punFeaturesSensed  = robotAgent->GetFeaturesSensed();
+    //Are we not overwriting a pointer to allocated memory (allocated in the CRM constructor)
+    unsigned int* m_punFeaturesSensed  = robotAgent->GetFeaturesSensed();
 
     for (int i = 0; i < m_unNumberOfReceptors; i++)
     {
-        //TODO: We need to read the range variable for the below expression - instead of hardcoding it
         m_pfAPCs[i] = m_punFeaturesSensed[i]/(3.142 * robotAgent->GetFVSenseRange()  * robotAgent->GetFVSenseRange());
     }
-
 }
 
 /******************************************************************************/
