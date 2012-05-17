@@ -21,13 +21,22 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
 
     static bool bHelpDisplayed = false;
 
+
+    m_fBitflipProbabililty    = pc_arguments->GetArgumentAsDoubleOr("bitflipprob", 0.0);
+
+    //control at what distances agents can sense one another when FVs have to be communicated
     m_fFVSenseRange               = pc_arguments->GetArgumentAsDoubleOr("fvsenserange", 10.0);
+
+    //at what distances agents are considered neighbors when the individual features are computed
     CFeatureVector::FEATURE_RANGE = pc_arguments->GetArgumentAsDoubleOr("featuresenserange", 5.0);
+
 
     if (pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
-        printf("fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
+        printf("bitflipprob=#.#               Probability of flipping each bit in sensed feature vectors [%2.5f]\n"
+                "fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
                "featuresenserange=#.#         Range based on which features are computed  [%f]\n",
+               m_fBitflipProbabililty,
                m_fFVSenseRange,
                CFeatureVector::FEATURE_RANGE
             );

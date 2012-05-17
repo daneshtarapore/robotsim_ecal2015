@@ -100,7 +100,7 @@ protected:
 
     double*        m_pfEffectors;
     double*        m_pfRegulators;
-    unsigned int*  m_punFeaturesSensed;
+    //unsigned int*  m_punFeaturesSensed;
     double*        m_pfAPCs;
 
         // predicted number of cells at time t+step with Euler method
@@ -136,8 +136,6 @@ protected:
     double          m_fAttackProbability;
 
     bool            m_bDumpSensed;
-
-    double          m_fBitflipProbabililty;
 
     double          m_fcross_affinity; /* the level of cross affinity*/
 
