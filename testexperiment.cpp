@@ -1,3 +1,5 @@
+//bioinstsim2 -a,help -T,help -e name=TEST,help  -T maxspeed=0.1,count=2,help -M,help -n 10000,help
+
 #include <vector>
 #include "testexperiment.h"
 #include "robotagent.h"
