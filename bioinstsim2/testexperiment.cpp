@@ -1,4 +1,4 @@
-//bioinstsim2 -a,help -T,help -e name=TEST,help  -T maxspeed=0.1,count=2,help -M,help -n 10000,help
+//bioinstsim2 -a sizex=100,sizey=100,resx=50,resy=50,help -e name=TEST,help -T maxspeed=0.1,count=5,fvsenserange=10,featuresenserange=5,bitflipprob=0.0,help -M,numberoffeatures=4,exchangeprob=0.0,cross-affinity=0.001,bitflipprob=0.5,help -n 10000,help
 
 #include <vector>
 #include "testexperiment.h"

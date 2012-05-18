@@ -27,14 +27,14 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
 
     se                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateE", 1e-3); //1.1e-3  // Source rate of E cell generation
     sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateR", 0.6e-3); //1.0e-3 // Source rate of R cell generation
-    m_bDumpSensed             = m_crmArguments->GetArgumentIsDefined("dumpsensed");
 
     m_fcross_affinity         = m_crmArguments->GetArgumentAsDoubleOr("cross-affinity", 0.4);
 
 
     if (m_crmArguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
-        printf("currE=#.#                     Density of effector cells [%f]\n"
+        printf("numberoffeatures=#             Number of features in a single FV [%d]\n"
+                "currE=#.#                     Density of effector cells [%f]\n"
                "currR=#.#                     Density of regulatory cells [%f]\n"
                "kon=#.#                       Conjugation rate [%f]\n"
                "koff=#.#                      Dissociation rate [%f]\n"
@@ -45,8 +45,8 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
                "exchangeprob=#.#              Probability of trying to exchange cells with other robots [%f]\n"
                "Source_E=#.#                  Source rate of E cell generation [%f]\n"
                "Source_R=#.#                  Source rate of R cell generation [%f]\n"
-               "dumpsensed                    Enable the output to stdout of the number of sensed features each cycle (for debugging) [%s]\n"               
                "cross-affinity=#.#            Level of cross-affinity (>0) [%2.5f]\n",
+               CFeatureVector::NUMBER_OF_FEATURES,
                currE,
                currR,
                kon,
@@ -58,7 +58,6 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
                m_fTryExchangeProbability,
                se,
                sr,
-               m_bDumpSensed ? "on" : "off",
                m_fcross_affinity
                );
         bHelpDisplayed = true;
@@ -648,6 +647,13 @@ void CRMinRobotAgent::UpdateState()
             m_pbAttack[apctype] = 2;
         }
     }
+
+    for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
+    {
+        printf("\n FV [%d]: nAPCs=%f,currE=%f,currR=%f. Attack status:%d",
+               thtype,m_pfAPCs[thtype],m_pfEffectors[thtype],m_pfRegulators[thtype],m_pbAttack[thtype]);
+    }
+
 }
 
 /******************************************************************************/

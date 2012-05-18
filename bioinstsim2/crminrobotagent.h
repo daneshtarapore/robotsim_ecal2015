@@ -135,8 +135,6 @@ protected:
 
     double          m_fAttackProbability;
 
-    bool            m_bDumpSensed;
-
     double          m_fcross_affinity; /* the level of cross affinity*/
 
     int*            m_pbAttack; // 0: No state 1: Attack 2: Tolerate
