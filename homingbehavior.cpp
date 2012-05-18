@@ -16,7 +16,9 @@ bool CHomingBehavior::TakeControl()
     if (m_pcAgentToFollow == NULL)
         return false;
 
-    return GetDistanceBetweenPositions(m_pcAgentToFollow->GetPosition(), m_pcAgent->GetPosition()); 
+    return GetDistanceBetweenPositions(m_pcAgentToFollow->GetPosition(), m_pcAgent->GetPosition());
+
+    //return GetDistanceBetweenPositions(m_pcAgentToFollow->GetPosition(), m_pcAgent->GetPosition()) <=     m_fSensoryRadius;
 }
 
 /******************************************************************************/

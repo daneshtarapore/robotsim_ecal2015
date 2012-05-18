@@ -27,6 +27,7 @@ void CDisperseBehavior::SimulationStep()
 /******************************************************************************/
 /******************************************************************************/
 
+// Move in the opposite direction of CoM
 void CDisperseBehavior::Action()
 {
     m_tCenterOfMass.x = m_tCenterOfMass.x - m_pcAgent->GetPosition()->x;
