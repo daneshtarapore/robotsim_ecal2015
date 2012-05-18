@@ -648,11 +648,11 @@ void CRMinRobotAgent::UpdateState()
         }
     }
 
-    for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
+    /*for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
     {
         printf("\n FV [%d]: nAPCs=%f,currE=%f,currR=%f. Attack status:%d",
                thtype,m_pfAPCs[thtype],m_pfEffectors[thtype],m_pfRegulators[thtype],m_pbAttack[thtype]);
-    }
+    }*/
 
 }
 
