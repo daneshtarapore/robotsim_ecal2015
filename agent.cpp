@@ -524,6 +524,7 @@ TVector2d CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentTy
 {   
     TAgentListList tAgentListList; 
     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
+
     MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
     TVector2d tVelocity = { 0.0, 0.0 };
 

@@ -120,67 +120,75 @@ void CArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
 {
     pt_output_list->clear();
 
-    TVector2d tTranslatedPosition;
-
-    double fCellSizeX = m_fSizeX / (double) m_unResX; 
-    double fCellSizeY = m_fSizeY / (double) m_unResY; 
-
-    f_radius += max(fCellSizeX, fCellSizeY);
-
-    // We translate all coordinates to the first quadrant:
-    tTranslatedPosition.x = pt_position->x + (m_fSizeX / 2);
-    tTranslatedPosition.y = pt_position->y + (m_fSizeY / 2);
-
-    double fStartCellX = (tTranslatedPosition.x - f_radius) / fCellSizeX;
-    double fStartCellY = (tTranslatedPosition.y - f_radius) / fCellSizeY;
-
-    if (fStartCellX < 0)
+    if (f_radius > m_fSizeX / 2.0 || f_radius > m_fSizeY / 2.0)
     {
-        fStartCellX = 0;
-    }
+        for (int i = 0; i < m_unResX * m_unResY; i++)
+        { 
+            pt_output_list->push_back(&m_plistAgents[i]);
+        }
+    } else {        
+        TVector2d tTranslatedPosition;
 
-    if (fStartCellY < 0)
-    {
-        fStartCellY = 0;
-    }
+        double fCellSizeX = m_fSizeX / (double) m_unResX; 
+        double fCellSizeY = m_fSizeY / (double) m_unResY; 
 
-    // Go to the center of the start square:
-    double fStartX = (fStartCellX + (double) 0.49) * (double) fCellSizeX;
-    double fStartY = (fStartCellY + (double) 0.49) * (double) fCellSizeY;
+        f_radius += max(fCellSizeX, fCellSizeY);
 
-    double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2;
-    double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2;
+        // We translate all coordinates to the first quadrant:
+        tTranslatedPosition.x = pt_position->x + (m_fSizeX / 2);
+        tTranslatedPosition.y = pt_position->y + (m_fSizeY / 2);
 
-    if (fEndX > m_fSizeX)
-    {
-        fEndX = m_fSizeX;
-    }
+        double fStartCellX = (tTranslatedPosition.x - f_radius) / fCellSizeX;
+        double fStartCellY = (tTranslatedPosition.y - f_radius) / fCellSizeY;
 
-    if (fEndY > m_fSizeY)
-    {
-        fEndY = m_fSizeY;
-    }
-
-    double fCellY = fStartCellY;
-    for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1)
-    {
-        int nCellY = (int) floor(fCellY);
-
-        if (nCellY >= 0 && nCellY < m_unResY)
+        if (fStartCellX < 0)
         {
-            double fCellX = fStartCellX;
+            fStartCellX = 0;
+        }
 
-            for (double fX = fStartX; fX < (tTranslatedPosition.x + f_radius) + fCellSizeX / 2 && fX < m_fSizeX; fX += fCellSizeX, fCellX += 1)
+        if (fStartCellY < 0)
+        {
+            fStartCellY = 0;
+        }
+
+        // Go to the center of the start square:
+        double fStartX = (fStartCellX + (double) 0.49) * (double) fCellSizeX;
+        double fStartY = (fStartCellY + (double) 0.49) * (double) fCellSizeY;
+
+        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2;
+        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2;
+
+        if (fEndX > m_fSizeX)
+        {
+            fEndX = m_fSizeX;
+        }
+
+        if (fEndY > m_fSizeY)
+        {
+            fEndY = m_fSizeY;
+        }
+
+        double fCellY = fStartCellY;
+        for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1)
+        {
+            int nCellY = (int) floor(fCellY);
+
+            if (nCellY >= 0 && nCellY < m_unResY)
             {
-                double fRelativeX = fX - tTranslatedPosition.x;
-                double fRelativeY = fY - tTranslatedPosition.y;
-                int nCellX = (int) floor(fCellX);
-                
-                if (nCellX >= 0 && nCellX < m_unResX && (sqrt(fRelativeX * fRelativeX + fRelativeY * fRelativeY) <= f_radius))
+                double fCellX = fStartCellX;
+
+                for (double fX = fStartX; fX < (tTranslatedPosition.x + f_radius) + fCellSizeX / 2 && fX < m_fSizeX; fX += fCellSizeX, fCellX += 1)
                 {
-                    unsigned int unArrayPosition = nCellX + nCellY * m_unResX;
+                    double fRelativeX = fX - tTranslatedPosition.x;
+                    double fRelativeY = fY - tTranslatedPosition.y;
+                    int nCellX = (int) floor(fCellX);
+                
+                    if (nCellX >= 0 && nCellX < m_unResX && (sqrt(fRelativeX * fRelativeX + fRelativeY * fRelativeY) <= f_radius))
+                    {
+                        unsigned int unArrayPosition = nCellX + nCellY * m_unResX;
 //                    printf("Array position: %d\n", unArrayPosition);
-                    pt_output_list->push_back(&m_plistAgents[unArrayPosition]);
+                        pt_output_list->push_back(&m_plistAgents[unArrayPosition]);
+                    }
                 }
             }
         }
