@@ -115,8 +115,8 @@ void CAgent::SimulationStep(unsigned int un_step_number)
     TVector2d tTemp = m_tVelocity;
     SimulationStepUpdatePosition();
     m_tAcceleration = m_tVelocity;
-    m_tAcceleration.x -= m_tVelocity.x;
-    m_tAcceleration.y -= m_tVelocity.y;
+    m_tAcceleration.x -= tTemp.x;
+    m_tAcceleration.y -= tTemp.y;
 }
 
 /******************************************************************************/
