@@ -47,6 +47,7 @@ public:
     virtual const CFeatureVector* GetFeatureVector() const;
     virtual void Sense();
     virtual double GetFVSenseRange() const;
+    virtual unsigned int GetColor();
     
 
 protected:
