@@ -65,31 +65,29 @@ unsigned int CFeatureVector::SimulationStep()
 
 void CFeatureVector::ComputeFeatureValues()
 {
+    // Number of neighbors:
+    m_pfFeatureValues[0] = m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT);
 
-//    // Number of neighbors:
-//    m_pfFeatureValues[0] = m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT);
+    // Distance to surrounding agents:
+    m_pfFeatureValues[1] = m_pcAgent->GetAverageDistanceToSurroundingAgents(FEATURE_RANGE, ROBOT);
 
-//    // Distance to surrounding agents:
-//    m_pfFeatureValues[1] = m_pcAgent->GetAverageDistanceToSurroundingAgents(FEATURE_RANGE, ROBOT);
-
-//    // Velocity magnitude and direction wrt. surrounding agents:
-//    TVector2d tTemp    = m_pcAgent->GetAverageVelocityOfSurroundingAgents(FEATURE_RANGE, ROBOT);
+    // Velocity magnitude and direction wrt. surrounding agents:
+    TVector2d tTemp    = m_pcAgent->GetAverageVelocityOfSurroundingAgents(FEATURE_RANGE, ROBOT);
     
-//    m_pfFeatureValues[2] = Vec2dLength((*m_pcAgent->GetVelocity())) - Vec2dLength((tTemp));
+    m_pfFeatureValues[2] = Vec2dLength((*m_pcAgent->GetVelocity())) - Vec2dLength((tTemp));
 
-//    if (Vec2dLength((*m_pcAgent->GetVelocity())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
-//        m_pfFeatureValues[3] = Vec2dAngle((*m_pcAgent->GetVelocity()), tTemp);
-//    else
-//        m_pfFeatureValues[3] = 0.0;
+    if (Vec2dLength((*m_pcAgent->GetVelocity())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
+        m_pfFeatureValues[3] = Vec2dAngle((*m_pcAgent->GetVelocity()), tTemp);
+    else
+        m_pfFeatureValues[3] = 0.0;
 
-//    // Acceleration magnitude and direction wrt. surrounding agents:
-//    tTemp                = m_pcAgent->GetAverageAccelerationOfSurroundingAgents(FEATURE_RANGE, ROBOT);
-//    m_pfFeatureValues[4] = Vec2dLength((*m_pcAgent->GetAcceleration())) - Vec2dLength((tTemp));
-//    if (Vec2dLength((*m_pcAgent->GetAcceleration())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
-//        m_pfFeatureValues[5] = Vec2dAngle((*m_pcAgent->GetAcceleration()), tTemp);
-//    else
-//        m_pfFeatureValues[5] = 0.0;
-
+    // Acceleration magnitude and direction wrt. surrounding agents:
+    tTemp                = m_pcAgent->GetAverageAccelerationOfSurroundingAgents(FEATURE_RANGE, ROBOT);
+    m_pfFeatureValues[4] = Vec2dLength((*m_pcAgent->GetAcceleration())) - Vec2dLength((tTemp));
+    if (Vec2dLength((*m_pcAgent->GetAcceleration())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
+        m_pfFeatureValues[5] = Vec2dAngle((*m_pcAgent->GetAcceleration()), tTemp);
+    else
+        m_pfFeatureValues[5] = 0.0;
 }
 
 /******************************************************************************/
@@ -101,11 +99,11 @@ std::string CFeatureVector::ToString()
 
     sprintf(pchTemp, "Values - "  
                      "nbrs: %3f [%3f]- " 
-                     "dist: %5.3f [%5.3f] - "  
-                     "vm.: %5.3f [%5.3f] - " 
-                     "vd.: %5.3f [%5.3f] - "  
-                     "am.: %5.3f [%5.3f] - " 
-                     "ad.: %5.3f [%5.3f] - fv: %d", 
+                     "dist: %5.3e [%5.3f] - "
+                     "vm.: %5.3e [%5.3f] - "
+                     "vd.: %5.3e [%5.3f] - "
+                     "am.: %5.3e [%5.3f] - "
+                     "ad.: %5.3e [%5.3f] - fv: %d",
             m_pfFeatureValues[0], m_pfThresholds[0],
             m_pfFeatureValues[1], m_pfThresholds[1], 
             m_pfFeatureValues[2], m_pfThresholds[2],

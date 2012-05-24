@@ -9,6 +9,15 @@
 /******************************************************************************/
 /******************************************************************************/
 
+enum ESwarmBehavType
+{
+    AGGREGATION,
+    DISPERSION,
+    FLOCKING,
+    HOMING1,
+    HOMING2
+};
+
 class CTestExperiment : public CExperiment
 {
 public:
@@ -18,6 +27,12 @@ public:
                     CArguments* pc_crm_arguments);
     
     virtual CAgent*     CreateAgent();
+
+protected:
+    ESwarmBehavType m_eswarmbehavType;
+
+    char swarmbehav[40];
+
 };
 
 /******************************************************************************/
