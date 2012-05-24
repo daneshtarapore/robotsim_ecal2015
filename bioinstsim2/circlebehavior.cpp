@@ -8,9 +8,6 @@ CCircleBehavior::CCircleBehavior(double f_radius) :
     m_fradius(f_radius)
 {
     m_ftheta = 0.0;
-
-    pt_circlecenter.x = m_pcAgent->GetPosition()->x - f_radius;
-    pt_circlecenter.y = m_pcAgent->GetPosition()->y;
 }
 
 /******************************************************************************/
@@ -44,3 +41,14 @@ void CCircleBehavior::Action()
 /******************************************************************************/
 /******************************************************************************/
 
+void CCircleBehavior::SetAgent(CAgent* pc_agent)
+{
+    CBehavior::SetAgent(pc_agent);
+    pt_circlecenter.x = m_pcAgent->GetPosition()->x - m_fradius;
+    pt_circlecenter.y = m_pcAgent->GetPosition()->y;
+
+    
+}
+
+/******************************************************************************/
+/******************************************************************************/

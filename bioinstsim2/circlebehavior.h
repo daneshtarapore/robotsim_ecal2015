@@ -16,6 +16,7 @@ public:
 
     virtual bool TakeControl();
     virtual void Action();
+    virtual void SetAgent(CAgent* pc_agent);
 
 
 protected:
