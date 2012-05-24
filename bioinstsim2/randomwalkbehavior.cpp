@@ -5,7 +5,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CRandomWalkBehavior::CRandomWalkBehavior(double f_change_direction_probability) : 
+CRandomWalkBehavior::CRandomWalkBehavior(double f_change_direction_probability) :
     m_fChangeDirectionProbability(f_change_direction_probability) 
 {    
 }

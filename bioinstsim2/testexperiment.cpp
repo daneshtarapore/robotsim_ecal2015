@@ -1,5 +1,4 @@
-//bioinstsim2 -a sizex=100,sizey=100,resx=50,resy=50,help -e name=TEST,help -T maxspeed=0.1,count=50,fvsenserange=15,featuresenserange=15,bitflipprob=0.0,help -M,numberoffeatures=4,exchangeprob=0.0,cross-affinity=0.4,help -s 111,help -n 10000,help
-
+//bioinstsim2 -a sizex=100,sizey=100,resx=50,resy=50,help -e name=TEST,swarmbehav=AGGREGATION,help -T maxspeed=0.1,count=50,fvsenserange=10,featuresenserange=6,bitflipprob=0.0,help -M,numberoffeatures=4,exchangeprob=0.0,cross-affinity=0.4,help -s 111,help -n 10000,help
 
 #include <vector>
 #include "testexperiment.h"
@@ -9,6 +8,7 @@
 #include "flockbehavior.h"
 #include "homingbehavior.h"
 #include "randomwalkbehavior.h"
+#include "circlebehavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -65,9 +65,9 @@ CAgent* CTestExperiment::CreateAgent()
     // Parameters: Dispersion range (d)
     // Robots disperse with the distance between them decided by dispersion range d in CDisperseBehavior(d)
     // Note that for large value of d (e.g. 50), the robots collapse into each other!
-    if(m_eswarmbehavType == DISPERSION)
+    if(m_eswarmbehavType == DISPERSION && id != TRACKAGENT)
     {
-        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(10);
+        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5);
         vecBehaviors.push_back(pcDisperseBehavior2);
 
         CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
@@ -78,7 +78,7 @@ CAgent* CTestExperiment::CreateAgent()
     // Aggregation behavior: formation of clusters of robots
     // Parameters: Dispersion range (d), Aggregation range (a)
     // The number of robots in each cluster seems to be proportional to d/a
-    if(m_eswarmbehavType == AGGREGATION)
+    if(m_eswarmbehavType == AGGREGATION && id != TRACKAGENT)
     {
         CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5); //1
         vecBehaviors.push_back(pcDisperseBehavior2);
@@ -94,11 +94,11 @@ CAgent* CTestExperiment::CreateAgent()
     // Parameters: Dispersion range (d), Homing range (h)
     // The dispersion range d > 0, else robots collapse into their individual leaders
     // If dispersion range d is too high (e.g. 5), other robots besides the leader disrupt the homing behavior - resulting in slowly moving clusters of robots
-    if(m_eswarmbehavType == HOMING2)
+    if(m_eswarmbehavType == HOMING2 && id != TRACKAGENT)
     {
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(1);
+        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(5);
         vecBehaviors.push_back(pcDisperseBehavior);
-        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(100, pcPreviousAgent);
+        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(10000, pcPreviousAgent);
         vecBehaviors.push_back(pcHomingBehavior);
 
         CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
@@ -109,7 +109,7 @@ CAgent* CTestExperiment::CreateAgent()
     // The robots form a single cluster around the leader-bot. The bahavior is quite similar to the aggregation behav.
     // The dispersion range d > 0 else robots collapse into leader.
     // Increasing d increases the area occupied by the cluster
-    if(m_eswarmbehavType == HOMING1)
+    if(m_eswarmbehavType == HOMING1 && id != TRACKAGENT)
     {
         CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(5);
         vecBehaviors.push_back(pcDisperseBehavior);
@@ -125,7 +125,7 @@ CAgent* CTestExperiment::CreateAgent()
     // Parameters: Dispersion range (d), Flocking range (f)
     // Dispersion range d is proportional to the size of individual flock of robots
     // Flocking range f influences how fast a flock is formed. Also f > d to initiate flocking
-    if(m_eswarmbehavType == FLOCKING)
+    if(m_eswarmbehavType == FLOCKING && id != TRACKAGENT)
     {
         CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5);
         vecBehaviors.push_back(pcDisperseBehavior2);
@@ -134,6 +134,21 @@ CAgent* CTestExperiment::CreateAgent()
 
         CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
         vecBehaviors.push_back(pcRandomWalkBehavior);
+    }
+
+    if(id == TRACKAGENT)
+    {
+        // move in straight line
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.0);
+        vecBehaviors.push_back(pcRandomWalkBehavior);
+
+        // random walk behavior
+        //CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+        //vecBehaviors.push_back(pcRandomWalkBehavior);
+
+        // circle behavior
+        //CCircleBehavior* pcCircleBehavior = new CCircleBehavior(5.0);
+        //vecBehaviors.push_back(pcCircleBehavior);
     }
 
 

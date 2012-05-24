@@ -77,9 +77,9 @@ void CRobotAgent::SimulationStepUpdatePosition()
 
     // Update the T-cells of the CRM instance for this robot
     m_pcFeatureVector->SimulationStep();
-    if (m_unIdentification == 0)
+    if (m_unIdentification == TRACKAGENT)
     {
-        printf("FV for agent 0: %s\n", m_pcFeatureVector->ToString().c_str());
+        printf("FV for agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
     Sense();
     crminAgent->SimulationStepUpdatePosition();
@@ -299,7 +299,7 @@ void CRobotAgent::Sense()
 
 unsigned int CRobotAgent::GetColor()
 {
-    return m_unIdentification == 0 ? GREEN : RED;
+    return m_unIdentification == TRACKAGENT ? GREEN : RED;
 }
 
 /******************************************************************************/
