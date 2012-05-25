@@ -584,7 +584,9 @@ double CAgent::GetAverageDistanceToSurroundingAgents(double f_range, EAgentType 
     {
         distance /= (double) unCount;
 //        printf("Distance: %f\n", distance);
-    } 
+    } else {
+        distance = f_range;
+    }
 
     return distance;
 }
