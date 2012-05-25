@@ -1,5 +1,5 @@
-#ifndef CIRCLEBEHAVIOR_H
-#define CIRCLEBEHAVIOR_H
+#ifndef STOPBEHAVIOR_H
+#define STOPBEHAVIOR_H
 
 /******************************************************************************/
 /******************************************************************************/
@@ -9,10 +9,10 @@
 /******************************************************************************/
 /******************************************************************************/
 
-class CCircleBehavior : public CBehavior
+class CStopBehavior : public CBehavior
 {
 public:
-    CCircleBehavior();
+    CStopBehavior();
 
     virtual bool TakeControl();
     virtual void Action();
@@ -20,11 +20,11 @@ public:
 
 
 protected:
-    double m_ftheta;
+
 };
 
 /******************************************************************************/
 /******************************************************************************/
 
 
-#endif // CIRCLEBEHAVIOR_H
+#endif // STOPBEHAVIOR_H

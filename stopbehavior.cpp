@@ -1,18 +1,17 @@
-#include "circlebehavior.h"
+#include "stopbehavior.h"
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-CCircleBehavior::CCircleBehavior()
+CStopBehavior::CStopBehavior()
 {
-    m_ftheta = 0.0;
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-bool CCircleBehavior::TakeControl()
+bool CStopBehavior::TakeControl()
 {
     return true;
 }
@@ -20,16 +19,20 @@ bool CCircleBehavior::TakeControl()
 /******************************************************************************/
 /******************************************************************************/
 
-void CCircleBehavior::Action()
+void CStopBehavior::Action()
 {
-    m_ftheta += 3.142*2.0 / 200.0;
+}
 
-    if (m_ftheta > 3.142*2.0)
-        m_ftheta = 0.0;
+/******************************************************************************/
+/******************************************************************************/
+
+void CStopBehavior::SetAgent(CAgent* pc_agent)
+{
+    CBehavior::SetAgent(pc_agent);
 
     TVector2d newvelocity;
-    newvelocity.x = m_pcAgent->GetMaximumSpeed() * cos(m_ftheta);
-    newvelocity.y = m_pcAgent->GetMaximumSpeed() * sin(m_ftheta);
+    newvelocity.x = 0.0;
+    newvelocity.y = 0.0;
 
     m_pcAgent->SetVelocity(&newvelocity);
 }
@@ -37,10 +40,3 @@ void CCircleBehavior::Action()
 /******************************************************************************/
 /******************************************************************************/
 
-void CCircleBehavior::SetAgent(CAgent* pc_agent)
-{
-    CBehavior::SetAgent(pc_agent);
-}
-
-/******************************************************************************/
-/******************************************************************************/
