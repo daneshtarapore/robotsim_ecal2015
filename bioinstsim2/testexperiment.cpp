@@ -9,6 +9,7 @@
 #include "homingbehavior.h"
 #include "randomwalkbehavior.h"
 #include "circlebehavior.h"
+#include "stopbehavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -127,13 +128,27 @@ CAgent* CTestExperiment::CreateAgent()
     // Flocking range f influences how fast a flock is formed. Also f > d to initiate flocking
     if(m_eswarmbehavType == FLOCKING && id != TRACKAGENT)
     {
-        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5);
-        vecBehaviors.push_back(pcDisperseBehavior2);
-        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(10);
-        vecBehaviors.push_back(pcFlockBehavior);
+        //first behav. highest priority hey behav you want to take control
 
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
+        //disperse 4     hp
+        //flocking 5     mp
+        //aggregation 10 lp
+
+
+//        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5);
+//        vecBehaviors.push_back(pcDisperseBehavior2);
+//        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(10);
+//        vecBehaviors.push_back(pcFlockBehavior);
+
+//        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+//        vecBehaviors.push_back(pcRandomWalkBehavior);
+
+        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(4);
+        vecBehaviors.push_back(pcDisperseBehavior);
+        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(5);
+        vecBehaviors.push_back(pcFlockBehavior);
+        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
+        vecBehaviors.push_back(pcAggregateBehavior);
     }
 
     if(id == TRACKAGENT)
@@ -147,8 +162,12 @@ CAgent* CTestExperiment::CreateAgent()
         //vecBehaviors.push_back(pcRandomWalkBehavior);
 
         // circle behavior
-        //CCircleBehavior* pcCircleBehavior = new CCircleBehavior(5.0);
+        //CCircleBehavior* pcCircleBehavior = new CCircleBehavior();
         //vecBehaviors.push_back(pcCircleBehavior);
+
+        // stop behavior
+        //CStopBehavior* pcStopBehavior = new CStopBehavior();
+        //vecBehaviors.push_back(pcStopBehavior);
     }
 
 
