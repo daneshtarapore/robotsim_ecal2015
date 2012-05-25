@@ -18,6 +18,15 @@ enum ESwarmBehavType
     HOMING2
 };
 
+enum EErrorBehavType
+{
+    STRAIGHTLINE,
+    RANDOMWK,
+    CIRCLE,
+    STOP,
+    NOERR
+};
+
 class CTestExperiment : public CExperiment
 {
 public:
@@ -30,8 +39,7 @@ public:
 
 protected:
     ESwarmBehavType m_eswarmbehavType;
-
-    char swarmbehav[40];
+    EErrorBehavType m_eerrorbehavType;
 
 };
 

@@ -242,7 +242,7 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
 
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
     double integration_t = 0.0;
-    while(integration_t <= 0) //1e5
+    while(integration_t < 0) //1e5
     {
         // Compute number of conjugates for T cells m_pfEffectors[..] + m_pfRegulators[..];
         // Stored in m_pfConjugates[i][j], the conjugates of Ti to APCj
