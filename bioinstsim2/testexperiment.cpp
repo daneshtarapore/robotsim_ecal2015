@@ -18,7 +18,7 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
                                  CArguments* pc_arena_arguments,
                                  CArguments* pc_agent_arguments,
                                  CArguments* pc_crm_arguments) :
-    CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_crm_arguments)
+CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_crm_arguments)
 {    
     static bool bHelpDisplayed = false;
 
@@ -45,9 +45,32 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
         m_eswarmbehavType = HOMING2;
     }
 
+    const char* errorbehav = pc_experiment_arguments->GetArgumentAsStringOr("errorbehav", "");
+    if (strcmp(errorbehav, "STRLN") == 0)
+    {
+        m_eerrorbehavType = STRAIGHTLINE;
+    }
+    else if (strcmp(errorbehav, "RNDWK") == 0)
+    {
+        m_eerrorbehavType = RANDOMWK;
+    }
+    else if (strcmp(errorbehav, "CIRCLE") == 0)
+    {
+        m_eerrorbehavType = CIRCLE;
+    }
+    else if (strcmp(errorbehav, "STOP") == 0)
+    {
+        m_eerrorbehavType = STOP;
+    }
+    else
+    {
+        m_eerrorbehavType = NOERR;
+    }
+
     if (pc_experiment_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
         printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2]\n");
+        printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP] \n");
         bHelpDisplayed = true;
     }
 }
@@ -62,131 +85,128 @@ CAgent* CTestExperiment::CreateAgent()
 
     vector<CBehavior*> vecBehaviors;
 
-    // Dispersion behavior
-    // Parameters: Dispersion range (d)
-    // Robots disperse with the distance between them decided by dispersion range d in CDisperseBehavior(d)
-    // Note that for large value of d (e.g. 50), the robots collapse into each other!
-    if(m_eswarmbehavType == DISPERSION && id != TRACKAGENT)
+    if(m_eerrorbehavType == STRAIGHTLINE && id == TRACKAGENT)
     {
-        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5);
-        vecBehaviors.push_back(pcDisperseBehavior2);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-
-    }
-
-    // Aggregation behavior: formation of clusters of robots
-    // Parameters: Dispersion range (d), Aggregation range (a)
-    // The number of robots in each cluster seems to be proportional to d/a
-    if(m_eswarmbehavType == AGGREGATION && id != TRACKAGENT)
-    {
-        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5); //1
-        vecBehaviors.push_back(pcDisperseBehavior2);
-        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
-        vecBehaviors.push_back(pcAggregateBehavior);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-    }
-
-
-    // Homing behavior 1: Ind. robots follow the robot that was placed immediately before them or the first robot
-    // Parameters: Dispersion range (d), Homing range (h)
-    // The dispersion range d > 0, else robots collapse into their individual leaders
-    // If dispersion range d is too high (e.g. 5), other robots besides the leader disrupt the homing behavior - resulting in slowly moving clusters of robots
-    if(m_eswarmbehavType == HOMING2 && id != TRACKAGENT)
-    {
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(5);
-        vecBehaviors.push_back(pcDisperseBehavior);
-        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(10000, pcPreviousAgent);
-        vecBehaviors.push_back(pcHomingBehavior);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-    }
-
-    // Homing behavior 1: All other robots follow a single leader bot
-    // The robots form a single cluster around the leader-bot. The bahavior is quite similar to the aggregation behav.
-    // The dispersion range d > 0 else robots collapse into leader.
-    // Increasing d increases the area occupied by the cluster
-    if(m_eswarmbehavType == HOMING1 && id != TRACKAGENT)
-    {
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(5);
-        vecBehaviors.push_back(pcDisperseBehavior);
-        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(100, pcPreviousAgent);
-        vecBehaviors.push_back(pcHomingBehavior);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-    }
-
-
-    // Flocking behavior:
-    // Parameters: Dispersion range (d), Flocking range (f)
-    // Dispersion range d is proportional to the size of individual flock of robots
-    // Flocking range f influences how fast a flock is formed. Also f > d to initiate flocking
-    if(m_eswarmbehavType == FLOCKING && id != TRACKAGENT)
-    {
-        //first behav. highest priority hey behav you want to take control
-
-        //disperse 4     hp
-        //flocking 5     mp
-        //aggregation 10 lp
-
-
-//        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5);
-//        vecBehaviors.push_back(pcDisperseBehavior2);
-//        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(10);
-//        vecBehaviors.push_back(pcFlockBehavior);
-
-//        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-//        vecBehaviors.push_back(pcRandomWalkBehavior);
-
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(4);
-        vecBehaviors.push_back(pcDisperseBehavior);
-        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(5);
-        vecBehaviors.push_back(pcFlockBehavior);
-        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
-        vecBehaviors.push_back(pcAggregateBehavior);
-    }
-
-    if(id == TRACKAGENT)
-    {
-        // move in straight line
         CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.0);
         vecBehaviors.push_back(pcRandomWalkBehavior);
-
-        // random walk behavior
-        //CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        //vecBehaviors.push_back(pcRandomWalkBehavior);
-
-        // circle behavior
-        //CCircleBehavior* pcCircleBehavior = new CCircleBehavior();
-        //vecBehaviors.push_back(pcCircleBehavior);
-
-        // stop behavior
-        //CStopBehavior* pcStopBehavior = new CStopBehavior();
-        //vecBehaviors.push_back(pcStopBehavior);
     }
+    else if(m_eerrorbehavType == RANDOMWK && id == TRACKAGENT)
+    {
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+        vecBehaviors.push_back(pcRandomWalkBehavior);
+    }
+    else if(m_eerrorbehavType == CIRCLE && id == TRACKAGENT)
+    {
+        CCircleBehavior* pcCircleBehavior = new CCircleBehavior();
+        vecBehaviors.push_back(pcCircleBehavior);
+    }
+    else if(m_eerrorbehavType == STOP && id == TRACKAGENT)
+    {
+        CStopBehavior* pcStopBehavior = new CStopBehavior();
+        vecBehaviors.push_back(pcStopBehavior);
+    }
+    else
+    {
+        // Dispersion behavior
+        // Parameters: Dispersion range (d)
+        // Robots disperse with the distance between them decided by dispersion range d in CDisperseBehavior(d)
+        // Note that for large value of d (e.g. 50), the robots collapse into each other!
+        if(m_eswarmbehavType == DISPERSION)
+        {
+            CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5);
+            vecBehaviors.push_back(pcDisperseBehavior2);
 
+            CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+            vecBehaviors.push_back(pcRandomWalkBehavior);
+
+        }
+
+        // Aggregation behavior: formation of clusters of robots
+        // Parameters: Dispersion range (d), Aggregation range (a)
+        // The number of robots in each cluster seems to be proportional to d/a
+        if(m_eswarmbehavType == AGGREGATION)
+        {
+            CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5); //1
+            vecBehaviors.push_back(pcDisperseBehavior2);
+            CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
+            vecBehaviors.push_back(pcAggregateBehavior);
+
+            CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+            vecBehaviors.push_back(pcRandomWalkBehavior);
+        }
+
+
+        // Homing behavior 1: Ind. robots follow the robot that was placed immediately before them or the first robot
+        // Parameters: Dispersion range (d), Homing range (h)
+        // The dispersion range d > 0, else robots collapse into their individual leaders
+        // If dispersion range d is too high (e.g. 5), other robots besides the leader disrupt the homing behavior - resulting in slowly moving clusters of robots
+        if(m_eswarmbehavType == HOMING2)
+        {
+            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(5);
+            vecBehaviors.push_back(pcDisperseBehavior);
+            CHomingBehavior* pcHomingBehavior = new CHomingBehavior(10000, pcPreviousAgent);
+            vecBehaviors.push_back(pcHomingBehavior);
+
+            CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+            vecBehaviors.push_back(pcRandomWalkBehavior);
+        }
+
+        // Homing behavior 1: All other robots follow a single leader bot
+        // The robots form a single cluster around the leader-bot. The bahavior is quite similar to the aggregation behav.
+        // The dispersion range d > 0 else robots collapse into leader.
+        // Increasing d increases the area occupied by the cluster
+        if(m_eswarmbehavType == HOMING1)
+        {
+            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(5);
+            vecBehaviors.push_back(pcDisperseBehavior);
+            CHomingBehavior* pcHomingBehavior = new CHomingBehavior(100, pcPreviousAgent);
+            vecBehaviors.push_back(pcHomingBehavior);
+
+            CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+            vecBehaviors.push_back(pcRandomWalkBehavior);
+        }
+
+
+        // Flocking behavior:
+        // Parameters: Dispersion range (d), Flocking range (f)
+        // Dispersion range d is proportional to the size of individual flock of robots
+        // Flocking range f influences how fast a flock is formed. Also f > d to initiate flocking
+        if(m_eswarmbehavType == FLOCKING)
+        {
+            //behav. inserted is decreasing order of priority to take control of the agent
+
+            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(2); //5
+            vecBehaviors.push_back(pcDisperseBehavior);
+            CFlockBehavior* pcFlockBehavior = new CFlockBehavior(5); //10
+            vecBehaviors.push_back(pcFlockBehavior);
+            CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
+            vecBehaviors.push_back(pcAggregateBehavior);
+
+            CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+            vecBehaviors.push_back(pcRandomWalkBehavior);
+
+//            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(4);
+//            vecBehaviors.push_back(pcDisperseBehavior);
+//            CFlockBehavior* pcFlockBehavior = new CFlockBehavior(5);
+//            vecBehaviors.push_back(pcFlockBehavior);
+//            CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
+//            vecBehaviors.push_back(pcAggregateBehavior);
+ //           CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+ //           vecBehaviors.push_back(pcRandomWalkBehavior);
+        }
+    }
 
     CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcCRMArguments, vecBehaviors);
 
     if(m_eswarmbehavType == HOMING1)
     {
         if (pcPreviousAgent == NULL)
-             pcPreviousAgent = pcAgent;
+            pcPreviousAgent = pcAgent;
     }
     else
     {
         pcPreviousAgent = pcAgent;
     }
-
-
-   // if condition enabled, all robots follow a single leader
-   // if (pcPreviousAgent == NULL)
-        //pcPreviousAgent = pcAgent;
 
 
     return pcAgent; //pcPreviousAgent;
