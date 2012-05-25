@@ -559,9 +559,34 @@ TVector2d CAgent::GetAverageVelocityOfSurroundingAgents(double f_range, EAgentTy
 
 double CAgent::GetAverageDistanceToSurroundingAgents(double f_range, EAgentType e_type)
 {
-    TVector2d tCenterOfMass = GetCenterOfMassOfSurroundingAgents(f_range, e_type);    
+    TAgentListList tAgentListList; 
+    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
 
-    return GetDistanceBetweenPositions(&tCenterOfMass, &m_tPosition);
+    MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
+    double distance = 0;
+
+    TAgentList* ptAgentList  = NULL;
+    CAgent* pcAgentSelected  = NULL;
+    unsigned int unCount     = 0;
+    for (TAgentListListIterator i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    {        
+        for (TAgentListIterator j = (*i)->begin(); j != (*i)->end(); j++) 
+        {
+            if ((*j)->m_bTempWithInRange) 
+            {
+                distance += GetDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()); 
+                unCount++;
+            }
+        }
+    }
+
+    if (unCount > 0) 
+    {
+        distance /= (double) unCount;
+//        printf("Distance: %f\n", distance);
+    } 
+
+    return distance;
 }
 
 /******************************************************************************/
