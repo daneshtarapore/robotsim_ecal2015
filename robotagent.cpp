@@ -82,7 +82,11 @@ void CRobotAgent::SimulationStepUpdatePosition()
         printf("FV for agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
     Sense();
-    crminAgent->SimulationStepUpdatePosition();
+
+
+    //crminAgent->SimulationStepUpdatePosition();
+
+
     CAgent::SimulationStepUpdatePosition();
 }
 
