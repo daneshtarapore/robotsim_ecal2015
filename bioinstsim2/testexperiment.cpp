@@ -1,4 +1,4 @@
-//bioinstsim2 -a sizex=100,sizey=100,resx=50,resy=50,help -e name=TEST,swarmbehav=AGGREGATION,help -T maxspeed=0.1,count=50,fvsenserange=10,featuresenserange=6,bitflipprob=0.0,help -M,numberoffeatures=4,exchangeprob=0.0,cross-affinity=0.4,help -s 111,help -n 10000,help
+//bioinstsim2 -a sizex=100,sizey=100,resx=50,resy=50,help -e name=TEST,swarmbehav=AGGREGATION,help -T maxspeed=0.1,count=50,fvsenserange=10,featuresenserange=6,bitflipprob=0.0,help -M,numberoffeatures=8,exchangeprob=0.0,cross-affinity=0.4,help -s 111,help -n 10000,help
 
 #include <vector>
 #include "testexperiment.h"
@@ -113,7 +113,7 @@ CAgent* CTestExperiment::CreateAgent()
         // Note that for large value of d (e.g. 50), the robots collapse into each other!
         if(m_eswarmbehavType == DISPERSION)
         {
-            CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5);
+            CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3);
             vecBehaviors.push_back(pcDisperseBehavior2);
 
             CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
@@ -126,7 +126,7 @@ CAgent* CTestExperiment::CreateAgent()
         // The number of robots in each cluster seems to be proportional to d/a
         if(m_eswarmbehavType == AGGREGATION)
         {
-            CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(5); //1
+            CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3); //1
             vecBehaviors.push_back(pcDisperseBehavior2);
             CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
             vecBehaviors.push_back(pcAggregateBehavior);
@@ -142,7 +142,7 @@ CAgent* CTestExperiment::CreateAgent()
         // If dispersion range d is too high (e.g. 5), other robots besides the leader disrupt the homing behavior - resulting in slowly moving clusters of robots
         if(m_eswarmbehavType == HOMING2)
         {
-            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(5);
+            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
             vecBehaviors.push_back(pcDisperseBehavior);
             CHomingBehavior* pcHomingBehavior = new CHomingBehavior(10000, pcPreviousAgent);
             vecBehaviors.push_back(pcHomingBehavior);
@@ -157,7 +157,7 @@ CAgent* CTestExperiment::CreateAgent()
         // Increasing d increases the area occupied by the cluster
         if(m_eswarmbehavType == HOMING1)
         {
-            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(5);
+            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
             vecBehaviors.push_back(pcDisperseBehavior);
             CHomingBehavior* pcHomingBehavior = new CHomingBehavior(100, pcPreviousAgent);
             vecBehaviors.push_back(pcHomingBehavior);
@@ -175,9 +175,9 @@ CAgent* CTestExperiment::CreateAgent()
         {
             //behav. inserted is decreasing order of priority to take control of the agent
 
-            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(2); //5
+            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(1); //5
             vecBehaviors.push_back(pcDisperseBehavior);
-            CFlockBehavior* pcFlockBehavior = new CFlockBehavior(5); //10
+            CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3); //10
             vecBehaviors.push_back(pcFlockBehavior);
             CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
             vecBehaviors.push_back(pcAggregateBehavior);
