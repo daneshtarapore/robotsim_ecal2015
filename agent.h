@@ -92,7 +92,11 @@ public:
     virtual unsigned int GetIdentification();
 
     bool    m_bTempWithInRange;
+
+    static double RADIUS;
         
+    virtual CAgent* GetClosestAgent(double f_range, EAgentType e_type);
+
     virtual TVector2d    GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
     virtual double       GetAverageDistanceToSurroundingAgents(double f_range, EAgentType e_type);
     virtual TVector2d    GetAverageVelocityOfSurroundingAgents(double f_range, EAgentType e_type);

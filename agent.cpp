@@ -8,6 +8,10 @@
 
 unsigned int CAgent::g_unGlobalNumberOfAgentsCreated = 0;
 
+// E-puck radius * 10:
+double CAgent::RADIUS = 0.375;
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -124,61 +128,31 @@ void CAgent::SimulationStep(unsigned int un_step_number)
 
 void CAgent::SimulationStepUpdatePosition()
 {
-    bool bWallHit           = false;
-    bool bVerticalWallHit   = false;
-    bool bHorizontalWallHit = false;
+    TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x, 
+                               m_tPosition.y + m_tVelocity.y  };
 
-    double fSpeedFactor = 1;
-    
-    TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x * fSpeedFactor, 
-                               m_tPosition.y + m_tVelocity.y * fSpeedFactor };
+    CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);     
 
-    if (CSimulator::GetInstance()->GetArena()->IsObstacle(&tNewPosition) && !CSimulator::GetInstance()->GetArena()->g_bIsBoundless)
-    {
-        bWallHit = true;
-      
-        TVector2d tHorizontalTestPosition = { m_tPosition.x + m_tVelocity.x, m_tPosition.y };
-        if (CSimulator::GetInstance()->GetArena()->IsObstacle(&tHorizontalTestPosition))
-        {
-            bVerticalWallHit = true;
-        } 
+    CAgent* pcCollidingAgent = GetClosestAgent(RADIUS * 2.0, ROBOT);
 
+    if (pcCollidingAgent) 
+    {        
+        TVector2d vecCollidingAgentPos = *(pcCollidingAgent->GetPosition());
+        TVector2d vecTemp = vecCollidingAgentPos;
 
-        TVector2d tVerticalTestPosition = { m_tPosition.x, m_tPosition.y + m_tVelocity.y };
-        if (CSimulator::GetInstance()->GetArena()->IsObstacle(&tVerticalTestPosition))
-        {
-            bHorizontalWallHit = true;
-        } 
-    } else {
-        CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);
-    }
-
-    // if (m_eControllerType == RANDOMWALK)
-    // {        
-    //     if (bWallHit || Random::nextDouble() < m_fChangeDirectionProbability)
-    //     {
-    //         SetRandomVelocity();
-    //     } 
-    // } 
-    // else if (m_eControllerType == RANDOMBOUNCE)
-    // {
-    //     if (bWallHit)
-    //     {
-    //         SetRandomVelocity();            
-    //     } 
-    // } 
-    // else if (m_eControllerType == REGULARBOUNCE)
-    // {
-    //     if (bVerticalWallHit)
-    //     {
-    //         m_tVelocity.x = -m_tVelocity.x;
-    //     }        
+        vecTemp.x = vecTemp.x - GetPosition()->x;
+        vecTemp.y = vecTemp.y - GetPosition()->y;
         
-    //     if (bHorizontalWallHit)
-    //     {
-    //         m_tVelocity.y = -m_tVelocity.y;
-    //     }        
-    // }   
+        Vec2dNormalize(vecTemp);
+
+        vecTemp.x = (-vecTemp.x * RADIUS * 2.0 + vecCollidingAgentPos.x); 
+        vecTemp.y = (-vecTemp.y * RADIUS * 2.0 + vecCollidingAgentPos.y); 
+        
+        CSimulator::GetInstance()->GetArena()->MoveAgent(this, &vecTemp);
+
+        m_tVelocity.x = 0;
+        m_tVelocity.y = 0;
+    }
 }
 
 /******************************************************************************/
@@ -228,35 +202,6 @@ unsigned int CAgent::CountAgentsInAgentListList(TAgentListList* ptlist_agent_lis
 
 /******************************************************************************/
 /******************************************************************************/
-
-// CAgent* CAgent::TryToConnectToRandomAgent(EAgentType e_type)
-// {
-//     CAgent* pcReturn = NULL;
-    
-//     TAgentListList tAgentListList; 
-//     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fMaximumPhysicalRange);
-//     if (tAgentListList.size() == 0)
-//     {
-//         ERROR2("This should never happen - the agent list-list is empty - maybe the position of the agent is wrong (%f,%f)", 
-//                m_tPosition.x, 
-//                m_tPosition.y);
-//     }
-
-//     CAgent* pcAgent = GetRandomAgentWithinRange(&tAgentListList, m_fMaximumPhysicalRange, e_type);
-
-//     if (pcAgent != NULL && pcAgent != this)
-//     {
-//         if (pcAgent->AcceptConnections())
-//         {
-//             pcReturn = pcAgent;
-//         }
-//     }
-
-//     return pcReturn;
-// }
-
-// /******************************************************************************/
-// /******************************************************************************/
 
 CAgent* CAgent::GetRandomAgentWithinRange(TAgentListList* pt_agents_list_list, double f_range, EAgentType e_type)
 {
@@ -453,6 +398,36 @@ unsigned int CAgent::CountAgents(double f_range, EAgentType e_type)
 /******************************************************************************/
 /******************************************************************************/
 
+CAgent* CAgent::GetClosestAgent(double f_range, EAgentType e_type)
+{
+    TAgentListList tAgentListList; 
+    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
+
+    double fShortestDistanceSquared = f_range * f_range;
+    CAgent* pcAgent  = NULL;
+    for (TAgentListListIterator i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    {        
+        for (TAgentListIterator j = (*i)->begin(); j != (*i)->end(); j++) 
+        {
+            if ((*j) != this) 
+            {
+                double fDistanceSqaured = GetSquaredDistanceBetweenPositions((*j)->GetPosition(), GetPosition());
+                if (fDistanceSqaured < fShortestDistanceSquared) 
+                {
+                    fShortestDistanceSquared = fDistanceSqaured;
+                    pcAgent = (*j);
+//                    printf("Closest agent found --- dist: %f, range: %f \n", sqrt(fDistanceSqaured), f_range);
+                }
+            }
+        }
+    }
+
+    return pcAgent;  
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 
 TVector2d CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type)
 {   
@@ -583,7 +558,6 @@ double CAgent::GetAverageDistanceToSurroundingAgents(double f_range, EAgentType 
     if (unCount > 0) 
     {
         distance /= (double) unCount;
-//        printf("Distance: %f\n", distance);
     } else {
         distance = f_range;
     }

@@ -60,6 +60,14 @@ extern double GetSquaredDistanceBetweenPositions(const TVector2d* pt_pos1, const
 #define Vec2dOwnAngle(vec) \
      (atan2(vec.y, vec.x))
 
+#define Vec2dNormalize(vec)                             \
+  {                                                     \
+     double length___ = Vec2dLength(vec);                \
+     vec.x /= length___;                                \
+     vec.y /= length___;                                \
+  }
+
+
 // Returns the normalized angle in the range [0,2*M_PI)
 #define NormalizeAngle(ang) \
   (ang < 0 ? fmod(ang, 2*M_PI)+2*M_PI : fmod(ang, 2*M_PI))
