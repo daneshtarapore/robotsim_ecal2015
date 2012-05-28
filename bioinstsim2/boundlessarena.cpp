@@ -84,15 +84,15 @@ void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
         tTranslatedPosition.x = pt_position->x + (m_fSizeX / 2);
         tTranslatedPosition.y = pt_position->y + (m_fSizeY / 2);
 
-        double fStartCellX = (tTranslatedPosition.x - f_radius) / fCellSizeX;
-        double fStartCellY = (tTranslatedPosition.y - f_radius) / fCellSizeY;
+        double fStartCellX = (tTranslatedPosition.x - f_radius) / fCellSizeX - 1;
+        double fStartCellY = (tTranslatedPosition.y - f_radius) / fCellSizeY - 1;
 
         // Go to the center of the start square:
         double fStartX = (fStartCellX + (double) 0.49) * (double) fCellSizeX;
         double fStartY = (fStartCellY + (double) 0.49) * (double) fCellSizeY;
 
-        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2;
-        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2;
+        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2 + 1;
+        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2 + 1;
 
         double fCellY = fStartCellY;
         for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1)
