@@ -116,8 +116,8 @@ CAgent* CTestExperiment::CreateAgent()
             CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3);
             vecBehaviors.push_back(pcDisperseBehavior2);
 
-            CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-            vecBehaviors.push_back(pcRandomWalkBehavior);
+            //CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+            //vecBehaviors.push_back(pcRandomWalkBehavior);
 
         }
 
