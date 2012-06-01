@@ -67,6 +67,12 @@ public:
     // Get the current velocity of the agent:
     virtual const TVector2d* GetAcceleration() const;
 
+    // Get the change in velocity direction of the agent
+    virtual double GetAngularVelocity();
+
+    // Get the angular acceleration of the agent
+    virtual double GetAngularAcceleration();
+
     // Get the current velocity of the agent:
     virtual void SetVelocity(TVector2d* pt_velocity_position);
        
@@ -116,6 +122,9 @@ protected:
 
     double       m_fMaximumSpeed;
     double       m_fMaximumPhysicalRange_Recruitment;
+
+    double       m_tAngularVelocity; // tracks changes in velocity (direction) of the agent
+    double       m_tAngularAcceleration; // tracks changes in velocity (direction) of the agent
 
     EControllerType    m_eControllerType;
     

@@ -114,13 +114,40 @@ void CAgent::SetVelocity(TVector2d* pt_new_velocity)
 /******************************************************************************/
 /******************************************************************************/
 
+double CAgent::GetAngularVelocity()
+{
+    return m_tAngularVelocity;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CAgent::GetAngularAcceleration()
+{
+    return m_tAngularAcceleration;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CAgent::SimulationStep(unsigned int un_step_number)
 {
     TVector2d tTemp = m_tVelocity;
+    double tTempAngVelocity = m_tAngularVelocity;
+
     SimulationStepUpdatePosition();
     m_tAcceleration = m_tVelocity;
     m_tAcceleration.x -= tTemp.x;
     m_tAcceleration.y -= tTemp.y;
+
+
+    if (Vec2dLength(tTemp) > EPSILON && Vec2dLength(m_tVelocity) > EPSILON)
+        m_tAngularVelocity = Vec2dAngle(m_tVelocity,tTemp);
+    else
+        m_tAngularVelocity = 0.0;
+
+
+    m_tAngularAcceleration = m_tAngularVelocity - tTempAngVelocity;
 }
 
 /******************************************************************************/
@@ -150,8 +177,8 @@ void CAgent::SimulationStepUpdatePosition()
         
         CSimulator::GetInstance()->GetArena()->MoveAgent(this, &vecTemp);
 
-        m_tVelocity.x = 0;
-        m_tVelocity.y = 0;
+        //m_tVelocity.x = 0;
+        //m_tVelocity.y = 0;
     }
 }
 
