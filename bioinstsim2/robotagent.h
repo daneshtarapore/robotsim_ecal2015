@@ -34,6 +34,7 @@ public:
     // Useful to calculate distances to other agents, update physical
     // links etc.
     virtual void SimulationStepUpdatePosition();    
+    virtual void SetBehaviors(TBehaviorVector vec_behaviors);
     
     virtual EAgentType   GetType();   
 
@@ -62,6 +63,8 @@ protected:
     double              m_fWeight;
     unsigned int*       m_punFeaturesSensed;
     double              m_fBitflipProbabililty;
+    bool*               m_pbMostWantedList;
+
 };
 
 /******************************************************************************/
