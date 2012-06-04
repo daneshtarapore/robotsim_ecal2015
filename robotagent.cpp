@@ -18,9 +18,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
 
     m_fWeight = 0;
 
-
     static bool bHelpDisplayed = false;
-
 
     m_fBitflipProbabililty    = pc_arguments->GetArgumentAsDoubleOr("bitflipprob", 0.0);
 
@@ -41,6 +39,13 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
                CFeatureVector::FEATURE_RANGE
             );
     }
+
+    m_pbMostWantedList = new bool[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
+
+    for (unsigned int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
+    {
+        m_pbMostWantedList[i] = false;
+    }       
 }
 
 /******************************************************************************/
@@ -54,6 +59,7 @@ CRobotAgent::~CRobotAgent()
     }
     delete m_pcFeatureVector;
     delete m_punFeaturesSensed;
+    delete m_pbMostWantedList;
 }
 
 /******************************************************************************/
@@ -82,10 +88,6 @@ void CRobotAgent::SimulationStepUpdatePosition()
         printf("FV for agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
     Sense();
-
-
-    //crminAgent->SimulationStepUpdatePosition();
-
 
     CAgent::SimulationStepUpdatePosition();
 }
@@ -292,6 +294,10 @@ void CRobotAgent::Sense()
                     }
                 }              
 
+                if (m_pbMostWantedList[unFeatureVector]) {
+                    printf("Attaching agent number: %d\n", (*j)->GetIdentification());
+                }
+
                 m_punFeaturesSensed[unFeatureVector]++;
             }
         }
@@ -304,6 +310,14 @@ void CRobotAgent::Sense()
 unsigned int CRobotAgent::GetColor()
 {
     return m_unIdentification == TRACKAGENT ? GREEN : RED;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CRobotAgent::SetBehaviors(TBehaviorVector vec_behaviors)
+{
+    m_vecBehaviors = vec_behaviors;
 }
 
 /******************************************************************************/

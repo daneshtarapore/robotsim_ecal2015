@@ -5,6 +5,7 @@
 /******************************************************************************/
 
 #include "experiment.h"
+#include "robotagent.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -36,11 +37,15 @@ public:
                     CArguments* pc_crm_arguments);
     
     virtual CAgent*     CreateAgent();
+    virtual void SimulationStep(unsigned int un_step_number);
+
 
 protected:
     ESwarmBehavType m_eswarmbehavType;
     EErrorBehavType m_eerrorbehavType;
 
+    unsigned int    m_unMisbehaveStep;
+    CRobotAgent*    m_pcMisbehaveAgent;
 };
 
 /******************************************************************************/
