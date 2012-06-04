@@ -136,7 +136,7 @@ CAgent* CTestExperiment::CreateAgent()
         }
 
 
-        // Homing behavior 1: Ind. robots follow the robot that was placed immediately before them or the first robot
+        // Homing behavior 2: Ind. robots follow the robot that was placed immediately before them or the first robot
         // Parameters: Dispersion range (d), Homing range (h)
         // The dispersion range d > 0, else robots collapse into their individual leaders
         // If dispersion range d is too high (e.g. 5), other robots besides the leader disrupt the homing behavior - resulting in slowly moving clusters of robots

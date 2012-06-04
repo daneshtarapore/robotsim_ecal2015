@@ -25,7 +25,7 @@ void CCircleBehavior::Action()
     m_ftheta += M_PI*2.0 / 200.0;
 
     if (m_ftheta > M_PI*2.0)
-        m_ftheta = 0.0;
+        m_ftheta -= M_PI*2.0;
 
     TVector2d newvelocity;
     newvelocity.x = m_pcAgent->GetMaximumSpeed() * cos(m_ftheta);
