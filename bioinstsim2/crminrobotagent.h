@@ -34,15 +34,6 @@ public:
 
     virtual ~CRMinRobotAgent();
 
-    enum MacroState {
-        NONE,
-        IMMUNE,
-        TOLERANCE
-    };
-
-
-    virtual MacroState GetCurrentMacroState();
-
     virtual double GetCurrE(unsigned thtype);
     virtual double GetCurrR(unsigned thtype);
 
@@ -78,8 +69,6 @@ protected:
 
     virtual double GetWeight();
 
-
-    MacroState m_eCurrentMacroState;
 
     double step_h; double conjstep_h; // internal step count of the CRM instance
     double currE; // : Density of effector cells
@@ -140,6 +129,8 @@ protected:
     int*            m_pbAttack; // 0: No state 1: Attack 2: Tolerate
 
     double          m_fWeight;
+
+    double          m_fFVtoApcscaling;
 };
 
 /******************************************************************************/

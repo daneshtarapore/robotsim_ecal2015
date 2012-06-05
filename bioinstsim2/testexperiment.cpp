@@ -67,13 +67,13 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
         m_eerrorbehavType = NOERR;
     }
 
-    m_unMisbehaveStep = pc_experiment_arguments->GetArgumentAsIntOr("misbehavestep", 0);
+    m_unMisbehaveStep = pc_experiment_arguments->GetArgumentAsIntOr("misbehavestep", 1000000);
 
     if (pc_experiment_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
         printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2]\n");
         printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP] \n");
-        printf("misbehavestep=# \n");
+        printf("misbehavestep=#  Step when agent starts misbehaving [%d]\n",m_unMisbehaveStep);
         bHelpDisplayed = true;
     }
 

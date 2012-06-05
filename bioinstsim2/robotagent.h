@@ -51,6 +51,8 @@ public:
     virtual void Sense();
     virtual double GetFVSenseRange() const;
     virtual unsigned int GetColor();
+
+    virtual void   SetMostWantedList(unsigned unFeatureVector, bool state);
     
 
 protected:
