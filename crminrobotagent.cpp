@@ -7,7 +7,8 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
 {
     robotAgent = ptr_robotAgent;
 
-    m_fWeight = 1.0;
+    m_fWeight         = 1.0;
+    m_fFVtoApcscaling = 400.0;//1000.0;//1.0;
 
     static bool bHelpDisplayed = false;
 
@@ -63,10 +64,7 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
         bHelpDisplayed = true;
     }
 
-    m_eCurrentMacroState = NONE;
-
     m_unNumberOfReceptors = 1 << (CFeatureVector::NUMBER_OF_FEATURES);
-    //m_unNumberOfReceptors = 1 << (CFeatureVector::GetLength());
 
     m_pbAttack          = new int[m_unNumberOfReceptors];
     m_pfEffectors       = new double[m_unNumberOfReceptors];
@@ -142,13 +140,12 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
         m_pfRegulatorConjugates[i] = m_pfRegulatorConjugates[i-1] + m_unNumberOfReceptors;
     }
 
-
     for (unsigned int i = 0; i < m_unNumberOfReceptors; i++)
     {
         m_pbAttack[i]          = 0;
         m_pfEffectors[i]       = currE;
         m_pfRegulators[i]      = currR;
-        //m_punFeaturesSensed[i] = 0;
+
         m_pfAPCs[i]            = 0.0;
         m_pfEffectorConjugatesPerAPC[i]  = 0.0;
         m_pfRegulatorConjugatesPerAPC[i] = 0.0;
@@ -186,8 +183,6 @@ CRMinRobotAgent::~CRMinRobotAgent()
     delete m_pfEffectors;
     delete m_pfRegulators;
 
-    //delete m_punFeaturesSensed; //Allocated and Deleted in RobotAgent class
-
     delete m_pfAPCs;
     delete m_pfEffectorConjugatesPerAPC;
     delete m_pfRegulatorConjugatesPerAPC;
@@ -223,14 +218,6 @@ CRMinRobotAgent::~CRMinRobotAgent()
     delete [] m_pfAffinities;
 }
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-CRMinRobotAgent::MacroState CRMinRobotAgent::GetCurrentMacroState()
-{
-    return m_eCurrentMacroState;
-}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -323,7 +310,6 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
                 
             }
         }
-
     }
 
     UpdateState();
@@ -372,7 +358,8 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
     {
         for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
         {
-            C[thtype][apctype] = 0.0; // since we are now deleting pathogens and the rate of deletion mayb be faster than the unbindingrate, we always start with 0 conjugates to compute QSS values
+            // since we are now deleting pathogens and the rate of deletion mayb be faster than the unbindingrate, we always start with 0 conjugates to compute QSS values
+            C[thtype][apctype] = 0.0;
         }
     }
 
@@ -624,36 +611,95 @@ double CRMinRobotAgent::Hyp(double N, double No, double M, double L)
 
 void CRMinRobotAgent::UpdateState()
 {
+    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+
+    //if(CurrentStepNumber > 3000U && CurrentStepNumber < 40050U)
+    {
+        if(robotAgent->GetIdentification() == 25U)
+        {
+            printf("\n\nAgent-%d: ",robotAgent->GetIdentification());
+        }
+    }
+
     double E, R;
     for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
     {
         E = 0.0; R = 0.0;
         for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
         {
+            // Brute force approach to cell generation
+            //cells which are not reacting to APCs would have stabel states at se/kde and sr/kdr.
+            //we ignore these clonaltypes in the tolerance decision
+            if ((fabs(m_pfEffectors[thtype] - se/kde)  < 0.00001  &&
+                 fabs(m_pfRegulators[thtype] - sr/kdr) < 0.00001) ||
+                (m_pfAPCs[apctype] == 0.0))
+            {
+                continue;
+            }
+
             E += m_pfAffinities[thtype][apctype] * m_pfEffectors[thtype];
             R += m_pfAffinities[thtype][apctype] * m_pfRegulators[thtype];
         }
 
-        if ((fabs(E - se/kde) < 0.1 && fabs(R - sr/kdr) < 0.1)||(m_pfAPCs[apctype] == 0.0)) // Brute force approach to cell generation
+        if (E == 0.0 && R == 0.0)
         {
             m_pbAttack[apctype] = 0;
+            robotAgent->SetMostWantedList(apctype, false);
         }
         else if (E > R)
         {
             m_pbAttack[apctype] = 1;
+            robotAgent->SetMostWantedList(apctype, true);
         }
         else
         {
             m_pbAttack[apctype] = 2;
+            robotAgent->SetMostWantedList(apctype, false);
+        }
+
+        //if(CurrentStepNumber > 3000U && CurrentStepNumber < 40050U)
+        {
+            if(robotAgent->GetIdentification() == 25U)
+            {
+                if(m_pfAPCs[apctype] >= 0.0)
+                    printf(" [APC]=%f,m_pbAttack[%d]=%d,E=%f,R=%f  ",m_pfAPCs[apctype],apctype,m_pbAttack[apctype],E,R);
+            }
         }
     }
 
-    /*for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
-    {
-        printf("\n FV [%d]: nAPCs=%f,currE=%f,currR=%f. Attack status:%d",
-               thtype,m_pfAPCs[thtype],m_pfEffectors[thtype],m_pfRegulators[thtype],m_pbAttack[thtype]);
-    }*/
 
+
+
+
+
+/*    if(CurrentStepNumber > 3000U && CurrentStepNumber < 3250U)
+    {
+        printf("\n\nAgent-%d: ",robotAgent->GetIdentification());
+        double min_APCs    = 1.0e10;
+        int    min_APCs_fv = -1;
+        for (int i = 0; i < m_unNumberOfReceptors; i++)
+        {
+            if(m_pfAPCs[i] > 0.0)
+                printf("FV=%d,[APC]=%f  ",i,m_pfAPCs[i]);
+
+            if(m_pfAPCs[i] > 0.0 && m_pfAPCs[i] < min_APCs)
+            {
+                min_APCs    = m_pfAPCs[i];
+                min_APCs_fv = i;
+            }
+        }
+
+        //if(robotAgent->GetIdentification() == 25)
+        //{
+        //    printf("\n FV to Apc function for agent [%d] is scaled at %f, min_APCs=%f of fv=%d. ",robotAgent->GetIdentification(), m_fFVtoApcscaling, min_APCs, min_APCs_fv);
+        //}
+
+
+        //if(min_APCs_fv != -1 && m_pbAttack[min_APCs_fv] == 1)
+        //{
+        //    m_fFVtoApcscaling += 0.5;
+        //}
+    }*/
 }
 
 /******************************************************************************/
@@ -661,19 +707,14 @@ void CRMinRobotAgent::UpdateState()
 
 void CRMinRobotAgent::Sense()
 {
-    /*for (int i = 0; i < m_unNumberOfReceptors; i++)
-    {
-        m_punFeaturesSensed[i] = 0;
-    }*/
-
-    // Askthe robot you belong to for the number of feature vectors of different types
+    // Ask the robot you belong to for the number of feature vectors of different types
     // returns in m_punFeaturesSensed
-    //Are we not overwriting a pointer to allocated memory (allocated in the CRM constructor)
     unsigned int* m_punFeaturesSensed  = robotAgent->GetFeaturesSensed();
 
     for (int i = 0; i < m_unNumberOfReceptors; i++)
     {
         m_pfAPCs[i] = m_punFeaturesSensed[i]/(3.142 * robotAgent->GetFVSenseRange()  * robotAgent->GetFVSenseRange());
+        m_pfAPCs[i] = m_fFVtoApcscaling * m_pfAPCs[i];
     }
 }
 

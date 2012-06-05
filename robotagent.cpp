@@ -89,6 +89,11 @@ void CRobotAgent::SimulationStepUpdatePosition()
     }
     Sense();
 
+    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+    if(CurrentStepNumber > 3000U)
+    {
+        crminAgent->SimulationStepUpdatePosition();
+    }
     CAgent::SimulationStepUpdatePosition();
 }
 
@@ -288,15 +293,18 @@ void CRobotAgent::Sense()
   
                         if (Random::nextDouble() < m_fBitflipProbabililty)
                         {
-                            unsigned int unBitToFlip = k; // Random::nextInt(CFeatureVector::NUMBER_OF_FEATURES);
+                            unsigned int unBitToFlip = k;
                             unFeatureVector ^= 1 << unBitToFlip;
                         }
                     }
                 }              
 
-                if (m_pbMostWantedList[unFeatureVector]) {
-                    printf("Attaching agent number: %d\n", (*j)->GetIdentification());
-                }
+                //unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+                //if(CurrentStepNumber > 3250U)
+                if(this->m_unIdentification == 25U)
+                    if (m_pbMostWantedList[unFeatureVector]) {
+                        printf("Attacking agent number: %d. unFeatureVector: %d\n", (*j)->GetIdentification(),unFeatureVector);
+                    }
 
                 m_punFeaturesSensed[unFeatureVector]++;
             }
@@ -318,6 +326,14 @@ unsigned int CRobotAgent::GetColor()
 void CRobotAgent::SetBehaviors(TBehaviorVector vec_behaviors)
 {
     m_vecBehaviors = vec_behaviors;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, bool state)
+{
+    m_pbMostWantedList[unFeatureVector] = state;
 }
 
 /******************************************************************************/

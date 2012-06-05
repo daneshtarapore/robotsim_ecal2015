@@ -1,4 +1,5 @@
 #include "featurevector.h"
+#include "assert.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -15,6 +16,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_unValue  = 0;
     m_unLength = NUMBER_OF_FEATURES;
 
+    assert(NUMBER_OF_FEATURES == 4);
     NUMBER_OF_FEATURE_VECTORS = 1 << NUMBER_OF_FEATURES;
 
     m_pfFeatureValues      = new float[m_unLength];
@@ -22,8 +24,8 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
 
     //m_pfThresholds    = new float[m_unLength];
 
-    m_fLowPassFilterParameter    = 0.0001;
-    m_fThresholdOnNumNbrs        = 5.0 ;
+    m_fLowPassFilterParameter    = 0.01;
+    m_fThresholdOnNumNbrs        = 4.9 ;
     m_fProcessedNumNeighbours    = 0.0;
 
     m_unEventSelectionTimeWindow = 1500U;
@@ -124,27 +126,29 @@ void CFeatureVector::ComputeFeatureValues()
     /*if(m_pcAgent->GetIdentification() == 25)
         printf("\n Ang. vel. %f, ang. acc. %f", angle_velocity, angle_acceleration);*/
 
+    /*if(m_pcAgent->GetIdentification() == 25)
+        printf("\n m_fProcessedNumNeighbours=%f",m_fProcessedNumNeighbours);*/
+
     m_fProcessedNumNeighbours = m_fLowPassFilterParameter * (float)m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT) + (1.0 - m_fLowPassFilterParameter) * m_fProcessedNumNeighbours;
 
-    m_pfFeatureValues[0] = m_fProcessedNumNeighbours > m_fThresholdOnNumNbrs ? 1.0 : 0.0;
+    m_pfFeatureValues[0] = m_fProcessedNumNeighbours >= m_fThresholdOnNumNbrs ? 1.0 : 0.0;
 
-
+    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
     if(dist_nbrsagents <= 3 && angle_acceleration != 0)
     {
-        m_puLastOccuranceEvent[1] = CSimulator::GetInstance()->GetSimulationStepNumber();
+        m_puLastOccuranceEvent[1] = CurrentStepNumber;
     }
 
     if(dist_nbrsagents >  3 && dist_nbrsagents < 6 && angle_acceleration != 0)
     {
-        m_puLastOccuranceEvent[2] = CSimulator::GetInstance()->GetSimulationStepNumber();
+        m_puLastOccuranceEvent[2] = CurrentStepNumber;
     }
 
     if(dist_nbrsagents == 6 && angle_velocity != 0)
     {
-        m_puLastOccuranceEvent[3] = CSimulator::GetInstance()->GetSimulationStepNumber();
+        m_puLastOccuranceEvent[3] = CurrentStepNumber;
     }
 
-    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
     for(unsigned int featureindex = 1; featureindex <=3; featureindex++)
     {
         m_pfFeatureValues[featureindex] = ((CurrentStepNumber - m_puLastOccuranceEvent[featureindex]) <= m_unEventSelectionTimeWindow) ? 1.0 : 0.0;
