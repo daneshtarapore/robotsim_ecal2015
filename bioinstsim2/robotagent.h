@@ -52,8 +52,11 @@ public:
     virtual double GetFVSenseRange() const;
     virtual unsigned int GetColor();
 
-    virtual void   SetMostWantedList(unsigned unFeatureVector, bool state);
+    virtual void SetMostWantedList(unsigned unFeatureVector, bool state);
     
+    virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers);
+
+    virtual bool Attack(CFeatureVector* pc_feature_vector); 
 
 protected:
     virtual double CountWeightsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range);
@@ -66,6 +69,7 @@ protected:
     unsigned int*       m_punFeaturesSensed;
     double              m_fBitflipProbabililty;
     bool*               m_pbMostWantedList;
+    double              m_fResponseRange;
 
 };
 

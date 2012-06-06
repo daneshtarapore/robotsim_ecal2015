@@ -28,15 +28,19 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     //at what distances agents are considered neighbors when the individual features are computed
     CFeatureVector::FEATURE_RANGE = pc_arguments->GetArgumentAsDoubleOr("featuresenserange", 5.0);
 
+    m_fResponseRange              = pc_arguments->GetArgumentAsDoubleOr("responserange", m_fFVSenseRange);
+
 
     if (pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
         printf("bitflipprob=#.#               Probability of flipping each bit in sensed feature vectors [%2.5f]\n"
-                "fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
-               "featuresenserange=#.#         Range based on which features are computed  [%f]\n",
+               "fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
+               "featuresenserange=#.#         Range based on which features are computed  [%f]\n"
+               "responserange=#.#             Range at which a robot \"reponds\" to other features [%f]\n",
                m_fBitflipProbabililty,
                m_fFVSenseRange,
-               CFeatureVector::FEATURE_RANGE
+               CFeatureVector::FEATURE_RANGE,
+               m_fResponseRange
             );
     }
 
@@ -273,13 +277,14 @@ void CRobotAgent::Sense()
     TAgentListList tAgentListList;
     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fFVSenseRange);
     TAgentListListIterator i;
+    double fSenseRangeSquared = m_fFVSenseRange * m_fFVSenseRange;
 
     for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
     {
         TAgentListIterator j;
         for (j = (*i)->begin(); j != (*i)->end(); j++)
         {
-            if ((*j)->GetType() == ROBOT)
+            if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fSenseRangeSquared)
             {
                 CRobotAgent* pcRobot = (CRobotAgent*) (*j);
                 
@@ -334,6 +339,45 @@ void CRobotAgent::SetBehaviors(TBehaviorVector vec_behaviors)
 void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, bool state)
 {
     m_pbMostWantedList[unFeatureVector] = state;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers)
+{
+    (*pun_number_of_toleraters) = 0;
+    (*pun_number_of_attackers)  = 0;
+
+    TAgentListList tAgentListList;
+    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fResponseRange);
+    TAgentListListIterator i;
+    double fResponseRangeSquared = m_fResponseRange * m_fResponseRange;
+
+    for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    {
+        TAgentListIterator j;
+        for (j = (*i)->begin(); j != (*i)->end(); j++)
+        {
+            if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared)
+            {
+                if (((CRobotAgent*) (*j))->Attack(m_pcFeatureVector)) 
+                {
+                    (*pun_number_of_attackers)++;
+                } else {
+                    (*pun_number_of_toleraters)++;
+                }
+            }
+        }
+    }
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+bool CRobotAgent::Attack(CFeatureVector* pc_feature_vector)
+{
+    return m_pbMostWantedList[pc_feature_vector->GetValue()];
 }
 
 /******************************************************************************/

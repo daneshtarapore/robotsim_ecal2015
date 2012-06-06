@@ -45,7 +45,9 @@ protected:
     EErrorBehavType m_eerrorbehavType;
 
     unsigned int    m_unMisbehaveStep;
+    unsigned int    m_unNormalAgentToTrack;
     CRobotAgent*    m_pcMisbehaveAgent;
+    CRobotAgent*    m_pcNormalAgentToTrack;
 };
 
 /******************************************************************************/
