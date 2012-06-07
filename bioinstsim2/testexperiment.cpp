@@ -75,8 +75,30 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
 
     if (pc_experiment_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
-        printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2]\n");
-        printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP] \n");
+        char* pchSwarmBehavior = "INVALID";
+        switch (m_eswarmbehavType) {
+        case AGGREGATION : pchSwarmBehavior = "AGGREGATION"; break;
+        case DISPERSION  : pchSwarmBehavior = "DISPERSION"; break;
+        case FLOCKING    : pchSwarmBehavior = "FLOCKING"; break;
+        case HOMING1     : pchSwarmBehavior = "HOMING1"; break;
+        case HOMING2     : pchSwarmBehavior = "HOMING2"; break;
+        default:
+            pchSwarmBehavior = "UNKNOWN"; 
+        }
+
+        char* pchErrorBehavior = "INVALID";
+        switch (m_eerrorbehavType) {
+        case STRAIGHTLINE  : pchErrorBehavior = "STRAIGHTLINE"; break;
+        case RANDOMWK      : pchErrorBehavior = "RANDOMWK"; break;
+        case CIRCLE        : pchErrorBehavior = "CIRCLE"; break;
+        case STOP          : pchErrorBehavior = "STOP"; break;
+        case NOERR         : pchErrorBehavior = "NOERR"; break;
+        default:
+            pchErrorBehavior = "UNKNOWN"; 
+        }
+
+        printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2] -- behavior selected: %s\n", pchSwarmBehavior);
+        printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP ]                        -- behavior selected: %s\n", pchErrorBehavior);
         printf("misbehavestep=#     Step when agent starts misbehaving [%d]\n",m_unMisbehaveStep);
         printf("tracknormalagent=#    Id of normal agent to track [%d]\n",  m_unNormalAgentToTrack);
         printf("trackabnormalagent=#  Id of abnormal agent to track [%d]\n",m_unAbnormalAgentToTrack);
