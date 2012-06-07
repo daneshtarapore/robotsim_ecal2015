@@ -87,10 +87,10 @@ void CRobotAgent::SimulationStepUpdatePosition()
 
     // Update the T-cells of the CRM instance for this robot
     m_pcFeatureVector->SimulationStep();
-    if (m_unIdentification == TRACKAGENT)
-    {
-        printf("FV for agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
-    }
+//    if (m_unIdentification == TRACKAGENT)
+//    {
+//        printf("FV for agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
+//    }
     Sense();
 
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
@@ -304,12 +304,12 @@ void CRobotAgent::Sense()
                     }
                 }              
 
-                //unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-                //if(CurrentStepNumber > 3250U)
-                if(this->m_unIdentification == 25U)
-                    if (m_pbMostWantedList[unFeatureVector]) {
-                        printf("Attacking agent number: %d. unFeatureVector: %d\n", (*j)->GetIdentification(),unFeatureVector);
-                    }
+//                unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+//                if(CurrentStepNumber > 3250U)
+//                if(this->m_unIdentification == 25U)
+//                    if (m_pbMostWantedList[unFeatureVector]) {
+//                        printf("Attacking agent number: %d. unFeatureVector: %d\n", (*j)->GetIdentification(),unFeatureVector);
+//                    }
 
                 m_punFeaturesSensed[unFeatureVector]++;
             }
@@ -322,7 +322,8 @@ void CRobotAgent::Sense()
 
 unsigned int CRobotAgent::GetColor()
 {
-    return m_unIdentification == TRACKAGENT ? GREEN : RED;
+    //return m_unIdentification == TRACKAGENT ? GREEN : RED;
+    return RED;
 }
 
 /******************************************************************************/

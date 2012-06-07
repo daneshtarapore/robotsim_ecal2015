@@ -46,6 +46,7 @@ protected:
 
     unsigned int    m_unMisbehaveStep;
     unsigned int    m_unNormalAgentToTrack;
+    unsigned int    m_unAbnormalAgentToTrack;
     CRobotAgent*    m_pcMisbehaveAgent;
     CRobotAgent*    m_pcNormalAgentToTrack;
 };

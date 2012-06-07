@@ -611,15 +611,14 @@ double CRMinRobotAgent::Hyp(double N, double No, double M, double L)
 
 void CRMinRobotAgent::UpdateState()
 {
-    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-
-    //if(CurrentStepNumber > 3000U && CurrentStepNumber < 40050U)
-    {
-        if(robotAgent->GetIdentification() == 25U)
-        {
-            printf("\n\nAgent-%d: ",robotAgent->GetIdentification());
-        }
-    }
+//    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+//    if(CurrentStepNumber > 3000U && CurrentStepNumber < 40050U)
+//    {
+//        if(robotAgent->GetIdentification() == 25U)
+//        {
+//            printf("\n\nAgent-%d: ",robotAgent->GetIdentification());
+//        }
+//    }
 
     double E, R;
     for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
@@ -657,14 +656,14 @@ void CRMinRobotAgent::UpdateState()
             robotAgent->SetMostWantedList(apctype, false);
         }
 
-        //if(CurrentStepNumber > 3000U && CurrentStepNumber < 40050U)
-        {
-            if(robotAgent->GetIdentification() == 25U)
-            {
-                if(m_pfAPCs[apctype] >= 0.0)
-                    printf(" [APC]=%f,m_pbAttack[%d]=%d,E=%f,R=%f  ",m_pfAPCs[apctype],apctype,m_pbAttack[apctype],E,R);
-            }
-        }
+//        if(CurrentStepNumber > 3000U && CurrentStepNumber < 40050U)
+//        {
+//            if(robotAgent->GetIdentification() == 25U)
+//            {
+//                if(m_pfAPCs[apctype] >= 0.0)
+//                    printf(" [APC]=%f,m_pbAttack[%d]=%d,E=%f,R=%f  ",m_pfAPCs[apctype],apctype,m_pbAttack[apctype],E,R);
+//            }
+//        }
     }
 
 
