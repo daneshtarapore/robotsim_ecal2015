@@ -332,6 +332,12 @@ unsigned int CRobotAgent::GetColor()
 void CRobotAgent::SetBehaviors(TBehaviorVector vec_behaviors)
 {
     m_vecBehaviors = vec_behaviors;
+
+    for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
+    {
+        (*i)->SetAgent(this);
+    }
+
 }
 
 /******************************************************************************/
