@@ -67,9 +67,10 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
         m_eerrorbehavType = NOERR;
     }
 
-    m_unMisbehaveStep = pc_experiment_arguments->GetArgumentAsIntOr("misbehavestep", 1000000);
+    m_unMisbehaveStep = pc_experiment_arguments->GetArgumentAsIntOr("misbehavestep", 0);
 
-    m_unNormalAgentToTrack = pc_experiment_arguments->GetArgumentAsIntOr("tracknormalagent", 1000000);
+    m_unNormalAgentToTrack   = pc_experiment_arguments->GetArgumentAsIntOr("tracknormalagent", 0);
+    m_unAbnormalAgentToTrack = pc_experiment_arguments->GetArgumentAsIntOr("trackabnormalagent",25);
 
 
     if (pc_experiment_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
@@ -77,7 +78,8 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
         printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2]\n");
         printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP] \n");
         printf("misbehavestep=#     Step when agent starts misbehaving [%d]\n",m_unMisbehaveStep);
-        printf("tracknormalagent=#  Id of normal agent to track [%d]\n",m_unNormalAgentToTrack);
+        printf("tracknormalagent=#    Id of normal agent to track [%d]\n",  m_unNormalAgentToTrack);
+        printf("trackabnormalagent=#  Id of abnormal agent to track [%d]\n",m_unAbnormalAgentToTrack);
 
         bHelpDisplayed = true;
     }
@@ -186,7 +188,7 @@ CAgent* CTestExperiment::CreateAgent()
 
     CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcCRMArguments, vecBehaviors);
 
-    if ((id - 1) == TRACKAGENT)
+    if ((id - 1) == m_unAbnormalAgentToTrack)
     {
         m_pcMisbehaveAgent = (CRobotAgent*) pcAgent;
     } 
@@ -214,24 +216,25 @@ CAgent* CTestExperiment::CreateAgent()
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
-    if (m_pcMisbehaveAgent) 
+    if (m_pcMisbehaveAgent && un_step_number > 3000)
     {
         unsigned int unToleraters = 0;
         unsigned int unAttackers  = 0;
         m_pcMisbehaveAgent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers);
-        printf("MisbehavingAgentResponse: tol: %d, att: %d\n",  unToleraters, unAttackers);
+        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d\n", un_step_number, unToleraters, unAttackers);
     }
 
-    if (m_pcNormalAgentToTrack) 
+    if (m_pcNormalAgentToTrack && un_step_number > 3000)
     {
         unsigned int unToleraters = 0;
         unsigned int unAttackers  = 0;
         m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers);
-        printf("NormalAgentResponse: tol: %d, att: %d\n",  unToleraters, unAttackers);
+        printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d\n", un_step_number, unToleraters, unAttackers);
     }
 
 
-    if (un_step_number == m_unMisbehaveStep) {
+    if (un_step_number == m_unMisbehaveStep)
+    {
         vector<CBehavior*> vecBehaviors;
         if(m_eerrorbehavType == STRAIGHTLINE)
         {
@@ -252,6 +255,11 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         {
             CStopBehavior* pcStopBehavior = new CStopBehavior();
             vecBehaviors.push_back(pcStopBehavior);
+        }
+        else
+        {
+            printf("\n No error behavior");
+            exit(-1);
         }
         m_pcMisbehaveAgent->SetBehaviors(vecBehaviors);        
     }
