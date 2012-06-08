@@ -8,28 +8,28 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     robotAgent = ptr_robotAgent;
 
     m_fWeight         = 1.0;
-    m_fFVtoApcscaling = 400.0;//1000.0;//1.0;
-
     static bool bHelpDisplayed = false;
 
     CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 6);
     currE = m_crmArguments->GetArgumentAsDoubleOr("currE", 10.0);  // : Density of effector cells
-    currR = m_crmArguments->GetArgumentAsDoubleOr("currR", 100.0);  // : Density of regulatory cells
-    kon   = m_crmArguments->GetArgumentAsDoubleOr("kon", 0.1);   // : Conjugation rate
-    koff  = m_crmArguments->GetArgumentAsDoubleOr("koff", 0.1);  // : Dissociation rate
-    kpe   = m_crmArguments->GetArgumentAsDoubleOr("kpe", 1e-3);   // : Proliferation rate for effector cells
+    currR = m_crmArguments->GetArgumentAsDoubleOr("currR", 10.0);  // : Density of regulatory cells
+    kon   = m_crmArguments->GetArgumentAsDoubleOr("kon", 1);   // : Conjugation rate
+    koff  = m_crmArguments->GetArgumentAsDoubleOr("koff", 1);  // : Dissociation rate
+    kpe   = m_crmArguments->GetArgumentAsDoubleOr("kpe", 1e-2);   // : Proliferation rate for effector cells
     kde   = m_crmArguments->GetArgumentAsDoubleOr("kde", 1e-5);   // : Death rate for effector cells
-    kpr   = m_crmArguments->GetArgumentAsDoubleOr("kpr", 0.5e-3);   // : Proliferation rate for regulatory cells
+    kpr   = m_crmArguments->GetArgumentAsDoubleOr("kpr", 0.5e-2);//0.6e-2   // : Proliferation rate for regulatory cells
     kdr   = m_crmArguments->GetArgumentAsDoubleOr("kdr", 1e-5);   // : Death rate for regulatory cells
 
-    m_fTryExchangeProbability = m_crmArguments->GetArgumentAsDoubleOr("exchangeprob", 0.5);
+    m_fTryExchangeProbability = m_crmArguments->GetArgumentAsDoubleOr("exchangeprob", 0.0);
     // is now set based on characteristics of robot
     //m_fExchangeRange          = m_crmArguments->GetArgumentAsDoubleOr("exchangerange", 2.0);
 
-    se                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateE", 1e-3); //1.1e-3  // Source rate of E cell generation
-    sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateR", 0.6e-3); //1.0e-3 // Source rate of R cell generation
+    se                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateE", 0.0); //1.1e-3  // Source rate of E cell generation
+    sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateR", 0.0); //0.6e-3 // Source rate of R cell generation
 
     m_fcross_affinity         = m_crmArguments->GetArgumentAsDoubleOr("cross-affinity", 0.4);
+
+    m_fFVtoApcscaling         = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling", 1.0);
 
 
     if (m_crmArguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
@@ -46,7 +46,8 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
                "exchangeprob=#.#              Probability of trying to exchange cells with other robots [%f]\n"
                "Source_E=#.#                  Source rate of E cell generation [%f]\n"
                "Source_R=#.#                  Source rate of R cell generation [%f]\n"
-               "cross-affinity=#.#            Level of cross-affinity (>0) [%2.5f]\n",
+               "cross-affinity=#.#            Level of cross-affinity (>0)     [%2.5f]\n"
+               "fvapcscaling=#.#              Scaling parameter of [FV] to [APC] [%f]\n",
                CFeatureVector::NUMBER_OF_FEATURES,
                currE,
                currR,
@@ -59,8 +60,8 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
                m_fTryExchangeProbability,
                se,
                sr,
-               m_fcross_affinity
-               );
+               m_fcross_affinity,
+               m_fFVtoApcscaling);
         bHelpDisplayed = true;
     }
 
@@ -91,10 +92,6 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
 
     m_pfEffectorConjugatesPerAPC  = new double[m_unNumberOfReceptors];
     m_pfRegulatorConjugatesPerAPC = new double[m_unNumberOfReceptors];
-
-    m_pfEff_h = new double[m_unNumberOfReceptors];
-    m_pfReg_h = new double[m_unNumberOfReceptors];
-
 
     m_pfConjugates = new double* [m_unNumberOfReceptors];
     m_pfConjugates[0] = new double [m_unNumberOfReceptors * m_unNumberOfReceptors];
@@ -150,13 +147,10 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
         m_pfEffectorConjugatesPerAPC[i]  = 0.0;
         m_pfRegulatorConjugatesPerAPC[i] = 0.0;
 
-        m_pfEff_h[i] = 0.1;
-        m_pfReg_h[i] = 0.1;
-
         for (unsigned int j = 0; j < m_unNumberOfReceptors; j++)
         {
             m_pfAffinities[i][j]              = NegExpDistAffinity(i,j,m_fcross_affinity);
-            //printf("\n Af(%d,%d)=%f",i,j,m_pfAffinities[i][j]);
+            //printf("Af(%d,%d)=%f\n",i,j,m_pfAffinities[i][j]);
 
             m_pfConjugates[i][j]              = 0.0;
             m_pfConjugates_tmp[i][j]          = 0.0;
@@ -186,8 +180,6 @@ CRMinRobotAgent::~CRMinRobotAgent()
     delete m_pfAPCs;
     delete m_pfEffectorConjugatesPerAPC;
     delete m_pfRegulatorConjugatesPerAPC;
-    delete m_pfEff_h;
-    delete m_pfReg_h;
 
     delete m_pfEffectors_Eu;
     delete m_pfRegulators_Eu;
@@ -227,9 +219,16 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     // Convert the number of feature vectors from robot agents in the vicinity to APCs for the CRM
     Sense();
 
+    int selectedclonaltype = Random::nextInt(m_unNumberOfReceptors);
+    m_pfEffectors[selectedclonaltype]  += 10.0;
+    m_pfRegulators[selectedclonaltype] += 10.0;
+
+
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
+    m_bConvergenceFlag = false;
+    double convergence_error=10.0, convergence_errormax=-1.0;
     double integration_t = 0.0;
-    while(integration_t < 1e5)
+    while(integration_t < (1.0e6))
     {
         // Compute number of conjugates for T cells m_pfEffectors[..] + m_pfRegulators[..];
         // Stored in m_pfConjugates[i][j], the conjugates of Ti to APCj
@@ -264,22 +263,40 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
             }
         }
 
+
+
         step_h *= sqrt(0.01/absDiffHuenEuler);
+        convergence_errormax = -1.0;
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
             m_pfEffectors[thtype]  = m_pfEffectors[thtype]  + step_h * m_pfDeltaEffectors_k0[thtype];
             m_pfRegulators[thtype] = m_pfRegulators[thtype] + step_h * m_pfDeltaRegulators_k0[thtype];
+
+            if(fabs(step_h * m_pfDeltaEffectors_k0[thtype]) > convergence_errormax)
+            {
+                convergence_errormax = fabs(step_h * m_pfDeltaEffectors_k0[thtype]);
+            }
+
+            if(fabs(step_h * m_pfDeltaRegulators_k0[thtype]) > convergence_errormax)
+            {
+                convergence_errormax = step_h * m_pfDeltaRegulators_k0[thtype];
+            }
         }
+        convergence_error = convergence_errormax;
 
         integration_t += step_h;
     }
+
+    if (convergence_error <= 0.01)
+        m_bConvergenceFlag = true;
+
 
     m_fWeight = 0.0;
     for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
     {
         m_fWeight += m_pfEffectors[thtype] + m_pfRegulators[thtype];
     }
-    m_fWeight = m_fWeight * m_fWeight;
+    m_fWeight = m_fWeight * m_fWeight * m_fWeight;
     robotAgent->SetWeight(m_fWeight);
 
 
@@ -629,12 +646,12 @@ void CRMinRobotAgent::UpdateState()
             // Brute force approach to cell generation
             //cells which are not reacting to APCs would have stabel states at se/kde and sr/kdr.
             //we ignore these clonaltypes in the tolerance decision
-            if ((fabs(m_pfEffectors[thtype] - se/kde)  < 0.00001  &&
+            /*if ((fabs(m_pfEffectors[thtype] - se/kde)  < 0.00001  &&
                  fabs(m_pfRegulators[thtype] - sr/kdr) < 0.00001) ||
                 (m_pfAPCs[apctype] == 0.0))
             {
                 continue;
-            }
+            }*/
 
             E += m_pfAffinities[thtype][apctype] * m_pfEffectors[thtype];
             R += m_pfAffinities[thtype][apctype] * m_pfRegulators[thtype];
@@ -712,7 +729,7 @@ void CRMinRobotAgent::Sense()
 
     for (int i = 0; i < m_unNumberOfReceptors; i++)
     {
-        m_pfAPCs[i] = m_punFeaturesSensed[i]/(3.142 * robotAgent->GetFVSenseRange()  * robotAgent->GetFVSenseRange());
+        m_pfAPCs[i] = m_punFeaturesSensed[i]/(M_PI * robotAgent->GetFVSenseRange()  * robotAgent->GetFVSenseRange());
         m_pfAPCs[i] = m_fFVtoApcscaling * m_pfAPCs[i];
     }
 }
@@ -797,6 +814,22 @@ void CRMinRobotAgent::SetCurrR(unsigned thtype, double f_currR)
 double CRMinRobotAgent::GetWeight()
 {
     return m_fWeight;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CRMinRobotAgent::GetFVtoApcScaling()
+{
+    return m_fFVtoApcscaling;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+bool CRMinRobotAgent::GetConvergenceFlag()
+{
+    return m_bConvergenceFlag;
 }
 
 /******************************************************************************/
