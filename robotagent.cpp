@@ -87,10 +87,16 @@ void CRobotAgent::SimulationStepUpdatePosition()
 
     // Update the T-cells of the CRM instance for this robot
     m_pcFeatureVector->SimulationStep();
-//    if (m_unIdentification == TRACKAGENT)
+//    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+//    if (m_unIdentification == 1 && CurrentStepNumber > 3000U)
 //    {
-//        printf("FV for agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
+//        printf("\nFV for normal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
 //    }
+//    if (m_unIdentification == 25 && CurrentStepNumber > 3000U)
+//    {
+//        printf("\nFV for abnormal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
+//    }
+
     Sense();
 
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
@@ -323,7 +329,12 @@ void CRobotAgent::Sense()
 unsigned int CRobotAgent::GetColor()
 {
     //return m_unIdentification == TRACKAGENT ? GREEN : RED;
-    return RED;
+    if(m_unIdentification == 1)
+        return GREEN;
+    else if (m_unIdentification == 25)
+        return RED;
+    else
+        return BLUE;
 }
 
 /******************************************************************************/
@@ -337,7 +348,6 @@ void CRobotAgent::SetBehaviors(TBehaviorVector vec_behaviors)
     {
         (*i)->SetAgent(this);
     }
-
 }
 
 /******************************************************************************/
@@ -361,6 +371,7 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
     TAgentListListIterator i;
     double fResponseRangeSquared = m_fResponseRange * m_fResponseRange;
 
+    bool m_battackeragentlog=true,m_btolerateragentlog=true;
     for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
     {
         TAgentListIterator j;
@@ -368,11 +379,58 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         {
             if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared)
             {
-                if (((CRobotAgent*) (*j))->Attack(m_pcFeatureVector)) 
+                CRMinRobotAgent* tmp_crm = ((CRobotAgent*) (*j))->GetCRMinRobotAgent();
+                if (((CRobotAgent*) (*j))->Attack(m_pcFeatureVector) && tmp_crm->GetConvergenceFlag())
                 {
                     (*pun_number_of_attackers)++;
-                } else {
+
+                    if(m_battackeragentlog)
+                    {
+                        printf("\nAn attacker agent:     ");
+                        unsigned int* FeatureVectorsSensed;
+                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
+
+                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
+                        {
+                            if(FeatureVectorsSensed[i] > 0.0)
+                            {
+                                printf("FV:%d, [APC]:%f  ",i,
+                                       (FeatureVectorsSensed[i] *
+                                        ((CRobotAgent*) (*j))->crminAgent->GetFVtoApcScaling())/
+                                       (M_PI * ((CRobotAgent*) (*j))->GetFVSenseRange()  *
+                                        ((CRobotAgent*) (*j))->GetFVSenseRange()));
+                            }
+                        }
+                        m_battackeragentlog = false;
+                    }
+
+
+                }
+                else if(tmp_crm->GetConvergenceFlag())
+                {
                     (*pun_number_of_toleraters)++;
+
+                    if(m_btolerateragentlog)
+                    {
+                        printf("A tolerator agent:     ");
+                        unsigned int* FeatureVectorsSensed;
+                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
+
+                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
+                        {
+                            if(FeatureVectorsSensed[i] > 0.0)
+                            {
+                                printf("FV:%d, [APC]:%f  ",i,
+                                       (FeatureVectorsSensed[i] *
+                                        ((CRobotAgent*) (*j))->crminAgent->GetFVtoApcScaling())/
+                                       (M_PI * ((CRobotAgent*) (*j))->GetFVSenseRange()  *
+                                        ((CRobotAgent*) (*j))->GetFVSenseRange()));
+                            }
+                        }
+                        m_btolerateragentlog = false;
+                    }
+
+
                 }
             }
         }

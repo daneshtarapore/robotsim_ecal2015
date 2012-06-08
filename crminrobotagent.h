@@ -50,6 +50,10 @@ public:
     virtual void ConjugatesQSS(double* E, double* R, double** C);
     virtual void Derivative(double* E, double* R, double** C, double* deltaE, double* deltaR);
 
+    virtual double GetFVtoApcScaling();
+
+    virtual bool GetConvergenceFlag();
+
     virtual void SimulationStepUpdatePosition();
 
 protected:
@@ -131,6 +135,8 @@ protected:
     double          m_fWeight;
 
     double          m_fFVtoApcscaling;
+
+    bool            m_bConvergenceFlag;
 };
 
 /******************************************************************************/

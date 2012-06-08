@@ -128,10 +128,6 @@ CAgent* CTestExperiment::CreateAgent()
     {
         CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3);
         vecBehaviors.push_back(pcDisperseBehavior2);
-
-        //CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        //vecBehaviors.push_back(pcRandomWalkBehavior);
-
     }
 
     // Aggregation behavior: formation of clusters of robots
@@ -243,7 +239,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unToleraters = 0;
         unsigned int unAttackers  = 0;
         m_pcMisbehaveAgent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers);
-        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d\n", un_step_number, unToleraters, unAttackers);
+        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d", un_step_number, unToleraters, unAttackers);
+        printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent->GetFeatureVector()->GetValue());
     }
 
     if (m_pcNormalAgentToTrack && un_step_number > 3000)
@@ -251,7 +248,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unToleraters = 0;
         unsigned int unAttackers  = 0;
         m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers);
-        printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d\n", un_step_number, unToleraters, unAttackers);
+        printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d", un_step_number, unToleraters, unAttackers);
+        printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
     }
 
 

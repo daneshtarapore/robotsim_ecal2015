@@ -134,17 +134,17 @@ void CFeatureVector::ComputeFeatureValues()
     m_pfFeatureValues[0] = m_fProcessedNumNeighbours >= m_fThresholdOnNumNbrs ? 1.0 : 0.0;
 
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-    if(dist_nbrsagents <= 3 && angle_acceleration != 0)
+    if(dist_nbrsagents <= 3.0 && angle_acceleration != 0.0)
     {
         m_puLastOccuranceEvent[1] = CurrentStepNumber;
     }
 
-    if(dist_nbrsagents >  3 && dist_nbrsagents < 6 && angle_acceleration != 0)
+    if(dist_nbrsagents >  3.0 && dist_nbrsagents < 6 && angle_acceleration != 0.0)
     {
         m_puLastOccuranceEvent[2] = CurrentStepNumber;
     }
 
-    if(dist_nbrsagents == 6 && angle_velocity != 0)
+    if(dist_nbrsagents == 6.0 && angle_velocity != 0.0)
     {
         m_puLastOccuranceEvent[3] = CurrentStepNumber;
     }
