@@ -22,6 +22,11 @@ class CRMinRobotAgent;
 /******************************************************************************/
 /******************************************************************************/
 
+#define CRMSTARTTIME 3000
+
+/******************************************************************************/
+/******************************************************************************/
+
 class CRobotAgent : public CAgent
 {
 public: 
@@ -52,7 +57,7 @@ public:
 
     virtual void SetMostWantedList(unsigned unFeatureVector, bool state);
     
-    virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers);
+    virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged);
 
     virtual bool Attack(CFeatureVector* pc_feature_vector); 
 

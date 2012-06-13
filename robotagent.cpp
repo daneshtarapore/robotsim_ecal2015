@@ -26,7 +26,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     m_fFVSenseRange               = pc_arguments->GetArgumentAsDoubleOr("fvsenserange", 10.0);
 
     //at what distances agents are considered neighbors when the individual features are computed
-    CFeatureVector::FEATURE_RANGE = pc_arguments->GetArgumentAsDoubleOr("featuresenserange", 5.0);
+    CFeatureVector::FEATURE_RANGE = pc_arguments->GetArgumentAsDoubleOr("featuresenserange", 6.0);
 
     m_fResponseRange              = pc_arguments->GetArgumentAsDoubleOr("responserange", m_fFVSenseRange);
 
@@ -100,7 +100,7 @@ void CRobotAgent::SimulationStepUpdatePosition()
     Sense();
 
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-    if(CurrentStepNumber > 3000U)
+    if(CurrentStepNumber > CRMSTARTTIME)
     {
         crminAgent->SimulationStepUpdatePosition();
     }
@@ -361,10 +361,11 @@ void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, bool state)
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers)
+void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged)
 {
-    (*pun_number_of_toleraters) = 0;
-    (*pun_number_of_attackers)  = 0;
+    (*pun_number_of_toleraters)  = 0;
+    (*pun_number_of_attackers)   = 0;
+    (*pun_number_of_unconverged) = 0;
 
     TAgentListList tAgentListList;
     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fResponseRange);
@@ -380,13 +381,13 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
             if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared)
             {
                 CRMinRobotAgent* tmp_crm = ((CRobotAgent*) (*j))->GetCRMinRobotAgent();
-                if (((CRobotAgent*) (*j))->Attack(m_pcFeatureVector) && tmp_crm->GetConvergenceFlag())
+                if (((CRobotAgent*) (*j))->Attack(m_pcFeatureVector))
                 {
                     (*pun_number_of_attackers)++;
 
                     if(m_battackeragentlog)
                     {
-                        printf("\nAn attacker agent:     ");
+                        printf("\nAn attacker agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
                         unsigned int* FeatureVectorsSensed;
                         FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
 
@@ -394,25 +395,22 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                         {
                             if(FeatureVectorsSensed[i] > 0.0)
                             {
-                                printf("FV:%d, [APC]:%f  ",i,
-                                       (FeatureVectorsSensed[i] *
-                                        ((CRobotAgent*) (*j))->crminAgent->GetFVtoApcScaling())/
-                                       (M_PI * ((CRobotAgent*) (*j))->GetFVSenseRange()  *
-                                        ((CRobotAgent*) (*j))->GetFVSenseRange()));
+                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
+                                       tmp_crm->GetAPC(i),
+                                       tmp_crm->GetCurrE(i),
+                                       tmp_crm->GetCurrR(i));
                             }
                         }
                         m_battackeragentlog = false;
                     }
-
-
                 }
-                else if(tmp_crm->GetConvergenceFlag())
+                else
                 {
                     (*pun_number_of_toleraters)++;
 
                     if(m_btolerateragentlog)
                     {
-                        printf("A tolerator agent:     ");
+                        printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
                         unsigned int* FeatureVectorsSensed;
                         FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
 
@@ -420,18 +418,21 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                         {
                             if(FeatureVectorsSensed[i] > 0.0)
                             {
-                                printf("FV:%d, [APC]:%f  ",i,
-                                       (FeatureVectorsSensed[i] *
-                                        ((CRobotAgent*) (*j))->crminAgent->GetFVtoApcScaling())/
-                                       (M_PI * ((CRobotAgent*) (*j))->GetFVSenseRange()  *
-                                        ((CRobotAgent*) (*j))->GetFVSenseRange()));
+                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
+                                       tmp_crm->GetAPC(i),
+                                       tmp_crm->GetCurrE(i),
+                                       tmp_crm->GetCurrR(i));
                             }
                         }
                         m_btolerateragentlog = false;
                     }
-
-
                 }
+
+                if (!tmp_crm->GetConvergenceFlag())
+                {
+                    (*pun_number_of_unconverged)++;
+                }
+
             }
         }
     }
