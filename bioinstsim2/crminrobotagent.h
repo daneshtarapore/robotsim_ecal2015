@@ -40,6 +40,8 @@ public:
     virtual void SetCurrE(unsigned thtype, double f_currE);
     virtual void SetCurrR(unsigned thtype, double f_currR);
 
+    virtual double GetAPC(unsigned apctype);
+
     virtual double FreeThCells(double* E, double* R, double** C, unsigned int thtype);
     virtual double AvailableBindingSites(double** C, unsigned int apctype);
 
@@ -53,6 +55,10 @@ public:
     virtual double GetFVtoApcScaling();
 
     virtual bool GetConvergenceFlag();
+
+    virtual double GetConvergenceError();
+
+    virtual void PrintCRMDetails(unsigned id);
 
     virtual void SimulationStepUpdatePosition();
 
@@ -93,6 +99,9 @@ protected:
 
     double*        m_pfEffectors;
     double*        m_pfRegulators;
+    double*        m_pfEffectors_prev;
+    double*        m_pfRegulators_prev;
+
     //unsigned int*  m_punFeaturesSensed;
     double*        m_pfAPCs;
 
@@ -137,6 +146,7 @@ protected:
     double          m_fFVtoApcscaling;
 
     bool            m_bConvergenceFlag;
+    double          m_dconvergence_error;
 };
 
 /******************************************************************************/

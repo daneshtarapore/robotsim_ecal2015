@@ -3,6 +3,27 @@
 /******************************************************************************/
 /******************************************************************************/
 
+#define TCELL_UPPERLIMIT_STEPSIZE 100000
+#define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
+
+#define CONJ_UPPERLIMIT_STEPSIZE 100000
+#define CONJ_LOWERLIMIT_STEPSIZE 1.0e-6
+
+#define ERRORALLOWED_TCELL_STEPSIZE 1.0e-2
+#define ERRORALLOWED_CONJ_STEPSIZE  1.0e-3
+
+#define INTEGRATION_TIME  1e+5
+
+#define TCELL_CONVERGENCE  0.01
+#define CONJ_CONVERGENCE   0.001
+
+
+//10 cells added - how long for 10 cells to die if none activated?
+//We are perturbing the system ourselves by adding these cells - making it difficult for T-cell pop. to converge
+
+/******************************************************************************/
+/******************************************************************************/
+
 CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmArguments)
 {
     robotAgent = ptr_robotAgent;
@@ -10,15 +31,15 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     m_fWeight         = 1.0;
     static bool bHelpDisplayed = false;
 
-    CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 6);
+    CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 4);
     currE = m_crmArguments->GetArgumentAsDoubleOr("currE", 10.0);  // : Density of effector cells
     currR = m_crmArguments->GetArgumentAsDoubleOr("currR", 10.0);  // : Density of regulatory cells
-    kon   = m_crmArguments->GetArgumentAsDoubleOr("kon", 1);   // : Conjugation rate
-    koff  = m_crmArguments->GetArgumentAsDoubleOr("koff", 1);  // : Dissociation rate
-    kpe   = m_crmArguments->GetArgumentAsDoubleOr("kpe", 1e-2);   // : Proliferation rate for effector cells
-    kde   = m_crmArguments->GetArgumentAsDoubleOr("kde", 1e-5);   // : Death rate for effector cells
-    kpr   = m_crmArguments->GetArgumentAsDoubleOr("kpr", 0.5e-2);//0.6e-2   // : Proliferation rate for regulatory cells
-    kdr   = m_crmArguments->GetArgumentAsDoubleOr("kdr", 1e-5);   // : Death rate for regulatory cells
+    kon   = m_crmArguments->GetArgumentAsDoubleOr("kon", .1);   // : Conjugation rate
+    koff  = m_crmArguments->GetArgumentAsDoubleOr("koff", .1);  // : Dissociation rate
+    kpe   = m_crmArguments->GetArgumentAsDoubleOr("kpe", 1e-3);   // : Proliferation rate for effector cells
+    kde   = m_crmArguments->GetArgumentAsDoubleOr("kde", 1e-6);   // : Death rate for effector cells
+    kpr   = m_crmArguments->GetArgumentAsDoubleOr("kpr", 0.5e-3);//0.6e-2   // : Proliferation rate for regulatory cells
+    kdr   = m_crmArguments->GetArgumentAsDoubleOr("kdr", 1e-6);   // : Death rate for regulatory cells
 
     m_fTryExchangeProbability = m_crmArguments->GetArgumentAsDoubleOr("exchangeprob", 0.0);
     // is now set based on characteristics of robot
@@ -35,7 +56,7 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     if (m_crmArguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
         printf("numberoffeatures=#             Number of features in a single FV [%d]\n"
-                "currE=#.#                     Density of effector cells [%f]\n"
+               "currE=#.#                     Density of effector cells [%f]\n"
                "currR=#.#                     Density of regulatory cells [%f]\n"
                "kon=#.#                       Conjugation rate [%f]\n"
                "koff=#.#                      Dissociation rate [%f]\n"
@@ -70,6 +91,9 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     m_pbAttack          = new int[m_unNumberOfReceptors];
     m_pfEffectors       = new double[m_unNumberOfReceptors];
     m_pfRegulators      = new double[m_unNumberOfReceptors];
+
+    m_pfEffectors_prev  = new double[m_unNumberOfReceptors];
+    m_pfRegulators_prev = new double[m_unNumberOfReceptors];
 
     // predicted number of cells at time t+step with Euler method
     m_pfEffectors_Eu    = new double[m_unNumberOfReceptors];
@@ -176,6 +200,8 @@ CRMinRobotAgent::~CRMinRobotAgent()
     delete m_pbAttack;
     delete m_pfEffectors;
     delete m_pfRegulators;
+    delete m_pfEffectors_prev;
+    delete m_pfRegulators_prev;
 
     delete m_pfAPCs;
     delete m_pfEffectorConjugatesPerAPC;
@@ -225,11 +251,17 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
 
 
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
+    //PrintCRMDetails();
     m_bConvergenceFlag = false;
-    double convergence_error=10.0, convergence_errormax=-1.0;
+    m_dconvergence_error = 10.0;
+    double convergence_errormax = -1.0;
     double integration_t = 0.0;
-    while(integration_t < (1.0e6))
+    double step_h = 1.0;
+    bool b_prevdiff0occurance = false;
+    while(integration_t < INTEGRATION_TIME)
     {
+        //PrintCRMDetails();
+
         // Compute number of conjugates for T cells m_pfEffectors[..] + m_pfRegulators[..];
         // Stored in m_pfConjugates[i][j], the conjugates of Ti to APCj
         ConjugatesQSS(m_pfEffectors, m_pfRegulators, m_pfConjugates);
@@ -237,8 +269,16 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
 
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
-            m_pfEffectors_Eu[thtype]  = m_pfEffectors[thtype]  + step_h * m_pfDeltaEffectors_k0[thtype];
-            m_pfRegulators_Eu[thtype] = m_pfRegulators[thtype] + step_h * m_pfDeltaRegulators_k0[thtype];
+            m_pfEffectors_Eu[thtype]  = m_pfEffectors[thtype]  +
+                                        step_h * m_pfDeltaEffectors_k0[thtype];
+            m_pfRegulators_Eu[thtype] = m_pfRegulators[thtype] +
+                                        step_h * m_pfDeltaRegulators_k0[thtype];
+
+            if(m_pfEffectors_Eu[thtype] < 0.0) {
+                m_pfEffectors_Eu[thtype] = 0.0;}
+
+            if(m_pfRegulators_Eu[thtype] < 0.0) {
+                m_pfRegulators_Eu[thtype] = 0.0;}
         }
 
         ConjugatesQSS(m_pfEffectors_Eu, m_pfRegulators_Eu, m_pfConjugates_Eu);
@@ -247,7 +287,13 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
         double absDiffHuenEuler = -1.0;
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
-            m_pfEffectors_Hu[thtype]  = m_pfEffectors[thtype]  + 0.5 * step_h * (m_pfDeltaEffectors_k0[thtype] + m_pfDeltaEffectors_k1[thtype]);
+            m_pfEffectors_Hu[thtype]  = m_pfEffectors[thtype]  +
+                                        0.5 * step_h *
+                                        (m_pfDeltaEffectors_k0[thtype] + m_pfDeltaEffectors_k1[thtype]);
+
+            if(m_pfEffectors_Hu[thtype] < 0.0) {
+                m_pfEffectors_Hu[thtype] = 0.0;}
+
 
             if(fabs(m_pfEffectors_Hu[thtype] - m_pfEffectors_Eu[thtype]) > absDiffHuenEuler)
             {
@@ -255,7 +301,13 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
             }
 
 
-            m_pfRegulators_Hu[thtype] = m_pfRegulators[thtype] + 0.5 * step_h * (m_pfDeltaRegulators_k0[thtype] + m_pfDeltaRegulators_k1[thtype]);
+            m_pfRegulators_Hu[thtype] = m_pfRegulators[thtype] +
+                                        0.5 * step_h *
+                                        (m_pfDeltaRegulators_k0[thtype] +
+                                         m_pfDeltaRegulators_k1[thtype]);
+            if(m_pfRegulators_Hu[thtype] < 0.0) {
+                m_pfRegulators_Hu[thtype] = 0.0;}
+
 
             if(fabs(m_pfRegulators_Hu[thtype] - m_pfRegulators_Eu[thtype]) > absDiffHuenEuler)
             {
@@ -264,31 +316,100 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
         }
 
 
+        if(!(absDiffHuenEuler > 0.0))
+        {
+            for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+            {
+                printf("\n E_Hu %f, E_Eu %f        R_Hu %f, R_Eu %f",
+                       m_pfEffectors_Hu[thtype],m_pfEffectors_Eu[thtype],
+                       m_pfRegulators_Hu[thtype],m_pfRegulators_Eu[thtype]);
+            }
 
-        step_h *= sqrt(0.01/absDiffHuenEuler);
+            printf("\n Stepsize %e",step_h);
+        }
+
+        if(absDiffHuenEuler == 0.0)
+        {
+            if(b_prevdiff0occurance && step_h == TCELL_LOWERLIMIT_STEPSIZE)
+            {
+                printf("\n The T-cell population solution is stalled");
+                exit(-1);
+            }
+            step_h = step_h / 2.0;
+
+            if(step_h < TCELL_LOWERLIMIT_STEPSIZE) {
+                        step_h = TCELL_LOWERLIMIT_STEPSIZE;}
+
+            printf("\n New stepsize %f - integration time %e",step_h,integration_t);
+
+
+
+            b_prevdiff0occurance = true;
+
+            continue;
+        }
+
+        b_prevdiff0occurance = false;
+
+
+        assert(absDiffHuenEuler >= 0.0);
+        step_h *= sqrt(ERRORALLOWED_TCELL_STEPSIZE/absDiffHuenEuler);
+        if(step_h > TCELL_UPPERLIMIT_STEPSIZE) {
+            step_h = TCELL_UPPERLIMIT_STEPSIZE;}
+        else if(step_h < TCELL_LOWERLIMIT_STEPSIZE) {
+            step_h = TCELL_LOWERLIMIT_STEPSIZE;}
+
+
+
+        //printf("\nintegration_t = %f,absDiffHuenEuler = %e,new step_h = %f",integration_t,absDiffHuenEuler,step_h);
+
         convergence_errormax = -1.0;
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
+            m_pfEffectors_prev[thtype]  = m_pfEffectors[thtype];
+            m_pfRegulators_prev[thtype] = m_pfRegulators[thtype];
+
             m_pfEffectors[thtype]  = m_pfEffectors[thtype]  + step_h * m_pfDeltaEffectors_k0[thtype];
             m_pfRegulators[thtype] = m_pfRegulators[thtype] + step_h * m_pfDeltaRegulators_k0[thtype];
 
-            if(fabs(step_h * m_pfDeltaEffectors_k0[thtype]) > convergence_errormax)
+
+            if(m_pfEffectors[thtype] < 0.0){
+                m_pfEffectors[thtype] = 0.0;}
+            else
             {
-                convergence_errormax = fabs(step_h * m_pfDeltaEffectors_k0[thtype]);
+                if(fabs(step_h * m_pfDeltaEffectors_k0[thtype]) > convergence_errormax)
+                {
+                    convergence_errormax = fabs(step_h * m_pfDeltaEffectors_k0[thtype]);
+                }
             }
 
-            if(fabs(step_h * m_pfDeltaRegulators_k0[thtype]) > convergence_errormax)
+
+            if(m_pfRegulators[thtype] < 0.0){
+                m_pfRegulators[thtype] = 0.0;}
+            else
             {
-                convergence_errormax = step_h * m_pfDeltaRegulators_k0[thtype];
+                if(fabs(step_h * m_pfDeltaRegulators_k0[thtype]) > convergence_errormax)
+                {
+                    convergence_errormax = fabs(step_h * m_pfDeltaRegulators_k0[thtype]);
+                }
             }
         }
-        convergence_error = convergence_errormax;
 
+        m_dconvergence_error = convergence_errormax;
+        if(m_dconvergence_error < TCELL_CONVERGENCE)
+        {
+            m_bConvergenceFlag = true;
+            break;
+        }
         integration_t += step_h;
     }
 
-    if (convergence_error <= 0.01)
-        m_bConvergenceFlag = true;
+    //PrintCRMDetails(70);
+//    if(robotAgent->GetIdentification() == 70)
+//    {
+//        printf("\n agent 70: m_dconvergence_error=%e,step_h=%f,slope=%e,integration time %f",
+//                                 m_dconvergence_error,step_h,m_dconvergence_error/step_h,integration_t);
+//    }
 
 
     m_fWeight = 0.0;
@@ -296,7 +417,7 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     {
         m_fWeight += m_pfEffectors[thtype] + m_pfRegulators[thtype];
     }
-    m_fWeight = m_fWeight * m_fWeight * m_fWeight;
+    m_fWeight = m_fWeight * m_fWeight;
     robotAgent->SetWeight(m_fWeight);
 
 
@@ -305,29 +426,30 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     if (pcRemoteRobotAgent != NULL)
     {
         CRMinRobotAgent* crminRemoteRobotAgent = pcRemoteRobotAgent->GetCRMinRobotAgent();
-                
+
         if (crminRemoteRobotAgent)
         {
             for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
             {
                 double currEtoSend = m_pfEffectors[thtype]  * m_fTryExchangeProbability;
                 double currRtoSend = m_pfRegulators[thtype] * m_fTryExchangeProbability;
-                
+
                 double remoteCurrE = crminRemoteRobotAgent->GetCurrE(thtype);
                 double remoteCurrR = crminRemoteRobotAgent->GetCurrR(thtype);
-                                
+
                 double currEtoReceive = remoteCurrE * m_fTryExchangeProbability;
                 double currRtoReceive = remoteCurrR * m_fTryExchangeProbability;
-                
+
                 crminRemoteRobotAgent->SetCurrR(thtype, remoteCurrR + currRtoSend - currRtoReceive);
                 crminRemoteRobotAgent->SetCurrE(thtype, remoteCurrE + currEtoSend - currEtoReceive);
-                
+
                 m_pfRegulators[thtype] += currRtoReceive - currRtoSend;
                 m_pfEffectors[thtype]  += currEtoReceive - currEtoSend;
-                
+
             }
         }
     }
+
 
     UpdateState();
 
@@ -382,15 +504,20 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
 
     conjstep_h = 0.001;
     double error = 1.0;
-    while(error >= 0.01)
+    unsigned long n_iteration = 0;
+    bool b_prevdiff0occurance=false;
+    while(error >= CONJ_CONVERGENCE)
     {
+        n_iteration++;
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
             for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
             {
-                m_pfDeltaConjugates_k0[thtype][apctype] = ((kon * m_pfAffinities[thtype][apctype] *
-                                                            FreeThCells(E, R, C, thtype) * AvailableBindingSites(C, apctype)) -
-                                                           koff*C[thtype][apctype]);
+                m_pfDeltaConjugates_k0[thtype][apctype] =
+                        ((kon * m_pfAffinities[thtype][apctype] *
+                          FreeThCells(E, R, C, thtype) *
+                          AvailableBindingSites(C, apctype)) -
+                         koff*C[thtype][apctype]);
             }
         }
 
@@ -398,7 +525,11 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
         {
             for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
             {
-                m_pfConj_tmp_Eu[thtype][apctype] = C[thtype][apctype] + conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype];
+                m_pfConj_tmp_Eu[thtype][apctype] = C[thtype][apctype] + conjstep_h *
+                                                   m_pfDeltaConjugates_k0[thtype][apctype];
+
+                if(m_pfConj_tmp_Eu[thtype][apctype] < 0.0)
+                    m_pfConj_tmp_Eu[thtype][apctype] = 0.0;
             }
         }
 
@@ -406,9 +537,11 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
         {
             for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
             {
-                m_pfDeltaConjugates_k1[thtype][apctype] = ((kon * m_pfAffinities[thtype][apctype] *
-                                                            FreeThCells(E, R, m_pfConj_tmp_Eu, thtype) * AvailableBindingSites(m_pfConj_tmp_Eu, apctype)) -
-                                                           koff*m_pfConj_tmp_Eu[thtype][apctype]);
+                m_pfDeltaConjugates_k1[thtype][apctype] =
+                        ((kon * m_pfAffinities[thtype][apctype] *
+                          FreeThCells(E, R, m_pfConj_tmp_Eu, thtype) *
+                          AvailableBindingSites(m_pfConj_tmp_Eu, apctype)) -
+                         koff*m_pfConj_tmp_Eu[thtype][apctype]);
             }
         }
 
@@ -419,6 +552,10 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
             {
                 m_pfConj_tmp_Hu[thtype][apctype] = C[thtype][apctype] + 0.5 * conjstep_h * (m_pfDeltaConjugates_k0[thtype][apctype] + m_pfDeltaConjugates_k1[thtype][apctype]);
 
+                if(m_pfConj_tmp_Hu[thtype][apctype] < 0.0)
+                    m_pfConj_tmp_Hu[thtype][apctype] = 0.0;
+
+
                 if(fabs(m_pfConj_tmp_Hu[thtype][apctype] - m_pfConj_tmp_Eu[thtype][apctype]) > absDiffHuenEuler)
                 {
                     absDiffHuenEuler = fabs(m_pfConj_tmp_Hu[thtype][apctype] - m_pfConj_tmp_Eu[thtype][apctype]);
@@ -426,7 +563,66 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
             }
         }
 
-        conjstep_h *= sqrt(0.01/absDiffHuenEuler);
+
+
+//        printf("\n\n\n\n\n");
+//        for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+//        {
+//            if(m_pfAPCs[apctype]>0.0)
+//                printf("APC[%d]=%f  ",apctype,m_pfAPCs[apctype]);
+//        }
+
+//        // Print Effector and regulatory clonaltypes
+//        printf("\n=================================\n");
+//        for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+//        {
+//            printf("E[%d]=%f,R[%d]=%f  ",thtype,E[thtype],thtype,R[thtype]);
+//        }
+
+
+//        // Print table of conjugates
+//        printf("\n==============ConjEu===================\n");
+//        for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+//        {
+//            printf("\nCj:%d\t",apctype);
+//            for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+//            {
+//                printf("%e  ",m_pfConj_tmp_Eu[thtype][apctype]);
+//            }
+//        }
+
+
+
+
+        if(absDiffHuenEuler == 0.0)
+        {
+            if(b_prevdiff0occurance && conjstep_h == CONJ_LOWERLIMIT_STEPSIZE)
+            {
+                printf("\n The T-cell population solution is stalled");
+                exit(-1);
+            }
+
+            conjstep_h = conjstep_h / 2.0;
+
+            if(conjstep_h < CONJ_LOWERLIMIT_STEPSIZE) {
+                        conjstep_h = CONJ_LOWERLIMIT_STEPSIZE;}
+
+            printf("\n new conjugation step %f, n_iteration %lu",conjstep_h,n_iteration);
+
+            b_prevdiff0occurance = true;
+
+            continue;
+        }
+
+        b_prevdiff0occurance = false;
+
+        assert(absDiffHuenEuler >= 0.0);
+        conjstep_h *= sqrt(ERRORALLOWED_CONJ_STEPSIZE/absDiffHuenEuler);
+        if(conjstep_h > CONJ_UPPERLIMIT_STEPSIZE) {
+            conjstep_h = CONJ_UPPERLIMIT_STEPSIZE;}
+        else if(conjstep_h < CONJ_LOWERLIMIT_STEPSIZE) {
+            conjstep_h = CONJ_LOWERLIMIT_STEPSIZE;}
+
 
         double error_max = -1.0;
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
@@ -434,13 +630,23 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
             for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
             {
                 C[thtype][apctype] = C[thtype][apctype] + conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype];
-                if(fabs(conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype]) > error_max)
+                if(C[thtype][apctype] < 0.0)
                 {
-                    error_max = fabs(conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype]);
+                    C[thtype][apctype] = 0.0;
+                }
+                else
+                {
+                    if(fabs(conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype]) > error_max)
+                    {
+                        error_max = fabs(conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype]);
+                    }
                 }
             }
         }
         error = error_max;
+
+
+        //printf("\nConj.step=%f,error=%f",conjstep_h,error);
     }
 
 
@@ -498,13 +704,24 @@ void CRMinRobotAgent::Derivative(double *E, double *R, double **C, double *delta
     // Dividing the conjugates into Effector and Regulator type
     for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
     {
-        for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+        if((E[thtype] + R[thtype]) == 0.0)
         {
-            m_pfEffectorConjugates[thtype][apctype] =
-                    (E[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
+            for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+            {
+                m_pfEffectorConjugates[thtype][apctype]  =  0.0;
+                m_pfRegulatorConjugates[thtype][apctype] =  0.0;
+            }
+        }
+        else
+        {
+            for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+            {
+                m_pfEffectorConjugates[thtype][apctype] =
+                            (E[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
 
-            m_pfRegulatorConjugates[thtype][apctype] =
-                    (R[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
+                m_pfRegulatorConjugates[thtype][apctype] =
+                            (R[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
+            }
         }
     }
 
@@ -567,6 +784,19 @@ double CRMinRobotAgent::FreeThCells(double* E, double* R, double** C, unsigned i
     double conjugatedcells = 0.0;
     for(unsigned apctype = 0; apctype < m_unNumberOfReceptors; apctype++)
     {
+        if(C[thtype][apctype] < 0.0)
+        {
+            printf("\nC[%d][%d]=%f",thtype,apctype,C[thtype][apctype]);
+            printf("\nRobot id:%d, Step:%d",robotAgent->GetIdentification(),CSimulator::GetInstance()->GetSimulationStepNumber());
+            //exit(-1);
+        }
+        if(E[thtype] < 0.0 || R[thtype] < 0.0)
+        {
+            printf("\nE[%d]=%e;R[%d]=%e",thtype,E[thtype],thtype,R[thtype]);
+            printf("\nRobot id:%d, Step:%d",robotAgent->GetIdentification(),CSimulator::GetInstance()->GetSimulationStepNumber());
+            //exit(-1);
+        }
+
         conjugatedcells += C[thtype][apctype];
     }
 
@@ -626,96 +856,109 @@ double CRMinRobotAgent::Hyp(double N, double No, double M, double L)
 /******************************************************************************/
 /******************************************************************************/
 
-void CRMinRobotAgent::UpdateState()
+void CRMinRobotAgent::PrintCRMDetails(unsigned id)
 {
-//    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-//    if(CurrentStepNumber > 3000U && CurrentStepNumber < 40050U)
-//    {
-//        if(robotAgent->GetIdentification() == 25U)
-//        {
-//            printf("\n\nAgent-%d: ",robotAgent->GetIdentification());
-//        }
-//    }
+    //unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+    if(!(robotAgent->GetIdentification() == id))
+        return;
 
-    double E, R;
+    // Print NonZero APCs
+    printf("\n");
     for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
     {
-        E = 0.0; R = 0.0;
-        for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
-        {
-            // Brute force approach to cell generation
-            //cells which are not reacting to APCs would have stabel states at se/kde and sr/kdr.
-            //we ignore these clonaltypes in the tolerance decision
-            /*if ((fabs(m_pfEffectors[thtype] - se/kde)  < 0.00001  &&
-                 fabs(m_pfRegulators[thtype] - sr/kdr) < 0.00001) ||
-                (m_pfAPCs[apctype] == 0.0))
-            {
-                continue;
-            }*/
+        if(m_pfAPCs[apctype]>0.0)
+            printf("APC[%d]=%f  ",apctype,m_pfAPCs[apctype]);
+    }
 
-            E += m_pfAffinities[thtype][apctype] * m_pfEffectors[thtype];
-            R += m_pfAffinities[thtype][apctype] * m_pfRegulators[thtype];
-        }
-
-        if (E == 0.0 && R == 0.0)
+    // Print table of conjugates
+    printf("\n=================================\n");
+    for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+    {
+        printf("\nAPC:%d\t",apctype);
+        for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
-            m_pbAttack[apctype] = 0;
-            robotAgent->SetMostWantedList(apctype, false);
+            printf("%e  ",m_pfConjugates[thtype][apctype]);
         }
-        else if (E > R)
-        {
-            m_pbAttack[apctype] = 1;
-            robotAgent->SetMostWantedList(apctype, true);
-        }
-        else
-        {
-            m_pbAttack[apctype] = 2;
-            robotAgent->SetMostWantedList(apctype, false);
-        }
-
-//        if(CurrentStepNumber > 3000U && CurrentStepNumber < 40050U)
-//        {
-//            if(robotAgent->GetIdentification() == 25U)
-//            {
-//                if(m_pfAPCs[apctype] >= 0.0)
-//                    printf(" [APC]=%f,m_pbAttack[%d]=%d,E=%f,R=%f  ",m_pfAPCs[apctype],apctype,m_pbAttack[apctype],E,R);
-//            }
-//        }
     }
 
 
-
-
-
-
-/*    if(CurrentStepNumber > 3000U && CurrentStepNumber < 3250U)
+    // Print Effector and regulatory clonaltypes
+    printf("\n=================================\n");
+    for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
     {
-        printf("\n\nAgent-%d: ",robotAgent->GetIdentification());
-        double min_APCs    = 1.0e10;
-        int    min_APCs_fv = -1;
-        for (int i = 0; i < m_unNumberOfReceptors; i++)
-        {
-            if(m_pfAPCs[i] > 0.0)
-                printf("FV=%d,[APC]=%f  ",i,m_pfAPCs[i]);
+        printf("E[%d]=%e,R[%d]=%e  ",thtype,m_pfEffectors[thtype],thtype,m_pfRegulators[thtype]);
+    }
+}
 
-            if(m_pfAPCs[i] > 0.0 && m_pfAPCs[i] < min_APCs)
+/******************************************************************************/
+/******************************************************************************/
+
+void CRMinRobotAgent::UpdateState()
+{
+    double E, R;
+
+    //if(m_bConvergenceFlag)
+        for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+        {
+            E = 0.0; R = 0.0;
+            for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
             {
-                min_APCs    = m_pfAPCs[i];
-                min_APCs_fv = i;
+                // Brute force approach to cell generation
+                //cells which are not reacting to APCs would have stable states at se/kde and sr/kdr.
+                //we ignore these clonaltypes in the tolerance decision
+                /*if ((fabs(m_pfEffectors[thtype] - se/kde)  < 0.00001  &&
+                     fabs(m_pfRegulators[thtype] - sr/kdr) < 0.00001) ||
+                    (m_pfAPCs[apctype] == 0.0))
+                {
+                    continue;
+                }*/
+
+                E += m_pfAffinities[thtype][apctype] * m_pfEffectors[thtype];
+                R += m_pfAffinities[thtype][apctype] * m_pfRegulators[thtype];
+            }
+
+            if (E == 0.0 && R == 0.0)
+            {
+                m_pbAttack[apctype] = 0;
+                robotAgent->SetMostWantedList(apctype, false);
+            }
+            else if (E > R)
+            {
+                m_pbAttack[apctype] = 1;
+                robotAgent->SetMostWantedList(apctype, true);
+            }
+            else
+            {
+                m_pbAttack[apctype] = 2;
+                robotAgent->SetMostWantedList(apctype, false);
             }
         }
+//    else
+//        for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+//        {
+//            E = 0.0; R = 0.0;
+//            for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
+//            {
+//                E += m_pfAffinities[thtype][apctype] *
+//                     (m_pfEffectors[thtype] - m_pfEffectors_prev[thtype]);
+//                R += m_pfAffinities[thtype][apctype] *
+//                     (m_pfRegulators[thtype] - m_pfRegulators_prev[thtype]);
+//            }
 
-        //if(robotAgent->GetIdentification() == 25)
-        //{
-        //    printf("\n FV to Apc function for agent [%d] is scaled at %f, min_APCs=%f of fv=%d. ",robotAgent->GetIdentification(), m_fFVtoApcscaling, min_APCs, min_APCs_fv);
-        //}
+//            if (E > R)
+//            {
+//                m_pbAttack[apctype] = 1;
+//                robotAgent->SetMostWantedList(apctype, true);
+//            }
+//            else if (R > E)
+//            {
+//                m_pbAttack[apctype] = 2;
+//                robotAgent->SetMostWantedList(apctype, false);
+//            }
 
+//            //(E==R) case ingnored does not give any information. If we dont know, tolerate!
+//        }
 
-        //if(min_APCs_fv != -1 && m_pbAttack[min_APCs_fv] == 1)
-        //{
-        //    m_fFVtoApcscaling += 0.5;
-        //}
-    }*/
 }
 
 /******************************************************************************/
@@ -748,8 +991,6 @@ double CRMinRobotAgent::NormalizedAffinity(unsigned int v1, unsigned int v2)
 
     //TODO: Have to change affinity computation
     return (double) (CFeatureVector::NUMBER_OF_FEATURES - unMatching) / (double) CFeatureVector::NUMBER_OF_FEATURES;
-
-    return 0.0;
 }
 
 /******************************************************************************/
@@ -772,8 +1013,6 @@ double CRMinRobotAgent::NegExpDistAffinity(unsigned int v1, unsigned int v2, dou
     // Should we normalize the hammingdistance when input to the exp function, or as above?
 
     return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
-
-    return 0.0;
 }
 
 /******************************************************************************/
@@ -790,6 +1029,14 @@ double CRMinRobotAgent::GetCurrE(unsigned thtype)
 double CRMinRobotAgent::GetCurrR(unsigned thtype)
 {
     return m_pfRegulators[thtype];
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CRMinRobotAgent::GetAPC(unsigned apctype)
+{
+    return m_pfAPCs[apctype];
 }
 
 /******************************************************************************/
@@ -830,6 +1077,14 @@ double CRMinRobotAgent::GetFVtoApcScaling()
 bool CRMinRobotAgent::GetConvergenceFlag()
 {
     return m_bConvergenceFlag;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CRMinRobotAgent::GetConvergenceError()
+{
+    return m_dconvergence_error;
 }
 
 /******************************************************************************/

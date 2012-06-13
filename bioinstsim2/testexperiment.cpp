@@ -234,21 +234,25 @@ CAgent* CTestExperiment::CreateAgent()
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
-    if (m_pcMisbehaveAgent && un_step_number > 3000)
+    if (m_pcMisbehaveAgent && un_step_number > CRMSTARTTIME)
     {
-        unsigned int unToleraters = 0;
-        unsigned int unAttackers  = 0;
-        m_pcMisbehaveAgent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers);
-        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d", un_step_number, unToleraters, unAttackers);
+        unsigned int unToleraters  = 0;
+        unsigned int unAttackers   = 0;
+        unsigned int unUnConverged = 0;
+
+        m_pcMisbehaveAgent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unUnConverged);
+        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, unconvg: %d", un_step_number, unToleraters, unAttackers, unUnConverged);
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent->GetFeatureVector()->GetValue());
     }
 
-    if (m_pcNormalAgentToTrack && un_step_number > 3000)
+    if (m_pcNormalAgentToTrack && un_step_number > CRMSTARTTIME)
     {
         unsigned int unToleraters = 0;
         unsigned int unAttackers  = 0;
-        m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers);
-        printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d", un_step_number, unToleraters, unAttackers);
+        unsigned int unUnConverged = 0;
+
+        m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unUnConverged);
+        printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, unconvg: %d", un_step_number, unToleraters, unAttackers, unUnConverged);
         printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
     }
 

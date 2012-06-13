@@ -4,9 +4,9 @@
 /******************************************************************************/
 /******************************************************************************/
 
-unsigned int CFeatureVector::NUMBER_OF_FEATURES        = 6;
+unsigned int CFeatureVector::NUMBER_OF_FEATURES        = 4;
 unsigned int CFeatureVector::NUMBER_OF_FEATURE_VECTORS = 0;
-double       CFeatureVector::FEATURE_RANGE             = 5.0;
+double       CFeatureVector::FEATURE_RANGE             = 6.0;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -20,7 +20,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     NUMBER_OF_FEATURE_VECTORS = 1 << NUMBER_OF_FEATURES;
 
     m_pfFeatureValues      = new float[m_unLength];
-    m_puLastOccuranceEvent = new unsigned int[m_unLength];
+    m_piLastOccuranceEvent = new int[m_unLength];
 
     //m_pfThresholds    = new float[m_unLength];
 
@@ -28,7 +28,12 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_fThresholdOnNumNbrs        = 4.9 ;
     m_fProcessedNumNeighbours    = 0.0;
 
-    m_unEventSelectionTimeWindow = 1500U;
+    m_iEventSelectionTimeWindow = 1500;
+
+    for(unsigned int i = 0; i < NUMBER_OF_FEATURES; i++)
+    {
+        m_piLastOccuranceEvent[i] = 0;
+    }
 }
 
 /******************************************************************************/
@@ -38,7 +43,7 @@ CFeatureVector::~CFeatureVector()
 {
     delete m_pfFeatureValues;
     //delete m_pfThresholds;
-    delete m_puLastOccuranceEvent;
+    delete m_piLastOccuranceEvent;
 }
 
 /******************************************************************************/
@@ -118,51 +123,51 @@ unsigned int CFeatureVector::SimulationStep()
 
 void CFeatureVector::ComputeFeatureValues()
 {
-    double dist_nbrsagents        = m_pcAgent->GetAverageDistanceToSurroundingAgents(FEATURE_RANGE, ROBOT);
-    double angle_velocity         = m_pcAgent->GetAngularVelocity();
-    double angle_acceleration     = m_pcAgent->GetAngularAcceleration();
-    //double linear_acceleration    = Vec2dLength((*m_pcAgent->GetAcceleration()));
+    double dist_nbrsagents, angle_acceleration, angle_velocity;
 
-    /*if(m_pcAgent->GetIdentification() == 25)
-        printf("\n Ang. vel. %f, ang. acc. %f", angle_velocity, angle_acceleration);*/
-
-    /*if(m_pcAgent->GetIdentification() == 25)
-        printf("\n m_fProcessedNumNeighbours=%f",m_fProcessedNumNeighbours);*/
+    dist_nbrsagents    = m_pcAgent->GetAverageDistanceToSurroundingAgents(FEATURE_RANGE, ROBOT);
+    angle_acceleration = m_pcAgent->GetAngularAcceleration();
+    angle_velocity     = m_pcAgent->GetAngularVelocity();
 
     m_fProcessedNumNeighbours = m_fLowPassFilterParameter * (float)m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT) + (1.0 - m_fLowPassFilterParameter) * m_fProcessedNumNeighbours;
 
-    m_pfFeatureValues[0] = m_fProcessedNumNeighbours >= m_fThresholdOnNumNbrs ? 1.0 : 0.0;
+    if(m_fProcessedNumNeighbours >= m_fThresholdOnNumNbrs)
+    {
+        m_pfFeatureValues[0] = 1.0;
+    }
+    else
+    {
+        m_pfFeatureValues[0] = 0.0;
+    }
 
-    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+    int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
     if(dist_nbrsagents <= 3.0 && angle_acceleration != 0.0)
     {
-        m_puLastOccuranceEvent[1] = CurrentStepNumber;
+        m_piLastOccuranceEvent[1] = CurrentStepNumber;
     }
 
     if(dist_nbrsagents >  3.0 && dist_nbrsagents < 6 && angle_acceleration != 0.0)
     {
-        m_puLastOccuranceEvent[2] = CurrentStepNumber;
+        m_piLastOccuranceEvent[2] = CurrentStepNumber;
     }
+
 
     if(dist_nbrsagents == 6.0 && angle_velocity != 0.0)
     {
-        m_puLastOccuranceEvent[3] = CurrentStepNumber;
+        m_piLastOccuranceEvent[3] = CurrentStepNumber;
     }
 
     for(unsigned int featureindex = 1; featureindex <=3; featureindex++)
     {
-        m_pfFeatureValues[featureindex] = ((CurrentStepNumber - m_puLastOccuranceEvent[featureindex]) <= m_unEventSelectionTimeWindow) ? 1.0 : 0.0;
+        if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
+        {
+            m_pfFeatureValues[featureindex] = 1.0;
+        }
+        else
+        {
+            m_pfFeatureValues[featureindex] =  0.0;
+        }
     }
-
-/*    if(linear_acceleration != 0.0)
-    {
-        m_pfFeatureValues[4] = 1.0;
-    }
-    else
-    {
-        m_pfFeatureValues[4] = 0.0;
-    }*/
-
 }
 
 /******************************************************************************/
