@@ -23,7 +23,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     m_fBitflipProbabililty    = pc_arguments->GetArgumentAsDoubleOr("bitflipprob", 0.0);
 
     //control at what distances agents can sense one another when FVs have to be communicated
-    m_fFVSenseRange               = pc_arguments->GetArgumentAsDoubleOr("fvsenserange", 10.0);
+    m_fFVSenseRange               = pc_arguments->GetArgumentAsDoubleOr("fvsenserange", 15.0);
 
     //at what distances agents are considered neighbors when the individual features are computed
     CFeatureVector::FEATURE_RANGE = pc_arguments->GetArgumentAsDoubleOr("featuresenserange", 6.0);
@@ -87,19 +87,18 @@ void CRobotAgent::SimulationStepUpdatePosition()
 
     // Update the T-cells of the CRM instance for this robot
     m_pcFeatureVector->SimulationStep();
-//    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-//    if (m_unIdentification == 1 && CurrentStepNumber > 3000U)
-//    {
-//        printf("\nFV for normal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
-//    }
-//    if (m_unIdentification == 25 && CurrentStepNumber > 3000U)
-//    {
-//        printf("\nFV for abnormal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
-//    }
+    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+    if (m_unIdentification == 1 && CurrentStepNumber > CRMSTARTTIME)
+    {
+        printf("\nFV for normal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
+    }
+    if (m_unIdentification == 25 && CurrentStepNumber > CRMSTARTTIME)
+    {
+        printf("\nFV for abnormal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
+    }
 
     Sense();
 
-    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
     if(CurrentStepNumber > CRMSTARTTIME)
     {
         crminAgent->SimulationStepUpdatePosition();
@@ -413,7 +412,6 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                         printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
                         unsigned int* FeatureVectorsSensed;
                         FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
-
                         for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
                         {
                             if(FeatureVectorsSensed[i] > 0.0)

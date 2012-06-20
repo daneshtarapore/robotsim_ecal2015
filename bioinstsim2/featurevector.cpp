@@ -16,7 +16,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_unValue  = 0;
     m_unLength = NUMBER_OF_FEATURES;
 
-    assert(NUMBER_OF_FEATURES == 4);
+    //assert(NUMBER_OF_FEATURES == 4);
     NUMBER_OF_FEATURE_VECTORS = 1 << NUMBER_OF_FEATURES;
 
     m_pfFeatureValues      = new float[m_unLength];
