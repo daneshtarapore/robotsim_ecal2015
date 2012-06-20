@@ -6,13 +6,13 @@
 #define TCELL_UPPERLIMIT_STEPSIZE 100000
 #define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
 
-#define CONJ_UPPERLIMIT_STEPSIZE 100000
+#define CONJ_UPPERLIMIT_STEPSIZE 10
 #define CONJ_LOWERLIMIT_STEPSIZE 1.0e-6
 
 #define ERRORALLOWED_TCELL_STEPSIZE 1.0e-2
 #define ERRORALLOWED_CONJ_STEPSIZE  1.0e-3
 
-#define INTEGRATION_TIME  1e+5
+#define INTEGRATION_TIME  1e+6
 
 #define TCELL_CONVERGENCE  0.01
 #define CONJ_CONVERGENCE   0.001
@@ -395,13 +395,19 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
             }
         }
 
+
         m_dconvergence_error = convergence_errormax;
-        if(m_dconvergence_error < TCELL_CONVERGENCE)
+
+	//printf("\n agent %d: m_dconvergence_error=%e,step_h=%f,slope=%e,integration time %f",
+	//                                 robotAgent->GetIdentification(),m_dconvergence_error,step_h,m_dconvergence_error/step_h,integration_t);
+        
+   if((m_dconvergence_error - TCELL_CONVERGENCE) <= 0.00001)
         {
             m_bConvergenceFlag = true;
             break;
         }
         integration_t += step_h;
+
     }
 
     //PrintCRMDetails(70);
@@ -506,7 +512,8 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
     double error = 1.0;
     unsigned long n_iteration = 0;
     bool b_prevdiff0occurance=false;
-    while(error >= CONJ_CONVERGENCE)
+    //while(error > CONJ_CONVERGENCE)
+    while((error - CONJ_CONVERGENCE) > 0.00001)
     {
         n_iteration++;
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
@@ -646,7 +653,7 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
         error = error_max;
 
 
-        //printf("\nConj.step=%f,error=%f",conjstep_h,error);
+        //printf("\nConj.step=%f,error=%e",conjstep_h,error);
     }
 
 
