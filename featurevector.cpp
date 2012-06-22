@@ -25,7 +25,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     //m_pfThresholds    = new float[m_unLength];
 
     m_fLowPassFilterParameter    = 0.01;
-    m_fThresholdOnNumNbrs        = 4.9 ;
+    m_fThresholdOnNumNbrs        = 4.99 ;
     m_fProcessedNumNeighbours    = 0.0;
 
     m_iEventSelectionTimeWindow = 1500;
@@ -129,6 +129,7 @@ void CFeatureVector::ComputeFeatureValues()
     angle_acceleration = m_pcAgent->GetAngularAcceleration();
     angle_velocity     = m_pcAgent->GetAngularVelocity();
 
+
     m_fProcessedNumNeighbours = m_fLowPassFilterParameter * (float)m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT) + (1.0 - m_fLowPassFilterParameter) * m_fProcessedNumNeighbours;
 
     if(m_fProcessedNumNeighbours >= m_fThresholdOnNumNbrs)
@@ -168,6 +169,19 @@ void CFeatureVector::ComputeFeatureValues()
             m_pfFeatureValues[featureindex] =  0.0;
         }
     }
+
+
+    if (m_pcAgent->GetIdentification() == 1 && CurrentStepNumber > CRMSTARTTIME)
+    {
+        printf("\nFV for normal agent %d: #NBRS %d, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f\n", m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),dist_nbrsagents,angle_acceleration,angle_velocity);
+    }
+
+    if (m_pcAgent->GetIdentification() == 25 && CurrentStepNumber > CRMSTARTTIME)
+    {
+        printf("\nFV for abnormal agent %d: #NBRS %d, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f\n", m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),dist_nbrsagents,angle_acceleration,angle_velocity);
+    }
+
+
 }
 
 /******************************************************************************/
