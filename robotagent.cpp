@@ -279,48 +279,87 @@ void CRobotAgent::Sense()
         m_punFeaturesSensed[i] = 0;
     }
 
-    TAgentListList tAgentListList;
-    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fFVSenseRange);
-    TAgentListListIterator i;
-    double fSenseRangeSquared = m_fFVSenseRange * m_fFVSenseRange;
+    TAgentVector tSortedAgents;
 
-    for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    SortAllAgentsAccordingToDistance(&tSortedAgents);
+
+    // 1-11 because agent at index 0 is ourselves:
+    for (int i = 1; i < 11; i++) 
     {
-        TAgentListIterator j;
-        for (j = (*i)->begin(); j != (*i)->end(); j++)
-        {
-            if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fSenseRangeSquared)
-            {
-                CRobotAgent* pcRobot = (CRobotAgent*) (*j);
+        CRobotAgent* pcRobot = (CRobotAgent*) tSortedAgents[i];
                 
-                // Apply noise:
-                unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
-                if (m_fBitflipProbabililty > 0.00001) 
+        // Apply noise:
+        unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
+        if (m_fBitflipProbabililty > 0.00001) 
+        {
+            
+            for (int k = 0; k < CFeatureVector::NUMBER_OF_FEATURES; k++) 
+            {
+                
+                if (Random::nextDouble() < m_fBitflipProbabililty)
                 {
-
-                    for (int k = 0; k < CFeatureVector::NUMBER_OF_FEATURES; k++) 
-                    {
-  
-                        if (Random::nextDouble() < m_fBitflipProbabililty)
-                        {
-                            unsigned int unBitToFlip = k;
-                            unFeatureVector ^= 1 << unBitToFlip;
-                        }
-                    }
-                }              
-
-//                unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-//                if(CurrentStepNumber > 3250U)
-//                if(this->m_unIdentification == 25U)
-//                    if (m_pbMostWantedList[unFeatureVector]) {
-//                        printf("Attacking agent number: %d. unFeatureVector: %d\n", (*j)->GetIdentification(),unFeatureVector);
-//                    }
-
-                m_punFeaturesSensed[unFeatureVector]++;
+                    unsigned int unBitToFlip = k;
+                    unFeatureVector ^= 1 << unBitToFlip;
+                }
             }
-        }
+        }              
+        
+        m_punFeaturesSensed[unFeatureVector]++;
     }
 }
+
+// OLD VERSION
+
+// oid CRobotAgent::Sense()
+// {
+
+//     for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
+//     {
+//         m_punFeaturesSensed[i] = 0;
+//     }
+
+//     TAgentListList tAgentListList;
+//     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fFVSenseRange);
+//     TAgentListListIterator i;
+//     double fSenseRangeSquared = m_fFVSenseRange * m_fFVSenseRange;
+
+//     for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+//     {
+//         TAgentListIterator j;
+//         for (j = (*i)->begin(); j != (*i)->end(); j++)
+//         {
+//             if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fSenseRangeSquared)
+//             {
+//                 CRobotAgent* pcRobot = (CRobotAgent*) (*j);
+                
+//                 // Apply noise:
+//                 unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
+//                 if (m_fBitflipProbabililty > 0.00001) 
+//                 {
+
+//                     for (int k = 0; k < CFeatureVector::NUMBER_OF_FEATURES; k++) 
+//                     {
+  
+//                         if (Random::nextDouble() < m_fBitflipProbabililty)
+//                         {
+//                             unsigned int unBitToFlip = k;
+//                             unFeatureVector ^= 1 << unBitToFlip;
+//                         }
+//                     }
+//                 }              
+
+// //                unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+// //                if(CurrentStepNumber > 3250U)
+// //                if(this->m_unIdentification == 25U)
+// //                    if (m_pbMostWantedList[unFeatureVector]) {
+// //                        printf("Attacking agent number: %d. unFeatureVector: %d\n", (*j)->GetIdentification(),unFeatureVector);
+// //                    }
+
+//                 m_punFeaturesSensed[unFeatureVector]++;
+//             }
+//         }
+//     }
+// }
 
 /******************************************************************************/
 /******************************************************************************/

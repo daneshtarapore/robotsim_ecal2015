@@ -2,6 +2,7 @@
 #include "simulator.h"
 #include "random.h"
 #include <math.h>
+#include <algorithm>
 
 /******************************************************************************/
 /******************************************************************************/
@@ -630,3 +631,27 @@ TVector2d CAgent::GetAverageAccelerationOfSurroundingAgents(double f_range, EAge
 /******************************************************************************/
 /******************************************************************************/
 
+bool CompareDistances (CAgent* a, CAgent* b) { return (a->m_fTempDistance < b->m_fTempDistance); }
+
+
+void CAgent::SortAllAgentsAccordingToDistance(TAgentVector* pt_result) 
+{
+    TAgentVector* ptAllAgents = CSimulator::GetInstance()->GetAllAgents();
+    pt_result->resize(ptAllAgents->size());
+    copy(ptAllAgents->begin(), ptAllAgents->end(), pt_result->begin());
+    
+    for (TAgentVectorIterator i = pt_result->begin(); i != pt_result->end(); i++)
+    {
+        if ((*i) == this)
+            (*i)->m_fTempDistance = 0.0;
+        else 
+        {
+            (*i)->m_fTempDistance = GetDistanceBetweenPositions(&m_tPosition, &((*i)->m_tPosition)); 
+        }
+    }
+
+    sort(pt_result->begin(), pt_result->end(), CompareDistances);       
+}
+
+/******************************************************************************/
+/******************************************************************************/
