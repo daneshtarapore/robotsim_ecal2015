@@ -102,7 +102,8 @@ public:
     
     virtual unsigned int GetIdentification();
 
-    bool    m_bTempWithInRange;
+    bool      m_bTempWithInRange;
+    double    m_fTempDistance;
 
     static double RADIUS;
         
@@ -119,6 +120,9 @@ public:
  
     virtual void SetRandomVelocity();    
     virtual void MoveTowards(TVector2d t_position, double f_max_speed);
+
+    virtual void SortAllAgentsAccordingToDistance(TAgentVector* pt_result);
+
 
 protected:
     TVector2d    m_tPosition;
