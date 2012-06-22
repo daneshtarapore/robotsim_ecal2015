@@ -377,7 +377,9 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         TAgentListIterator j;
         for (j = (*i)->begin(); j != (*i)->end(); j++)
         {
-            if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared)
+            if ((*j)->GetType() == ROBOT && 
+                GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared && 
+                (*j) != this)
             {
                 CRMinRobotAgent* tmp_crm = ((CRobotAgent*) (*j))->GetCRMinRobotAgent();
                 if (((CRobotAgent*) (*j))->Attack(m_pcFeatureVector))
