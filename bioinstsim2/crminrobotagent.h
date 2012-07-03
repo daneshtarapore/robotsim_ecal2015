@@ -105,7 +105,8 @@ protected:
     //unsigned int*  m_punFeaturesSensed;
     double*        m_pfAPCs;
 
-        // predicted number of cells at time t+step with Euler method
+
+    // predicted number of cells at time t+step with Euler method
     double* m_pfEffectors_Eu;
     double* m_pfRegulators_Eu;
     // predicted number of cells at time t+step with Huen method
@@ -117,6 +118,12 @@ protected:
     double* m_pfDeltaEffectors_k1;
     double* m_pfDeltaRegulators_k1;
 
+
+    // for the computation of conjugates in QSS
+    double** m_pfDeltaConjugates_k0;
+    double** m_pfDeltaConjugates_k1;
+    double** m_pfConj_tmp_Eu;
+    double** m_pfConj_tmp_Hu;
 
 
     unsigned int   m_unNumberOfReceptors;
@@ -139,7 +146,7 @@ protected:
 
     double          m_fcross_affinity; /* the level of cross affinity*/
 
-    int*            m_pbAttack; // 0: No state 1: Attack 2: Tolerate
+    //int*            m_pbAttack; // 0: No state 1: Attack 2: Tolerate
 
     double          m_fWeight;
 

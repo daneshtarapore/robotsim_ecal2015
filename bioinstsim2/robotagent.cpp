@@ -23,12 +23,13 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     m_fBitflipProbabililty    = pc_arguments->GetArgumentAsDoubleOr("bitflipprob", 0.0);
 
     //control at what distances agents can sense one another when FVs have to be communicated
-    m_fFVSenseRange               = pc_arguments->GetArgumentAsDoubleOr("fvsenserange", 15.0);
+    m_fFVSenseRange               = pc_arguments->GetArgumentAsDoubleOr("fvsenserange", 10.0);
 
     //at what distances agents are considered neighbors when the individual features are computed
     CFeatureVector::FEATURE_RANGE = pc_arguments->GetArgumentAsDoubleOr("featuresenserange", 6.0);
 
     m_fResponseRange              = pc_arguments->GetArgumentAsDoubleOr("responserange", m_fFVSenseRange);
+    m_uSelectedNumNearestNbrs     = pc_arguments->GetArgumentAsIntOr("selectnumnearestnbrs", 10);
 
 
     if (pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
@@ -36,19 +37,22 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
         printf("bitflipprob=#.#               Probability of flipping each bit in sensed feature vectors [%2.5f]\n"
                "fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
                "featuresenserange=#.#         Range based on which features are computed  [%f]\n"
-               "responserange=#.#             Range at which a robot \"reponds\" to other features [%f]\n",
+               "responserange=#.#             Range at which a robot \"reponds\" to other features [%f]\n"
+               "selectnumnearestnbrs=#        The number of nearest neighbours for FV sensing and T-cell diffusion (makes fvsenserange redundant) [%d]\n"
+               ,
                m_fBitflipProbabililty,
                m_fFVSenseRange,
                CFeatureVector::FEATURE_RANGE,
-               m_fResponseRange
+               m_fResponseRange,
+               m_uSelectedNumNearestNbrs
             );
     }
 
-    m_pbMostWantedList = new bool[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
+    m_pbMostWantedList = new unsigned int[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
 
     for (unsigned int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
     {
-        m_pbMostWantedList[i] = false;
+        m_pbMostWantedList[i] = 0;
     }       
 }
 
@@ -92,12 +96,12 @@ void CRobotAgent::SimulationStepUpdatePosition()
     {
         printf("\nFV for normal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
-    if (m_unIdentification == 25 && CurrentStepNumber > CRMSTARTTIME)
+    if (m_unIdentification == 15 && CurrentStepNumber > CRMSTARTTIME)
     {
         printf("\nFV for abnormal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
 
-    Sense();
+    Sense(GetSelectedNumNearestNbrs());
 
     if(CurrentStepNumber > CRMSTARTTIME)
     {
@@ -240,6 +244,43 @@ double CRobotAgent::CountWeightsInAgentListList(TAgentListList* ptlist_agent_lis
 /******************************************************************************/
 /******************************************************************************/
 
+CRobotAgent* CRobotAgent::GetRandomRobotWithWeights(unsigned int u_nearestnbrs)
+{
+    TAgentVector tSortedAgents;
+
+    SortAllAgentsAccordingToDistance(&tSortedAgents);
+
+    double fWeightSum = 0;
+    // 1-11 if u_nearestnbrs is 10, because agent at index 0 is ourselves:
+    for (int i = 1; i < u_nearestnbrs+1; i++)
+    {
+        CRobotAgent* pcRobot = (CRobotAgent*) tSortedAgents[i];
+        fWeightSum += pcRobot->GetWeight();
+    }
+
+    if (fWeightSum < 1e-10)
+    {
+        return NULL;
+    }
+    double fSelectedWeight  = Random::nextDouble() * fWeightSum;
+    CAgent* pcAgentSelected  = NULL;
+    for (int i = 1; i < u_nearestnbrs+1; i++)
+    {
+        CRobotAgent* pcRobot = (CRobotAgent*) tSortedAgents[i];
+        fSelectedWeight -= pcRobot->GetWeight();
+
+        if(fSelectedWeight <= 0.0)
+        {
+            pcAgentSelected = pcRobot;
+            break;
+        }
+    }
+    return (CRobotAgent*) pcAgentSelected;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 CRMinRobotAgent* CRobotAgent::GetCRMinRobotAgent()
 {
     return crminAgent;
@@ -272,7 +313,15 @@ double CRobotAgent::GetFVSenseRange() const
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgent::Sense()
+unsigned int CRobotAgent::GetSelectedNumNearestNbrs()
+{
+    return m_uSelectedNumNearestNbrs;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CRobotAgent::Sense(unsigned int u_nearestnbrs)
 {
     for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
     {
@@ -284,7 +333,7 @@ void CRobotAgent::Sense()
     SortAllAgentsAccordingToDistance(&tSortedAgents);
 
     // 1-11 because agent at index 0 is ourselves:
-    for (int i = 1; i < 11; i++) 
+    for (int i = 1; i < u_nearestnbrs+1; i++)
     {
         CRobotAgent* pcRobot = (CRobotAgent*) tSortedAgents[i];
                 
@@ -310,7 +359,7 @@ void CRobotAgent::Sense()
 
 // OLD VERSION
 
-// oid CRobotAgent::Sense()
+// void CRobotAgent::Sense()
 // {
 
 //     for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
@@ -369,7 +418,7 @@ unsigned int CRobotAgent::GetColor()
     //return m_unIdentification == TRACKAGENT ? GREEN : RED;
     if(m_unIdentification == 1)
         return GREEN;
-    else if (m_unIdentification == 25)
+    else if (m_unIdentification == 15)
         return RED;
     else
         return BLUE;
@@ -391,7 +440,7 @@ void CRobotAgent::SetBehaviors(TBehaviorVector vec_behaviors)
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, bool state)
+void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, unsigned int state)
 {
     m_pbMostWantedList[unFeatureVector] = state;
 }
@@ -405,82 +454,176 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
     (*pun_number_of_attackers)   = 0;
     (*pun_number_of_unconverged) = 0;
 
-    TAgentListList tAgentListList;
-    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fResponseRange);
-    TAgentListListIterator i;
-    double fResponseRangeSquared = m_fResponseRange * m_fResponseRange;
 
+    TAgentVector tSortedAgents;
+
+    SortAllAgentsAccordingToDistance(&tSortedAgents);
+
+    // 1-11 because agent at index 0 is ourselves:
     bool m_battackeragentlog=true,m_btolerateragentlog=true;
-    for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    for (unsigned int nbrs = 1; nbrs < m_uSelectedNumNearestNbrs+1; nbrs++)
     {
-        TAgentListIterator j;
-        for (j = (*i)->begin(); j != (*i)->end(); j++)
+        CRobotAgent* pcRobot     = (CRobotAgent*) tSortedAgents[nbrs];
+        CRMinRobotAgent* tmp_crm = pcRobot->GetCRMinRobotAgent();
+        unsigned int fv_status   = pcRobot->Attack(m_pcFeatureVector);
+        if (fv_status == 1)
         {
-            if ((*j)->GetType() == ROBOT && 
-                GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared && 
-                (*j) != this)
+            (*pun_number_of_attackers)++;
+
+            if(m_battackeragentlog)
             {
-                CRMinRobotAgent* tmp_crm = ((CRobotAgent*) (*j))->GetCRMinRobotAgent();
-                if (((CRobotAgent*) (*j))->Attack(m_pcFeatureVector))
+                printf("\nAn attacker agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
+                unsigned int* FeatureVectorsSensed;
+                FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
+
+                for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
                 {
-                    (*pun_number_of_attackers)++;
-
-                    if(m_battackeragentlog)
+                    if(FeatureVectorsSensed[fv] > 0.0)
                     {
-                        printf("\nAn attacker agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
-                        unsigned int* FeatureVectorsSensed;
-                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
-
-                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-                        {
-                            if(FeatureVectorsSensed[i] > 0.0)
-                            {
-                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
-                                       tmp_crm->GetAPC(i),
-                                       tmp_crm->GetCurrE(i),
-                                       tmp_crm->GetCurrR(i));
-                            }
-                        }
-                        m_battackeragentlog = false;
-                    }
-                }
-                else
-                {
-                    (*pun_number_of_toleraters)++;
-
-                    if(m_btolerateragentlog)
-                    {
-                        printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
-                        unsigned int* FeatureVectorsSensed;
-                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
-                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-                        {
-                            if(FeatureVectorsSensed[i] > 0.0)
-                            {
-                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
-                                       tmp_crm->GetAPC(i),
-                                       tmp_crm->GetCurrE(i),
-                                       tmp_crm->GetCurrR(i));
-                            }
-                        }
-                        m_btolerateragentlog = false;
+                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f   ",
+                               fv,
+                               tmp_crm->GetAPC(fv),
+                               fv,
+                               tmp_crm->GetCurrE(fv),
+                               fv,
+                               tmp_crm->GetCurrR(fv));
                     }
                 }
 
-                if (!tmp_crm->GetConvergenceFlag())
+                if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
                 {
-                    (*pun_number_of_unconverged)++;
+                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f   ",
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()));
                 }
-
+                m_battackeragentlog = false;
             }
         }
+        else if(fv_status == 2)
+        {
+            (*pun_number_of_toleraters)++;
+
+            if(m_btolerateragentlog)
+            {
+                printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
+                unsigned int* FeatureVectorsSensed;
+                FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
+                for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
+                {
+                    if(FeatureVectorsSensed[fv] > 0.0)
+                    {
+                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f   ",
+                               fv,
+                               tmp_crm->GetAPC(fv),
+                               fv,
+                               tmp_crm->GetCurrE(fv),
+                               fv,
+                               tmp_crm->GetCurrR(fv));
+                    }
+                }
+
+                if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
+                {
+                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f   ",
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()));
+                }
+                m_btolerateragentlog = false;
+            }
+        }
+
+        if (!tmp_crm->GetConvergenceFlag())
+        {
+            (*pun_number_of_unconverged)++;
+        }
     }
+
+
+//    TAgentListList tAgentListList;
+//    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fResponseRange);
+//    TAgentListListIterator i;
+//    double fResponseRangeSquared = m_fResponseRange * m_fResponseRange;
+
+//    bool m_battackeragentlog=true,m_btolerateragentlog=true;
+//    for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+//    {
+//        TAgentListIterator j;
+//        for (j = (*i)->begin(); j != (*i)->end(); j++)
+//        {
+//            if ((*j)->GetType() == ROBOT &&
+//                GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared &&
+//                (*j) != this)
+//            {
+//                CRMinRobotAgent* tmp_crm = ((CRobotAgent*) (*j))->GetCRMinRobotAgent();
+//                unsigned int fv_status = ((CRobotAgent*) (*j))->Attack(m_pcFeatureVector);
+//                if (fv_status == 1)
+//                {
+//                    (*pun_number_of_attackers)++;
+
+//                    if(m_battackeragentlog)
+//                    {
+//                        printf("\nAn attacker agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
+//                        unsigned int* FeatureVectorsSensed;
+//                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
+
+//                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
+//                        {
+//                            if(FeatureVectorsSensed[i] > 0.0)
+//                            {
+//                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
+//                                       tmp_crm->GetAPC(i),
+//                                       tmp_crm->GetCurrE(i),
+//                                       tmp_crm->GetCurrR(i));
+//                            }
+//                        }
+//                        m_battackeragentlog = false;
+//                    }
+//                }
+//                else if(fv_status == 2)
+//                {
+//                    (*pun_number_of_toleraters)++;
+
+//                    if(m_btolerateragentlog)
+//                    {
+//                        printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
+//                        unsigned int* FeatureVectorsSensed;
+//                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
+//                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
+//                        {
+//                            if(FeatureVectorsSensed[i] > 0.0)
+//                            {
+//                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
+//                                       tmp_crm->GetAPC(i),
+//                                       tmp_crm->GetCurrE(i),
+//                                       tmp_crm->GetCurrR(i));
+//                            }
+//                        }
+//                        m_btolerateragentlog = false;
+//                    }
+//                }
+
+//                if (!tmp_crm->GetConvergenceFlag())
+//                {
+//                    (*pun_number_of_unconverged)++;
+//                }
+
+//            }
+//        }
+//    }
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-bool CRobotAgent::Attack(CFeatureVector* pc_feature_vector)
+unsigned int CRobotAgent::Attack(CFeatureVector* pc_feature_vector)
 {
     return m_pbMostWantedList[pc_feature_vector->GetValue()];
 }
