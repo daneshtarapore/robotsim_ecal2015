@@ -41,7 +41,8 @@ protected:
     float        m_fLowPassFilterParameter;
     float        m_fThresholdOnNumNbrs;
     float        m_fProcessedNumNeighbours;
-    int          m_iEventSelectionTimeWindow;
+    int          m_iEventSelectionTimeWindow1;
+    int          m_iEventSelectionTimeWindow2;
 };
 
 /******************************************************************************/

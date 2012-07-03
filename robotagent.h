@@ -41,20 +41,22 @@ public:
     virtual unsigned int* GetFeaturesSensed() const;
 
     virtual CRobotAgent* GetRandomRobotWithWeights(double f_range);
+    virtual CRobotAgent* GetRandomRobotWithWeights(unsigned int u_nearestnbrs);
 
     virtual CRMinRobotAgent* GetCRMinRobotAgent();
     virtual void   SetWeight(double f_weight);
     virtual double GetWeight() const; 
     virtual const CFeatureVector* GetFeatureVector() const;
-    virtual void Sense();
+    virtual void Sense(unsigned int u_nearestnbrs);
     virtual double GetFVSenseRange() const;
     virtual unsigned int GetColor();
+    virtual unsigned int GetSelectedNumNearestNbrs();
 
-    virtual void SetMostWantedList(unsigned unFeatureVector, bool state);
+    virtual void SetMostWantedList(unsigned unFeatureVector, unsigned int state);
     
     virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged);
 
-    virtual bool Attack(CFeatureVector* pc_feature_vector); 
+    virtual unsigned int Attack(CFeatureVector* pc_feature_vector);
 
 protected:
     virtual double CountWeightsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range);
@@ -66,8 +68,9 @@ protected:
     double              m_fWeight;
     unsigned int*       m_punFeaturesSensed;
     double              m_fBitflipProbabililty;
-    bool*               m_pbMostWantedList;
+    unsigned int*       m_pbMostWantedList;
     double              m_fResponseRange;
+    unsigned int        m_uSelectedNumNearestNbrs;
 
 };
 
