@@ -4,7 +4,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-unsigned int CFeatureVector::NUMBER_OF_FEATURES        = 4;
+unsigned int CFeatureVector::NUMBER_OF_FEATURES        = 5;
 unsigned int CFeatureVector::NUMBER_OF_FEATURE_VECTORS = 0;
 double       CFeatureVector::FEATURE_RANGE             = 6.0;
 
@@ -35,9 +35,6 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     {
         m_piLastOccuranceEvent[i] = 0;
     }
-
-    printf(" m_iEventSelectionTimeWindow1 = %d, m_iEventSelectionTimeWindow2 = %d;",
-           m_iEventSelectionTimeWindow1, m_iEventSelectionTimeWindow2);
 }
 
 /******************************************************************************/
@@ -164,7 +161,7 @@ void CFeatureVector::ComputeFeatureValues()
             m_piLastOccuranceEvent[2] = CurrentStepNumber;
         }
 
-        if(dist_nbrsagents == 6.0 && angle_velocity != 0.0)
+        if(dist_nbrsagents == 6.0 && angle_acceleration != 0.0)
         {
             m_piLastOccuranceEvent[3] = CurrentStepNumber;
         }
@@ -239,7 +236,7 @@ void CFeatureVector::ComputeFeatureValues()
             m_piLastOccuranceEvent[2] = CurrentStepNumber;
         }
 
-        if(dist_nbrsagents == 6.0 && angle_velocity != 0.0)
+        if(dist_nbrsagents == 6.0 && angle_acceleration != 0.0)
         {
             m_piLastOccuranceEvent[3] = CurrentStepNumber;
         }
@@ -315,6 +312,20 @@ std::string CFeatureVector::ToString()
                          "nbrs: %f - "
                          "TW1500_dist0to3_angacc: %1.1f - "
                          "TW1500_dist3to6_angacc: %1.1f - "
+                         "TW1500_dist6_angvelocity: %1.1f - fv: %u",
+
+                m_pfFeatureValues[0],
+                m_pfFeatureValues[1],
+                m_pfFeatureValues[2],
+                m_pfFeatureValues[3],
+                m_unValue);
+    }
+    else if(CFeatureVector::NUMBER_OF_FEATURES == 5)
+    {
+        sprintf(pchTemp, "Values - "
+                         "nbrs: %f - "
+                         "TW1500_dist0to2_angacc: %1.1f - "
+                         "TW1500_dist2to4_angacc: %1.1f - "
                          "TW1500_dist6_angvelocity: %1.1f - fv: %u",
 
                 m_pfFeatureValues[0],
