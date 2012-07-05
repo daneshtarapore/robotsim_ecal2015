@@ -76,6 +76,14 @@ extern double GetSquaredDistanceBetweenPositions(const TVector2d* pt_pos1, const
 #define NormalizeAngleNegativePIPositivePI(ang) \
   (NormalizeAngle(ang) > M_PI ? NormalizeAngle(ang) - 2*M_PI : NormalizeAngle(ang))
 
+// Rotate a vector:
+#define Vec2dRotate(angle, vec)                         \
+  {                                                     \
+     double xt_ = vec.x;                                 \
+     vec.x = cos(angle) * vec.x - sin(angle) * vec.y;   \
+     vec.y = cos(angle) * vec.y + sin(angle) * xt_;     \
+  }
+
 
 
 #define PI 3.14159265

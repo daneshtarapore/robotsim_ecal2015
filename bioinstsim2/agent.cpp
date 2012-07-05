@@ -42,14 +42,22 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
 
     static bool bHelpDisplayed = false;
 
+
+    m_fProportionalDirectionNoise = pc_arguments->GetArgumentAsDoubleOr("dirnoise", 0.01);
+    m_fProportionalMagnitudeNoise = pc_arguments->GetArgumentAsDoubleOr("magnoise", 0.01); 
+
     if (pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed) 
     {
         printf("Agent help:\n"
                "  controller=[RANDOMWALK,RANDOMBOUNCE,REGULARBOUNCE]\n"
                "  maxspeed=#.#             Max speed of the agents per time-step [%f]\n"
-               "  recruitment_range=#.#    Max physical distance for recruitment only [%f]\n",
+               "  recruitment_range=#.#    Max physical distance for recruitment only [%f]\n"
+               "  dirnoise=#.#             Proportional direction noise (in degrees) on velocity [%f]\n" 
+               "  magnoise=#.#             Proportional magnitude noise on velocity [%f]\n",
                m_fMaximumSpeed,
-               m_fMaximumPhysicalRange_Recruitment);
+               m_fMaximumPhysicalRange_Recruitment,
+               m_fProportionalDirectionNoise,
+               m_fProportionalMagnitudeNoise);
         bHelpDisplayed = true;
     }
 
@@ -161,10 +169,8 @@ void CAgent::SimulationStep(unsigned int un_step_number)
 			m_tAngularVelocity = M_PI;
 		else
 			exit(-1);
-
 	}
 	
-
     m_tAngularAcceleration = m_tAngularVelocity - tTempAngVelocity;
 }
 
@@ -173,6 +179,26 @@ void CAgent::SimulationStep(unsigned int un_step_number)
 
 void CAgent::SimulationStepUpdatePosition()
 {
+    double fSpeed      = Vec2dLength(m_tVelocity);
+    double fSpeedRatio = fSpeed / m_fMaximumSpeed;
+    
+    if (fSpeedRatio > EPSILON && m_fProportionalDirectionNoise > EPSILON)
+    {
+        double fAngle = 360.0 * m_fProportionalDirectionNoise / (M_PI * 2.0) * fSpeedRatio * Random::nextNormGaussian();        
+        Vec2dRotate(fAngle, m_tVelocity);
+    }
+
+    if (fSpeedRatio > EPSILON && m_fProportionalMagnitudeNoise > EPSILON)
+    {
+        double fMagnitude = 1.0 + m_fProportionalMagnitudeNoise * fSpeedRatio * Random::nextNormGaussian();        
+        if (fSpeed * fMagnitude > m_fMaximumSpeed)
+        {
+            fMagnitude = 1.0;
+        }
+        
+        Vec2dMultiplyScalar(m_tVelocity, fMagnitude);
+    }
+
     TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x, 
                                m_tPosition.y + m_tVelocity.y  };
 

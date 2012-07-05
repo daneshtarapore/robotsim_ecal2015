@@ -142,6 +142,9 @@ protected:
     unsigned int       m_unIdentification;
     unsigned int       m_unColor;
 
+    double             m_fProportionalDirectionNoise; 
+    double             m_fProportionalMagnitudeNoise; 
+
     CArguments*        m_pcArguments;
 };
 
