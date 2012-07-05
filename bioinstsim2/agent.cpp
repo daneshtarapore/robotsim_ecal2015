@@ -43,8 +43,8 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
     static bool bHelpDisplayed = false;
 
 
-    m_fProportionalDirectionNoise = pc_arguments->GetArgumentAsDoubleOr("dirnoise", 0.01);
-    m_fProportionalMagnitudeNoise = pc_arguments->GetArgumentAsDoubleOr("magnoise", 0.01); 
+    m_fProportionalDirectionNoise = pc_arguments->GetArgumentAsDoubleOr("dirnoise", 0);
+    m_fProportionalMagnitudeNoise = pc_arguments->GetArgumentAsDoubleOr("magnoise", 0); 
 
     if (pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed) 
     {
@@ -184,7 +184,9 @@ void CAgent::SimulationStepUpdatePosition()
     
     if (fSpeedRatio > EPSILON && m_fProportionalDirectionNoise > EPSILON)
     {
-        double fAngle = 360.0 * m_fProportionalDirectionNoise / (M_PI * 2.0) * fSpeedRatio * Random::nextNormGaussian();        
+        double fAngle = m_fProportionalDirectionNoise / 360 * (M_PI * 2.0) * fSpeedRatio * Random::nextNormGaussian();        
+        printf("angle noise: %f\n", fAngle);
+
         Vec2dRotate(fAngle, m_tVelocity);
     }
 
