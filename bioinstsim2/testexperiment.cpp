@@ -71,6 +71,7 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
 
     m_unNormalAgentToTrack   = pc_experiment_arguments->GetArgumentAsIntOr("tracknormalagent", 0);
     m_unAbnormalAgentToTrack = pc_experiment_arguments->GetArgumentAsIntOr("trackabnormalagent",15);
+    m_unNumAbnormalAgents    = pc_experiment_arguments->GetArgumentAsIntOr("numabnormalagents",1);
 
 
     if (pc_experiment_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
@@ -102,11 +103,15 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
         printf("misbehavestep=#     Step when agent starts misbehaving [%d]\n",m_unMisbehaveStep);
         printf("tracknormalagent=#    Id of normal agent to track [%d]\n",  m_unNormalAgentToTrack);
         printf("trackabnormalagent=#  Id of abnormal agent to track [%d]\n",m_unAbnormalAgentToTrack);
+        printf("numabnormalagents=#  Number of abnormal agents [%d]\n",m_unNumAbnormalAgents);
 
         bHelpDisplayed = true;
     }
 
-    m_pcMisbehaveAgent     = NULL;
+    for(int i = 0; i < 20; i++)
+    {
+        m_pcMisbehaveAgent[i]     = NULL;
+    }
     m_pcNormalAgentToTrack = NULL;
 }
 
@@ -209,11 +214,15 @@ CAgent* CTestExperiment::CreateAgent()
 
     CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcCRMArguments, vecBehaviors);
 
-    if ((id - 1) == m_unAbnormalAgentToTrack)
+    for(int i = 0; i < m_unNumAbnormalAgents; i++)
     {
-        m_pcMisbehaveAgent = (CRobotAgent*) pcAgent;
-    } 
-    else if ((id - 1) == m_unNormalAgentToTrack) 
+        if ((id - 1 + i) == m_unAbnormalAgentToTrack)
+        {
+            m_pcMisbehaveAgent[i] = (CRobotAgent*) pcAgent;
+        }
+    }
+
+    if ((id - 1) == m_unNormalAgentToTrack)
     {
         m_pcNormalAgentToTrack = (CRobotAgent*) pcAgent;
     }
@@ -237,15 +246,15 @@ CAgent* CTestExperiment::CreateAgent()
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
-    if (m_pcMisbehaveAgent && un_step_number > CRMSTARTTIME)
+    if (m_pcMisbehaveAgent[0] && un_step_number > CRMSTARTTIME)
     {
         unsigned int unToleraters  = 0;
         unsigned int unAttackers   = 0;
         unsigned int unUnConverged = 0;
 
-        m_pcMisbehaveAgent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unUnConverged);
+        m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unUnConverged);
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, unconvg: %d", un_step_number, unToleraters, unAttackers, unUnConverged);
-        printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent->GetFeatureVector()->GetValue());
+        printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
     }
 
     if (m_pcNormalAgentToTrack && un_step_number > CRMSTARTTIME)
@@ -262,33 +271,37 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
     if (un_step_number == m_unMisbehaveStep)
     {
-        vector<CBehavior*> vecBehaviors;
-        if(m_eerrorbehavType == STRAIGHTLINE)
+        for(int i = 0; i < m_unNumAbnormalAgents; i++)
         {
-            CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.0);
-            vecBehaviors.push_back(pcRandomWalkBehavior);
+            vector<CBehavior*> vecBehaviors;
+            if(m_eerrorbehavType == STRAIGHTLINE)
+            {
+                CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.0);
+                vecBehaviors.push_back(pcRandomWalkBehavior);
+            }
+            else if(m_eerrorbehavType == RANDOMWK)
+            {
+                CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+                vecBehaviors.push_back(pcRandomWalkBehavior);
+            }
+            else if(m_eerrorbehavType == CIRCLE)
+            {
+                CCircleBehavior* pcCircleBehavior = new CCircleBehavior();
+                vecBehaviors.push_back(pcCircleBehavior);
+            }
+            else if(m_eerrorbehavType == STOP)
+            {
+                CStopBehavior* pcStopBehavior = new CStopBehavior();
+                vecBehaviors.push_back(pcStopBehavior);
+            }
+            else
+            {
+                printf("\n No error behavior");
+                exit(-1);
+            }
+
+            m_pcMisbehaveAgent[i]->SetBehaviors(vecBehaviors);
         }
-        else if(m_eerrorbehavType == RANDOMWK)
-        {
-            CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-            vecBehaviors.push_back(pcRandomWalkBehavior);
-        }
-        else if(m_eerrorbehavType == CIRCLE)
-        {
-            CCircleBehavior* pcCircleBehavior = new CCircleBehavior();
-            vecBehaviors.push_back(pcCircleBehavior);
-        }
-        else if(m_eerrorbehavType == STOP)
-        {
-            CStopBehavior* pcStopBehavior = new CStopBehavior();
-            vecBehaviors.push_back(pcStopBehavior);
-        }
-        else
-        {
-            printf("\n No error behavior");
-            exit(-1);
-        }
-        m_pcMisbehaveAgent->SetBehaviors(vecBehaviors);        
     }
 }
 

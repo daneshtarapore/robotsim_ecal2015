@@ -62,6 +62,10 @@ public:
 
     virtual void SimulationStepUpdatePosition();
 
+    double* m_pfSumEffectorsWeightedbyAffinity;
+    double* m_pfSumRegulatorsWeightedbyAffinity;
+
+
 protected:
 
     CRobotAgent* robotAgent;
@@ -117,7 +121,6 @@ protected:
     double* m_pfDeltaRegulators_k0;
     double* m_pfDeltaEffectors_k1;
     double* m_pfDeltaRegulators_k1;
-
 
     // for the computation of conjugates in QSS
     double** m_pfDeltaConjugates_k0;

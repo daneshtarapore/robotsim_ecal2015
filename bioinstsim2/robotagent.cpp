@@ -92,11 +92,11 @@ void CRobotAgent::SimulationStepUpdatePosition()
     // Update the T-cells of the CRM instance for this robot
     m_pcFeatureVector->SimulationStep();
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-    if (m_unIdentification == 1 && CurrentStepNumber > CRMSTARTTIME)
+    if (m_unIdentification == 1)// && CurrentStepNumber > CRMSTARTTIME)
     {
         printf("\nFV for normal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
-    if (m_unIdentification == 15 && CurrentStepNumber > CRMSTARTTIME)
+    if (m_unIdentification == 15)// && CurrentStepNumber > CRMSTARTTIME)
     {
         printf("\nFV for abnormal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
@@ -480,25 +480,29 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                 {
                     if(FeatureVectorsSensed[fv] > 0.0)
                     {
-                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f   ",
+                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
                                fv,
                                tmp_crm->GetAPC(fv),
                                fv,
                                tmp_crm->GetCurrE(fv),
                                fv,
-                               tmp_crm->GetCurrR(fv));
+                               tmp_crm->GetCurrR(fv),
+                               tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv],
+                               tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv]);
                     }
                 }
 
                 if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
                 {
-                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f   ",
+                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
                            m_pcFeatureVector->GetValue(),
                            tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
                            m_pcFeatureVector->GetValue(),
                            tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
                            m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()));
+                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()),
+                           tmp_crm->m_pfSumEffectorsWeightedbyAffinity[m_pcFeatureVector->GetValue()],
+                           tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[m_pcFeatureVector->GetValue()]);
                 }
                 m_battackeragentlog = false;
             }
@@ -516,25 +520,29 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                 {
                     if(FeatureVectorsSensed[fv] > 0.0)
                     {
-                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f   ",
+                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
                                fv,
                                tmp_crm->GetAPC(fv),
                                fv,
                                tmp_crm->GetCurrE(fv),
                                fv,
-                               tmp_crm->GetCurrR(fv));
+                               tmp_crm->GetCurrR(fv),
+                               tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv],
+                               tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv]);
                     }
                 }
 
                 if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
                 {
-                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f   ",
+                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
                            m_pcFeatureVector->GetValue(),
                            tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
                            m_pcFeatureVector->GetValue(),
                            tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
                            m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()));
+                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()),
+                           tmp_crm->m_pfSumEffectorsWeightedbyAffinity[m_pcFeatureVector->GetValue()],
+                           tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[m_pcFeatureVector->GetValue()]);
                 }
                 m_btolerateragentlog = false;
             }
