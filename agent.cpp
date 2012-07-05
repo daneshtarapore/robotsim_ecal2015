@@ -185,7 +185,6 @@ void CAgent::SimulationStepUpdatePosition()
     if (fSpeedRatio > EPSILON && m_fProportionalDirectionNoise > EPSILON)
     {
         double fAngle = m_fProportionalDirectionNoise / 360 * (M_PI * 2.0) * fSpeedRatio * Random::nextNormGaussian();        
-        printf("angle noise: %f\n", fAngle);
 
         Vec2dRotate(fAngle, m_tVelocity);
     }
