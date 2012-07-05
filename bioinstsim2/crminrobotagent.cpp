@@ -3,7 +3,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#define TCELL_UPPERLIMIT_STEPSIZE 10000
+#define TCELL_UPPERLIMIT_STEPSIZE 500000
 #define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
 
 #define CONJ_UPPERLIMIT_STEPSIZE 10
@@ -299,9 +299,13 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     // Convert the number of feature vectors from robot agents in the vicinity to APCs for the CRM
     Sense();
 
-    int selectedclonaltype = Random::nextInt(m_unNumberOfReceptors);
-    m_pfEffectors[selectedclonaltype]  += 10.0;
-    m_pfRegulators[selectedclonaltype] += 10.0;
+    int selectedclonaltype;// = Random::nextInt(m_unNumberOfReceptors);
+
+    for(selectedclonaltype=0;selectedclonaltype<m_unNumberOfReceptors;selectedclonaltype++)
+	{
+ 	   m_pfEffectors[selectedclonaltype]  += 10.0;
+	   m_pfRegulators[selectedclonaltype] += 10.0;
+	}
 
 
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
@@ -487,7 +491,7 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     //CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights(2.0*robotAgent->GetFVSenseRange());
 
     // could we also select the robot from one of the 10 nearest neighbours - but in these expts. comm does not seem to be needed
-    CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights(robotAgent->GetSelectedNumNearestNbrs());
+    CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights((unsigned int)((double)robotAgent->GetSelectedNumNearestNbrs()*1.2));
 
     if (pcRemoteRobotAgent != NULL)
     {

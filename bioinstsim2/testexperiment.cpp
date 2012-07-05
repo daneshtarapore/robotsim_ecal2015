@@ -196,7 +196,7 @@ CAgent* CTestExperiment::CreateAgent()
         vecBehaviors.push_back(pcDisperseBehavior);
         CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3); //10
         vecBehaviors.push_back(pcFlockBehavior);
-        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
+        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(5);
         vecBehaviors.push_back(pcAggregateBehavior);
 
         CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
