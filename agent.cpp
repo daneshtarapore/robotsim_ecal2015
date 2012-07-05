@@ -147,6 +147,23 @@ void CAgent::SimulationStep(unsigned int un_step_number)
     else
         m_tAngularVelocity = 0.0;
 
+   if(std::isnan(m_tAngularVelocity))
+	{
+		printf("\n Vector lengths: %f,%f",Vec2dLength(tTemp),Vec2dLength(m_tVelocity));
+		printf("\n vector1: [%f,%f]",tTemp.x,tTemp.y);
+		printf("\n vector2: [%f,%f]",m_tVelocity.x,m_tVelocity.y);
+
+		printf("\n cosangle: %e",Vec2dCosAngle(tTemp,m_tVelocity));
+
+		if(Vec2dCosAngle(tTemp,m_tVelocity) >= 1.0)
+			m_tAngularVelocity = 0.0;
+		else if(Vec2dCosAngle(tTemp,m_tVelocity) <= -1.0)	
+			m_tAngularVelocity = M_PI;
+		else
+			exit(-1);
+
+	}
+	
 
     m_tAngularAcceleration = m_tAngularVelocity - tTempAngVelocity;
 }

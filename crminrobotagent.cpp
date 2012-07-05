@@ -3,7 +3,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#define TCELL_UPPERLIMIT_STEPSIZE 500000
+#define TCELL_UPPERLIMIT_STEPSIZE 10000
 #define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
 
 #define CONJ_UPPERLIMIT_STEPSIZE 10
@@ -104,6 +104,11 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     m_pfDeltaEffectors_k1  = new double[m_unNumberOfReceptors];
     m_pfDeltaRegulators_k1 = new double[m_unNumberOfReceptors];
 
+    // the total number of effectors and regulators weighted by affinity
+    // used to make decision on FVs
+    m_pfSumEffectorsWeightedbyAffinity  = new double[m_unNumberOfReceptors];
+    m_pfSumRegulatorsWeightedbyAffinity = new double[m_unNumberOfReceptors];
+
 
     //Allocated and Deleted in RobotAgent class
     //m_punFeaturesSensed = new unsigned int[m_unNumberOfReceptors];
@@ -199,6 +204,9 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
         m_pfEffectorConjugatesPerAPC[i]  = 0.0;
         m_pfRegulatorConjugatesPerAPC[i] = 0.0;
 
+        m_pfSumEffectorsWeightedbyAffinity[i]  = 0.0;
+        m_pfSumRegulatorsWeightedbyAffinity[i] = 0.0;
+
         for (unsigned int j = 0; j < m_unNumberOfReceptors; j++)
         {
             m_pfAffinities[i][j]              = NegExpDistAffinity(i,j,m_fcross_affinity);
@@ -230,6 +238,8 @@ CRMinRobotAgent::~CRMinRobotAgent()
     delete m_pfEffectors_prev;
     delete m_pfRegulators_prev;
 
+
+
     delete m_pfAPCs;
     delete m_pfEffectorConjugatesPerAPC;
     delete m_pfRegulatorConjugatesPerAPC;
@@ -243,6 +253,9 @@ CRMinRobotAgent::~CRMinRobotAgent()
     delete m_pfDeltaRegulators_k0;
     delete m_pfDeltaEffectors_k1;
     delete m_pfDeltaRegulators_k1;
+
+    delete m_pfSumEffectorsWeightedbyAffinity;
+    delete m_pfSumRegulatorsWeightedbyAffinity;
 
 
     delete [] m_pfDeltaConjugates_k0[0];
@@ -931,21 +944,29 @@ void CRMinRobotAgent::UpdateState()
         for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
         {
             E = 0.0; R = 0.0;
-            for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
-            {
-                // Brute force approach to cell generation
-                //cells which are not reacting to APCs would have stable states at se/kde and sr/kdr.
-                //we ignore these clonaltypes in the tolerance decision
-                /*if ((fabs(m_pfEffectors[thtype] - se/kde)  < 0.00001  &&
-                     fabs(m_pfRegulators[thtype] - sr/kdr) < 0.00001) ||
-                    (m_pfAPCs[apctype] == 0.0))
-                {
-                    continue;
-                }*/
 
-                E += m_pfAffinities[thtype][apctype] * m_pfEffectors[thtype];
-                R += m_pfAffinities[thtype][apctype] * m_pfRegulators[thtype];
+            // if no apc's of specific type, how can i make a decision
+            if(m_pfAPCs[apctype] > 0.0)
+            {
+                for(unsigned thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
+                {
+                    // Brute force approach to cell generation
+                    //cells which are not reacting to APCs would have stable states at se/kde and sr/kdr.
+                    //we ignore these clonaltypes in the tolerance decision
+                    /*if ((fabs(m_pfEffectors[thtype] - se/kde)  < 0.00001  &&
+                         fabs(m_pfRegulators[thtype] - sr/kdr) < 0.00001) ||
+                        (m_pfAPCs[apctype] == 0.0))
+                    {
+                        continue;
+                    }*/
+
+                    E += m_pfAffinities[thtype][apctype] * m_pfEffectors[thtype];
+                    R += m_pfAffinities[thtype][apctype] * m_pfRegulators[thtype];
+                }
             }
+            m_pfSumEffectorsWeightedbyAffinity[apctype]  = E;
+            m_pfSumRegulatorsWeightedbyAffinity[apctype] = R;
+
 
             if (((E + R) <= CELLLOWERBOUND) || fabs(E - R) <= CELLLOWERBOUND)
             {
