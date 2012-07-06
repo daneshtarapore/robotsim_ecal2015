@@ -12,6 +12,7 @@
 #include "bioinstsim.h"
 #include "random.h"
 #include "openglrender.h"
+#include "prettyopenglrender.h"
 #include "populationanalyzer.h"
 
 
@@ -98,7 +99,7 @@ void CBioInstSim::Run()
     
     if (m_bRendering)
     {
-        COpenGLRender* pcRender = new COpenGLRender();
+        CPrettyOpenGLRender* pcRender = new CPrettyOpenGLRender();
         m_pcSimulator->AddChild(pcRender);
         pcRender->SetOutputStatistics(m_bOutputStatistics);
     }
