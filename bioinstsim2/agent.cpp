@@ -45,8 +45,8 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
     //newMag = currMag + currSpeed / maxSpeed * Gaussian * magnoise
     //newDir    = currDir + currSpeed / maxSpeed * Gaussian * magdir * 360 / (PI * 2)
 
-    m_fProportionalDirectionNoise = pc_arguments->GetArgumentAsDoubleOr("dirnoise", 0);
-    m_fProportionalMagnitudeNoise = pc_arguments->GetArgumentAsDoubleOr("magnoise", 0); 
+    m_fProportionalDirectionNoise = pc_arguments->GetArgumentAsDoubleOr("dirnoise", 0.0);
+    m_fProportionalMagnitudeNoise = pc_arguments->GetArgumentAsDoubleOr("magnoise", 0.0);
 
     if (pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed) 
     {
