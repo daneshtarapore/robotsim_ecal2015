@@ -243,6 +243,66 @@ CAgent* CTestExperiment::CreateAgent()
 /******************************************************************************/
 /******************************************************************************/
 
+void CTestExperiment::PrintVelocityDifference(CAgent* pc_agent, double f_range) 
+{
+    // Velocity magnitude and direction wrt. surrounding agents:
+    TVector2d tTemp    = pc_agent->GetAverageVelocityOfSurroundingAgents(f_range, ROBOT);
+    
+    float dir_relativeagentvelocity = 0;
+    float tmp_agentvelocity         = Vec2dLength((*pc_agent->GetVelocity()));
+    float mag_relativeagentvelocity = tmp_agentvelocity - Vec2dLength((tTemp));
+
+    if (Vec2dLength((*pc_agent->GetVelocity())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
+        dir_relativeagentvelocity = Vec2dAngle((*pc_agent->GetVelocity()), tTemp);
+    else
+        dir_relativeagentvelocity = 0.0;
+
+    printf("%f:[ mag: %f, dir: %f ]", f_range, mag_relativeagentvelocity, dir_relativeagentvelocity);
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+
+void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
+{
+    unsigned int unAgentsWithIn2            = pc_agent->CountAgents(2.0, ROBOT);
+    unsigned int unAgentsWithIn4            = pc_agent->CountAgents(4.0, ROBOT);
+    unsigned int unAgentsWithIn6            = pc_agent->CountAgents(6.0, ROBOT);
+    unsigned int unAgentsWithIn8            = pc_agent->CountAgents(8.0, ROBOT);
+    unsigned int unAgentsWithIn10           = pc_agent->CountAgents(10.0, ROBOT);
+    
+    printf("AgentsWithin - 2: %d, 4: %d, 6: %d, 8: %d, 10: %d, ", unAgentsWithIn2, unAgentsWithIn4, unAgentsWithIn6, unAgentsWithIn8, unAgentsWithIn10);
+
+    double fAverageDistanceToAgentsWithin2  = pc_agent->GetAverageDistanceToSurroundingAgents(2.0, ROBOT);
+    double fAverageDistanceToAgentsWithin4  = pc_agent->GetAverageDistanceToSurroundingAgents(4.0, ROBOT);
+    double fAverageDistanceToAgentsWithin6  = pc_agent->GetAverageDistanceToSurroundingAgents(6.0, ROBOT);
+    double fAverageDistanceToAgentsWithin8  = pc_agent->GetAverageDistanceToSurroundingAgents(8.0, ROBOT);
+    double fAverageDistanceToAgentsWithin10 = pc_agent->GetAverageDistanceToSurroundingAgents(10.0, ROBOT);
+
+    printf("AverageDistanceToAgentsWithin - 2: %f, 4: %f, 6: %f, 8: %f, 10: %f, ", fAverageDistanceToAgentsWithin2, fAverageDistanceToAgentsWithin4,
+           fAverageDistanceToAgentsWithin6, fAverageDistanceToAgentsWithin8, fAverageDistanceToAgentsWithin10);
+
+    printf("VelocityDifference: "); 
+    PrintVelocityDifference(pc_agent, 2);
+    printf(", ");
+    PrintVelocityDifference(pc_agent, 4);
+    printf(", ");
+    PrintVelocityDifference(pc_agent, 6);
+    printf(", ");
+    PrintVelocityDifference(pc_agent, 8);
+    printf(", ");
+    PrintVelocityDifference(pc_agent, 10);
+    printf(", ");
+       
+    printf("\n");
+
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
@@ -255,6 +315,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unUnConverged);
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, unconvg: %d", un_step_number, unToleraters, unAttackers, unUnConverged);
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
+        printf("\nMisbehavingAgentStats: ");
+        PrintStatsForAgent(m_pcMisbehaveAgent[0]);
     }
 
     if (m_pcNormalAgentToTrack && un_step_number > CRMSTARTTIME)
@@ -266,6 +328,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unUnConverged);
         printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, unconvg: %d", un_step_number, unToleraters, unAttackers, unUnConverged);
         printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
+        printf("\nNormalAgentStats: ");
+        PrintStatsForAgent(m_pcNormalAgentToTrack);
     }
 
 

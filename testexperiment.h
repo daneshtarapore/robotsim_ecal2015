@@ -38,9 +38,11 @@ public:
     
     virtual CAgent*     CreateAgent();
     virtual void SimulationStep(unsigned int un_step_number);
-
-
+   
 protected:
+    virtual void PrintStatsForAgent(CAgent* pc_agent);
+    virtual void PrintVelocityDifference(CAgent* pc_agent, double f_range);
+
     ESwarmBehavType m_eswarmbehavType;
     EErrorBehavType m_eerrorbehavType;
 
