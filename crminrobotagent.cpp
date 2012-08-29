@@ -303,8 +303,11 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
 
     for(selectedclonaltype=0;selectedclonaltype<m_unNumberOfReceptors;selectedclonaltype++)
 	{
- 	   m_pfEffectors[selectedclonaltype]  += 10.0;
-	   m_pfRegulators[selectedclonaltype] += 10.0;
+        if(m_pfAPCs[selectedclonaltype] > 0.0)
+        {
+            m_pfEffectors[selectedclonaltype]  += 10.0;
+            m_pfRegulators[selectedclonaltype] += 10.0;
+        }
 	}
 
 
