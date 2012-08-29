@@ -36,13 +36,11 @@ protected:
 
     float*         m_pfFeatureValues;
     int*           m_piLastOccuranceEvent;
-    //float*       m_pfThresholds;
 
     float        m_fLowPassFilterParameter;
     float        m_fThresholdOnNumNbrs;
     float        m_fProcessedNumNeighbours;
-    int          m_iEventSelectionTimeWindow1;
-    int          m_iEventSelectionTimeWindow2;
+    int          m_iEventSelectionTimeWindow;
 };
 
 /******************************************************************************/
