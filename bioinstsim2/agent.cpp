@@ -209,6 +209,7 @@ void CAgent::SimulationStepUpdatePosition()
 
     CAgent* pcCollidingAgent = GetClosestAgent(RADIUS * 2.0, ROBOT);
 
+
     if (pcCollidingAgent) 
     {        
         TVector2d vecCollidingAgentPos = *(pcCollidingAgent->GetPosition());

@@ -57,6 +57,7 @@ public:
     virtual bool GetConvergenceFlag();
 
     virtual double GetConvergenceError();
+    virtual double GetConvergenceError_Perc();
 
     virtual void PrintCRMDetails(unsigned id);
 
@@ -157,6 +158,7 @@ protected:
 
     bool            m_bConvergenceFlag;
     double          m_dconvergence_error;
+    double          m_dpercconvergence_error;
 };
 
 /******************************************************************************/

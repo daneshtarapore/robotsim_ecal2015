@@ -214,6 +214,7 @@ void CFeatureVector::ComputeFeatureValues()
         dir_relativeagentacceleration = 0.0;
 
 
+
     if (m_pcAgent->GetIdentification() == 1)// && CurrentStepNumber > CRMSTARTTIME)
     {
         printf("\nFV for normal agent %d: #NBRS %d, lpf(#NBRS) %f, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),m_fProcessedNumNeighbours,dist_nbrsagents,angle_acceleration,angle_velocity,
