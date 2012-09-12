@@ -92,6 +92,8 @@ void CRobotAgent::SimulationStepUpdatePosition()
     // Update the T-cells of the CRM instance for this robot
     m_pcFeatureVector->SimulationStep();
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+
+
     if (m_unIdentification == 1)// && CurrentStepNumber > CRMSTARTTIME)
     {
         printf("\nFV for normal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
@@ -460,19 +462,19 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
     SortAllAgentsAccordingToDistance(&tSortedAgents);
 
     // 1-11 because agent at index 0 is ourselves:
-    bool m_battackeragentlog=true,m_btolerateragentlog=true;
+    bool m_battackeragentlog=true, m_btolerateragentlog=true;
     for (unsigned int nbrs = 1; nbrs < m_uSelectedNumNearestNbrs+1; nbrs++)
     {
         CRobotAgent* pcRobot     = (CRobotAgent*) tSortedAgents[nbrs];
         CRMinRobotAgent* tmp_crm = pcRobot->GetCRMinRobotAgent();
         unsigned int fv_status   = pcRobot->Attack(m_pcFeatureVector);
-        if (fv_status == 1)
+        if (fv_status == 1 && tmp_crm->GetConvergenceError_Perc() <= 5.0)
         {
             (*pun_number_of_attackers)++;
 
             if(m_battackeragentlog)
             {
-                printf("\nAn attacker agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
+                printf("\nAn attacker agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
                 unsigned int* FeatureVectorsSensed;
                 FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
 
@@ -507,13 +509,13 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                 m_battackeragentlog = false;
             }
         }
-        else if(fv_status == 2)
+        else if(fv_status == 2 && tmp_crm->GetConvergenceError_Perc() <= 5.0)
         {
             (*pun_number_of_toleraters)++;
 
             if(m_btolerateragentlog)
             {
-                printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
+                printf("\nA tolerator agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
                 unsigned int* FeatureVectorsSensed;
                 FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
                 for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)

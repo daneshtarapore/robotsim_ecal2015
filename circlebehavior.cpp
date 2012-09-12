@@ -22,7 +22,7 @@ bool CCircleBehavior::TakeControl()
 
 void CCircleBehavior::Action()
 {
-    m_ftheta += M_PI*2.0 / 200.0;
+    m_ftheta += M_PI*2.0 / 10.0; //200
 
     if (m_ftheta > M_PI*2.0)
         m_ftheta -= M_PI*2.0;
