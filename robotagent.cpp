@@ -450,11 +450,11 @@ void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, unsigned int state
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged)
+void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_neighborsinsensoryrange)
 {
     (*pun_number_of_toleraters)  = 0;
     (*pun_number_of_attackers)   = 0;
-    (*pun_number_of_unconverged) = 0;
+    (*pun_number_of_neighborsinsensoryrange) = 0;
 
 
     TAgentVector tSortedAgents;
@@ -468,7 +468,7 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         CRobotAgent* pcRobot     = (CRobotAgent*) tSortedAgents[nbrs];
         CRMinRobotAgent* tmp_crm = pcRobot->GetCRMinRobotAgent();
         unsigned int fv_status   = pcRobot->Attack(m_pcFeatureVector);
-        if (fv_status == 1 && tmp_crm->GetConvergenceError_Perc() <= 5.0)
+        if (fv_status == 1)// && tmp_crm->GetConvergenceError_Perc() <= 0.50)
         {
             (*pun_number_of_attackers)++;
 
@@ -509,7 +509,7 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                 m_battackeragentlog = false;
             }
         }
-        else if(fv_status == 2 && tmp_crm->GetConvergenceError_Perc() <= 5.0)
+        else if(fv_status == 2)// && tmp_crm->GetConvergenceError_Perc() <= 0.50)
         {
             (*pun_number_of_toleraters)++;
 
@@ -550,10 +550,56 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
             }
         }
 
-        if (!tmp_crm->GetConvergenceFlag())
+        /*if (!tmp_crm->GetConvergenceFlag())
         {
             (*pun_number_of_unconverged)++;
-        }
+        }*/
+
+	
+        unsigned int* FeatureVectorsSensed;
+        FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
+        if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] > 0.0)
+	{
+            (*pun_number_of_neighborsinsensoryrange)++;
+	}
+	
+
+
+	{
+                printf("\nAn agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
+                unsigned int* FeatureVectorsSensed;
+                FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
+                for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
+                {
+                    if(FeatureVectorsSensed[fv] > 0.0)
+                    {
+                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
+                               fv,
+                               tmp_crm->GetAPC(fv),
+                               fv,
+                               tmp_crm->GetCurrE(fv),
+                               fv,
+                               tmp_crm->GetCurrR(fv),
+                               tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv],
+                               tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv]);
+                    }
+                }
+
+
+                if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
+                {
+                    printf("for the above agentFV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
+                           m_pcFeatureVector->GetValue(),
+                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()),
+                           tmp_crm->m_pfSumEffectorsWeightedbyAffinity[m_pcFeatureVector->GetValue()],
+                           tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[m_pcFeatureVector->GetValue()]);
+                }
+	}	
+
     }
 
 

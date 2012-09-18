@@ -12,7 +12,7 @@
 #define ERRORALLOWED_TCELL_STEPSIZE 1.0e-2
 #define ERRORALLOWED_CONJ_STEPSIZE  1.0e-3
 
-#define INTEGRATION_TIME  1.0e+7 // was 1.5e+7 on elephant01a
+#define INTEGRATION_TIME  5.0e+7 // was 1.5e+7 on elephant01a  earlier 1.0e+7
 
 #define TCELL_CONVERGENCE  0.01
 #define CONJ_CONVERGENCE   0.001
@@ -302,13 +302,13 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     int selectedclonaltype;// = Random::nextInt(m_unNumberOfReceptors);
 
     for(selectedclonaltype=0;selectedclonaltype<m_unNumberOfReceptors;selectedclonaltype++)
-	{
+   {
         if(m_pfAPCs[selectedclonaltype] > 0.0)
         {
             m_pfEffectors[selectedclonaltype]  += 10.0;
             m_pfRegulators[selectedclonaltype] += 10.0;
         }
-	}
+   }
 
 
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
@@ -468,11 +468,20 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
               robotAgent->GetIdentification(),
               m_dconvergence_error,step_h,m_dconvergence_error/step_h,integration_t);*/
 
-       if((m_dconvergence_error - TCELL_CONVERGENCE) <= 0.00001)
+
+       /*if((m_dconvergence_error - TCELL_CONVERGENCE) <= 0.00001)
+        {
+            m_bConvergenceFlag = true;
+            break;
+        }*/
+
+        if(m_dpercconvergence_error <= 0.001)
         {
             m_bConvergenceFlag = true;
             break;
         }
+
+
         integration_t += step_h;
 
     }
@@ -1101,7 +1110,8 @@ double CRMinRobotAgent::NormalizedAffinity(unsigned int v1, unsigned int v2)
     unsigned int unMatching  = GetNumberOfSetBits(unXoredString);
 
     //TODO: Have to change affinity computation
-    return (double) (CFeatureVector::NUMBER_OF_FEATURES - unMatching) / (double) CFeatureVector::NUMBER_OF_FEATURES;
+    return (double) (CFeatureVector::NUMBER_OF_FEATURES - unMatching) / (double)
+            CFeatureVector::NUMBER_OF_FEATURES;
 }
 
 /******************************************************************************/
