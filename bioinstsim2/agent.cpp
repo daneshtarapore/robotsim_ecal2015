@@ -18,7 +18,7 @@ double CAgent::RADIUS = 0.375;
 
 
 CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_arguments) :
-    CSimObject(pch_name)
+        CSimObject(pch_name)
 {    
     m_pcArguments = pc_arguments;
 
@@ -37,7 +37,7 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
     {
         m_eControllerType = REGULARBOUNCE;
     } 
-     
+
     m_fMaximumSpeed                         = pc_arguments->GetArgumentAsDoubleOr("maxspeed",             0.01);
 
     static bool bHelpDisplayed = false;
@@ -153,26 +153,55 @@ void CAgent::SimulationStep(unsigned int un_step_number)
 
 
     if (Vec2dLength(tTemp) > EPSILON && Vec2dLength(m_tVelocity) > EPSILON)
-        m_tAngularVelocity = Vec2dAngle(m_tVelocity,tTemp);
+    {
+        //m_tAngularVelocity = acos(Vec2dCosAngle(tTemp,m_tVelocity));
+        m_tAngularVelocity = acos(Vec2dCosAngle(m_tVelocity,tTemp));
+        //double cosineangle   = Vec2dCosAngle(m_tVelocity,tTemp);
+        //m_tAngularVelocity   = acos(cosineangle);
+    }
     else
+    {
         m_tAngularVelocity = 0.0;
+    }
 
-   if(std::isnan(m_tAngularVelocity))
-	{
-		printf("\n Vector lengths: %f,%f",Vec2dLength(tTemp),Vec2dLength(m_tVelocity));
-		printf("\n vector1: [%f,%f]",tTemp.x,tTemp.y);
-		printf("\n vector2: [%f,%f]",m_tVelocity.x,m_tVelocity.y);
+    if(std::isnan(m_tAngularVelocity))
+    {
+        printf("\n Vector lengths: %f,%f",Vec2dLength(tTemp),Vec2dLength(m_tVelocity));
+        printf("\n vector1: [%f,%f]",tTemp.x,tTemp.y);
+        printf("\n vector2: [%f,%f]",m_tVelocity.x,m_tVelocity.y);
 
-		printf("\n cosangle: %e",Vec2dCosAngle(tTemp,m_tVelocity));
+        double cosinevalue = Vec2dCosAngle(tTemp,m_tVelocity);
+        printf("\n cosinevalue: %e",cosinevalue);
 
-		if(Vec2dCosAngle(tTemp,m_tVelocity) >= 1.0)
-			m_tAngularVelocity = 0.0;
-		else if(Vec2dCosAngle(tTemp,m_tVelocity) <= -1.0)	
-			m_tAngularVelocity = M_PI;
-		else
-			exit(-1);
-	}
-	
+
+        if(fabs(cosinevalue - 1.0) < 1.0e-3)
+            m_tAngularVelocity = 0.0;
+        else if(fabs(cosinevalue - -1.0) < 1.0e-3)
+            m_tAngularVelocity = M_PI;
+        else
+        {
+            m_tAngularVelocity = acos(cosinevalue);
+            printf("\n angle in rad.: %e", m_tAngularVelocity);
+
+            if(std::isnan(m_tAngularVelocity))
+                exit(-1);
+        }
+
+
+        /*if(Vec2dCosAngle(tTemp,m_tVelocity) >= 1.0)
+            m_tAngularVelocity = 0.0;
+        else if(Vec2dCosAngle(tTemp,m_tVelocity) <= -1.0)
+            m_tAngularVelocity = M_PI;
+        else
+        {
+            double angle = acos(cosinevalue);
+            printf("\n angle in rad.: %e",angle);
+            printf("\n angle in rad.: %e",acos(Vec2dCosAngle(m_tVelocity,tTemp)));
+
+            exit(-1);
+        }*/
+    }
+
     m_tAngularAcceleration = m_tAngularVelocity - tTempAngVelocity;
 }
 
@@ -338,7 +367,7 @@ CAgent* CAgent::GetRandomAgentWithinRange(TAgentListList* pt_agents_list_list, d
     {
         ERROR("The random generator seems to be wrong");
     } 
-        
+
     return pcAgentSelected;
 } 
 
@@ -387,7 +416,7 @@ void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
     double fArenaWidth;
     double fArenaHeight;
     pcArena->GetSize(&fArenaWidth, &fArenaHeight);
-        
+
     if (CArena::g_bIsBoundless)
     { 
 
@@ -423,9 +452,9 @@ void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
         m_tVelocity.x /= fModifier;
         m_tVelocity.y /= fModifier;
     }
-                
+
     TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x, 
-                                   m_tPosition.y + m_tVelocity.y };
+                               m_tPosition.y + m_tVelocity.y };
     
     if (tNewPosition.x >= fArenaWidth / 2.0)
         tNewPosition.x -= fArenaWidth;
@@ -491,7 +520,7 @@ CAgent* CAgent::GetClosestAgent(double f_range, EAgentType e_type)
                 {
                     fShortestDistanceSquared = fDistanceSqaured;
                     pcAgent = (*j);
-//                    printf("Closest agent found --- dist: %f, range: %f \n", sqrt(fDistanceSqaured), f_range);
+                    //                    printf("Closest agent found --- dist: %f, range: %f \n", sqrt(fDistanceSqaured), f_range);
                 }
             }
         }

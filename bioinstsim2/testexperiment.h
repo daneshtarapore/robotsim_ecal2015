@@ -16,17 +16,30 @@ enum ESwarmBehavType
     DISPERSION,
     FLOCKING,
     HOMING1,
-    HOMING2
+    HOMING2,
+
+    STRAIGHTLINE,
+    RANDOMWK,
+    CIRCLE,
+    STOP,
+
+    NOERR
 };
 
-enum EErrorBehavType
+/*enum EErrorBehavType
 {
     STRAIGHTLINE,
     RANDOMWK,
     CIRCLE,
     STOP,
+
+    STRAIGHTLINE,
+    RANDOMWK,
+    CIRCLE,
+    STOP,
+
     NOERR
-};
+};*/
 
 class CTestExperiment : public CExperiment
 {
@@ -42,9 +55,10 @@ public:
 protected:
     virtual void PrintStatsForAgent(CAgent* pc_agent);
     virtual void PrintVelocityDifference(CAgent* pc_agent, double f_range);
+    vector<CBehavior*> GetAgentBehavior(ESwarmBehavType swarmbehavType, CAgent*  previousAgent);
 
-    ESwarmBehavType m_eswarmbehavType;
-    EErrorBehavType m_eerrorbehavType;
+    ESwarmBehavType m_eswarmbehavType, m_eerrorbehavType;
+    //EErrorBehavType m_eerrorbehavType;
 
     unsigned int    m_unMisbehaveStep;
     unsigned int    m_unNormalAgentToTrack;
@@ -52,6 +66,10 @@ protected:
     unsigned int    m_unNumAbnormalAgents;
     CRobotAgent*    m_pcMisbehaveAgent[20];
     CRobotAgent*    m_pcNormalAgentToTrack;
+
+    CAgent*         pcHomeToAgent;
+
+
 };
 
 /******************************************************************************/

@@ -11,6 +11,7 @@ double       CFeatureVector::FEATURE_RANGE             = 6.0;
 /******************************************************************************/
 /******************************************************************************/
 
+
 CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
 {
     m_unValue  = 0;
@@ -22,7 +23,6 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_pfFeatureValues      = new float[m_unLength];
     m_piLastOccuranceEvent = new int[m_unLength];
 
-
     m_fLowPassFilterParameter    = 0.01;
     m_fThresholdOnNumNbrs        = 3.99 ;
     m_fProcessedNumNeighbours    = 0.0;
@@ -33,6 +33,33 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     {
         m_piLastOccuranceEvent[i] = 0;
     }
+
+    m_dVelocityThreshold = 0.05 * (m_pcAgent->GetMaximumSpeed());
+
+#ifdef ALTERNATESIXBITFV
+
+    // keeping track of neighbors in last m_iEventSelectionTimeWindow time-steps
+    m_unNbrsCurrQueueIndex = 0;
+
+    m_unSumTimeStepsNbrsRange0to3 = 0;
+    m_unSumTimeStepsNbrsRange3to6 = 0;
+
+    m_punNbrsRange0to3AtTimeStep = new unsigned int[m_iEventSelectionTimeWindow];
+    m_punNbrsRange3to6AtTimeStep = new unsigned int[m_iEventSelectionTimeWindow];
+
+
+    // keeping track of distance travelled by bot in last 100 time-steps
+    m_iDistTravelledTimeWindow = 100;
+    m_unCoordCurrQueueIndex    = 0;
+
+    m_dSquaredDistTravelled = 0.0;
+    m_dSquaredDistThreshold = (0.05 * (m_pcAgent->GetMaximumSpeed()*m_iDistTravelledTimeWindow)) *
+                              (0.05 * (m_pcAgent->GetMaximumSpeed()*m_iDistTravelledTimeWindow));
+
+    m_pvecCoordAtTimeStep = new TVector2d[m_iDistTravelledTimeWindow];
+#endif
+
+
 }
 
 /******************************************************************************/
@@ -42,6 +69,12 @@ CFeatureVector::~CFeatureVector()
 {
     delete m_pfFeatureValues;
     delete m_piLastOccuranceEvent;
+
+#ifdef ALTERNATESIXBITFV
+    delete m_punNbrsRange0to3AtTimeStep;
+    delete m_punNbrsRange3to6AtTimeStep;
+    delete m_pvecCoordAtTimeStep;
+#endif
 }
 
 /******************************************************************************/
@@ -87,7 +120,7 @@ unsigned int CFeatureVector::SimulationStep()
 
 //    // Velocity magnitude and direction wrt. surrounding agents:
 //    TVector2d tTemp    = m_pcAgent->GetAverageVelocityOfSurroundingAgents(FEATURE_RANGE, ROBOT);
-    
+
 //    float tmp_agentvelocity = Vec2dLength((*m_pcAgent->GetVelocity()));
 //    m_pfFeatureValues[2] = tmp_agentvelocity - Vec2dLength((tTemp));
 
@@ -124,11 +157,123 @@ void CFeatureVector::ComputeFeatureValues()
     double mag_relativeagentvelocity, dir_relativeagentvelocity,
     mag_relativeagentacceleration, dir_relativeagentacceleration;
 
+
     dist_nbrsagents    = m_pcAgent->GetAverageDistanceToSurroundingAgents(FEATURE_RANGE, ROBOT);
     angle_acceleration = m_pcAgent->GetAngularAcceleration();
     angle_velocity     = m_pcAgent->GetAngularVelocity();
     mag_velocity       = Vec2dLength((*m_pcAgent->GetVelocity()));
 
+
+#ifdef ALTERNATESIXBITFV
+    int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
+
+    // Feature (from LS to MS bits in FV)
+    // Sensors
+    //1st: set if bot has atleast one neighbor in range 0-3 in the majority of of past X time-steps
+    //2nd: set if bot has atleast one neighbor in range 3-6 in the majority of of past X time-steps
+
+    if(CurrentStepNumber >= m_iEventSelectionTimeWindow)
+    {
+        // decision based on the last 1500 time-steps
+        if(m_unSumTimeStepsNbrsRange0to3 > (unsigned)(0.5*m_iEventSelectionTimeWindow))
+            m_pfFeatureValues[0] = 1.0;
+        else
+            m_pfFeatureValues[0] = 0.0;
+
+        if(m_unSumTimeStepsNbrsRange3to6 > (unsigned)(0.5*m_iEventSelectionTimeWindow))
+            m_pfFeatureValues[1] = 1.0;
+        else
+            m_pfFeatureValues[1] = 0.0;
+
+        // removing the fist entry of the moving time window  from the sum
+        m_unSumTimeStepsNbrsRange0to3 -=  m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex];
+        m_unSumTimeStepsNbrsRange3to6 -=  m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex];
+    }
+
+    // adding new values into the queue
+    unsigned int unCloseRangeNbrCount = m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT);
+    if (unCloseRangeNbrCount > 0)
+    {
+        m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex] = 1;
+        m_unSumTimeStepsNbrsRange0to3++;
+    }
+    else
+        m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex] = 0;
+
+    if ((m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT) - unCloseRangeNbrCount) > 0)
+    {
+        m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex] = 1;
+        m_unSumTimeStepsNbrsRange3to6++;
+    }
+    else
+        m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex] = 0;
+
+
+    m_unNbrsCurrQueueIndex = (m_unNbrsCurrQueueIndex + 1) % m_iEventSelectionTimeWindow;
+
+
+    // Sensors-motor interactions
+    // Set if the occurance of the following event, atleast once in time window X
+    // 3rd: distance to nbrs 0-6 && change in angular acceleration
+    // 4th: no neighbors detected  && change in angular acceleration
+
+    if(dist_nbrsagents < 6 && (angle_acceleration > 0.1 || angle_acceleration < -0.1))
+    {
+        m_piLastOccuranceEvent[0] = CurrentStepNumber;
+    }
+
+    if(dist_nbrsagents == 6.0 && (angle_acceleration > 0.1 || angle_acceleration < -0.1))
+    {
+        m_piLastOccuranceEvent[1] = CurrentStepNumber;
+    }
+
+    for(unsigned int featureindex = 0; featureindex <=1; featureindex++)
+    {
+        if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
+        {
+            m_pfFeatureValues[featureindex+2] = 1.0;
+        }
+        else
+        {
+            m_pfFeatureValues[featureindex+2] = 0.0;
+        }
+    }
+
+
+    // Motors
+    //5th: distance travelled by bot in past Y time-steps. Higher than 5% of max-possible distance travelled is accepted as feature=1.
+    TVector2d vecAgentPos = *(m_pcAgent->GetPosition());
+
+    if(CurrentStepNumber >= m_iDistTravelledTimeWindow)
+    {
+        // distance travelled in last 100 time-steps
+        m_dSquaredDistTravelled =
+                GetSquaredDistanceBetweenPositions(&vecAgentPos,
+                                                   &(m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex]));
+
+
+        // decision based on distance travelled in the last 100 time-steps
+        if(m_dSquaredDistTravelled >= m_dSquaredDistThreshold)
+            m_pfFeatureValues[4] = 1.0;
+        else
+            m_pfFeatureValues[4] = 0.0;
+    }
+
+    // adding new coordinate values into the queue
+    m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex] = vecAgentPos;
+    m_unCoordCurrQueueIndex = (m_unCoordCurrQueueIndex + 1) % m_iDistTravelledTimeWindow;
+
+
+
+    //6th: velocity, higher than 5% of speed is accepted as feature=1
+    if(mag_velocity >= m_dVelocityThreshold) // higher than 5% of speed is accepted as moving
+        m_pfFeatureValues[5] = 1.0;
+    else
+        m_pfFeatureValues[5] = 0.0;
+
+#else
+
+    int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
 
     m_fProcessedNumNeighbours = m_fLowPassFilterParameter * (float)m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT) + (1.0 - m_fLowPassFilterParameter) * m_fProcessedNumNeighbours;
 
@@ -141,8 +286,6 @@ void CFeatureVector::ComputeFeatureValues()
     {
         m_pfFeatureValues[0] = 0.0;
     }
-
-    int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
 
 
     if(dist_nbrsagents < 2 &&
@@ -184,12 +327,13 @@ void CFeatureVector::ComputeFeatureValues()
     }
 
     //6th feature: velocity
-    if(mag_velocity >= 0.1 * m_pcAgent->GetMaximumSpeed()) // higher than 10% of speed is accepted as moving
+    if(mag_velocity >= 0.1 * m_pcAgent->GetMaximumSpeed()) // higher than 5% of speed is accepted as moving
         m_pfFeatureValues[5] = 1.0;
     else
         m_pfFeatureValues[5] = 0.0;
 
 
+#endif
 
     // Velocity magnitude and direction wrt. surrounding agents:
     TVector2d tTemp    = m_pcAgent->GetAverageVelocityOfSurroundingAgents(FEATURE_RANGE, ROBOT);
@@ -222,6 +366,10 @@ void CFeatureVector::ComputeFeatureValues()
                mag_relativeagentacceleration,dir_relativeagentacceleration,
                m_pcAgent->GetVelocity()->x, m_pcAgent->GetVelocity()->y,
                m_pcAgent->GetAcceleration()->x , m_pcAgent->GetAcceleration()->y);
+
+#ifdef ALTERNATESIXBITFV
+        printf("Alternate normal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold);
+#endif
     }
 
     if (m_pcAgent->GetIdentification() == 15) //&& CurrentStepNumber > CRMSTARTTIME)
@@ -231,6 +379,10 @@ void CFeatureVector::ComputeFeatureValues()
                mag_relativeagentacceleration,dir_relativeagentacceleration,
                m_pcAgent->GetVelocity()->x, m_pcAgent->GetVelocity()->y,
                m_pcAgent->GetAcceleration()->x , m_pcAgent->GetAcceleration()->y);
+
+#ifdef ALTERNATESIXBITFV
+        printf("Alternate abnormal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold);
+#endif
     }
 }
 
@@ -241,21 +393,42 @@ std::string CFeatureVector::ToString()
 {
     char pchTemp[4096];
 
-       sprintf(pchTemp, "Values - "
-                         "nbrs: %f - "
-                         "TW1500_dist0to2_angacc: %1.1f - "
-                         "TW1500_dist2to4_angacc: %1.1f - "
-                         "TW1500_dist4to6_angacc: %1.1f - "
-                         "TW1500_dist6_angacc: %1.1f - "
-                         "speed: %1.1f - fv: %u",
 
-                m_pfFeatureValues[0],
-                m_pfFeatureValues[1],
-                m_pfFeatureValues[2],
-                m_pfFeatureValues[3],
-                m_pfFeatureValues[4],
-                m_pfFeatureValues[5],
-                m_unValue);
+#ifdef ALTERNATESIXBITFV
+    sprintf(pchTemp, "Values - "
+            "TS_nbrs:0to3: %f - "
+            "TS_nbrs:3to6: %f - "
+            "TW1500_dist0to6_angacc: %1.1f - "
+            "TW1500_dist6_angacc: %1.1f - "
+            "DistTW100: %1.1f - "
+            "speed: %1.1f - fv: %u",
+
+            m_pfFeatureValues[0],
+            m_pfFeatureValues[1],
+            m_pfFeatureValues[2],
+            m_pfFeatureValues[3],
+            m_pfFeatureValues[4],
+            m_pfFeatureValues[5],
+            m_unValue);
+
+#else
+    sprintf(pchTemp, "Values - "
+            "nbrs: %f - "
+            "TW1500_dist0to2_angacc: %1.1f - "
+            "TW1500_dist2to4_angacc: %1.1f - "
+            "TW1500_dist4to6_angacc: %1.1f - "
+            "TW1500_dist6_angacc: %1.1f - "
+            "speed: %1.1f - fv: %u",
+
+            m_pfFeatureValues[0],
+            m_pfFeatureValues[1],
+            m_pfFeatureValues[2],
+            m_pfFeatureValues[3],
+            m_pfFeatureValues[4],
+            m_pfFeatureValues[5],
+            m_unValue);
+#endif
+
 
     return string(pchTemp);
 }

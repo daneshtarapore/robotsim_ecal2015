@@ -10,6 +10,12 @@
 /******************************************************************************/
 /******************************************************************************/
 
+#define ALTERNATESIXBITFV
+
+/******************************************************************************/
+/******************************************************************************/
+
+
 class CFeatureVector
 {
 public:
@@ -41,6 +47,33 @@ protected:
     float        m_fThresholdOnNumNbrs;
     float        m_fProcessedNumNeighbours;
     int          m_iEventSelectionTimeWindow;
+
+    double       m_dVelocityThreshold;
+
+#ifdef ALTERNATESIXBITFV
+
+    // keeping track of neighbors in last m_iEventSelectionTimeWindow time-steps
+    unsigned int m_unNbrsCurrQueueIndex;
+
+    unsigned int m_unSumTimeStepsNbrsRange0to3;
+    unsigned int m_unSumTimeStepsNbrsRange3to6;
+
+    unsigned int* m_punNbrsRange0to3AtTimeStep;
+    unsigned int* m_punNbrsRange3to6AtTimeStep;
+
+
+    // keeping track of distance travelled by bot in last 100 time-steps
+    int              m_iDistTravelledTimeWindow;
+
+    unsigned int     m_unCoordCurrQueueIndex;
+
+    double           m_dSquaredDistTravelled;
+    double           m_dSquaredDistThreshold;
+
+    TVector2d*       m_pvecCoordAtTimeStep;
+
+
+#endif
 };
 
 /******************************************************************************/

@@ -44,6 +44,22 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
     {
         m_eswarmbehavType = HOMING2;
     }
+    else if (strcmp(swarmbehav, "STRLN") == 0)
+    {
+        m_eswarmbehavType = STRAIGHTLINE;
+    }
+    else if (strcmp(swarmbehav, "RNDWK") == 0)
+    {
+        m_eswarmbehavType = RANDOMWK;
+    }
+    else if (strcmp(swarmbehav, "CIRCLE") == 0)
+    {
+        m_eswarmbehavType = CIRCLE;
+    }
+    else if (strcmp(swarmbehav, "STOP") == 0)
+    {
+        m_eswarmbehavType = STOP;
+    }
 
     const char* errorbehav = pc_experiment_arguments->GetArgumentAsStringOr("errorbehav", "");
     if (strcmp(errorbehav, "STRLN") == 0)
@@ -62,6 +78,26 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
     {
         m_eerrorbehavType = STOP;
     }
+    else if (strcmp(errorbehav, "AGGREGATION") == 0)
+    {
+        m_eerrorbehavType = AGGREGATION;
+    }
+    else if (strcmp(errorbehav, "DISPERSION") == 0)
+    {
+        m_eerrorbehavType = DISPERSION;
+    }
+    else if (strcmp(errorbehav, "FLOCKING") == 0)
+    {
+        m_eerrorbehavType = FLOCKING;
+    }
+    else if (strcmp(errorbehav, "HOMING1") == 0)
+    {
+        m_eerrorbehavType = HOMING1;
+    }
+    else if (strcmp(errorbehav, "HOMING2") == 0)
+    {
+        m_eerrorbehavType = HOMING2;
+    }
     else
     {
         m_eerrorbehavType = NOERR;
@@ -78,11 +114,17 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
     {
         char* pchSwarmBehavior = "INVALID";
         switch (m_eswarmbehavType) {
-        case AGGREGATION : pchSwarmBehavior = "AGGREGATION"; break;
-        case DISPERSION  : pchSwarmBehavior = "DISPERSION"; break;
-        case FLOCKING    : pchSwarmBehavior = "FLOCKING"; break;
-        case HOMING1     : pchSwarmBehavior = "HOMING1"; break;
-        case HOMING2     : pchSwarmBehavior = "HOMING2"; break;
+        case AGGREGATION   : pchSwarmBehavior = "AGGREGATION"; break;
+        case DISPERSION    : pchSwarmBehavior = "DISPERSION"; break;
+        case FLOCKING      : pchSwarmBehavior = "FLOCKING"; break;
+        case HOMING1       : pchSwarmBehavior = "HOMING1"; break;
+        case HOMING2       : pchSwarmBehavior = "HOMING2"; break;
+
+        case STRAIGHTLINE  : pchSwarmBehavior = "STRAIGHTLINE"; break;
+        case RANDOMWK      : pchSwarmBehavior = "RANDOMWK"; break;
+        case CIRCLE        : pchSwarmBehavior = "CIRCLE"; break;
+        case STOP          : pchSwarmBehavior = "STOP"; break;
+
         default:
             pchSwarmBehavior = "UNKNOWN"; 
         }
@@ -94,12 +136,19 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
         case CIRCLE        : pchErrorBehavior = "CIRCLE"; break;
         case STOP          : pchErrorBehavior = "STOP"; break;
         case NOERR         : pchErrorBehavior = "NOERR"; break;
+
+        case AGGREGATION   : pchErrorBehavior = "AGGREGATION"; break;
+        case DISPERSION    : pchErrorBehavior = "DISPERSION"; break;
+        case FLOCKING      : pchErrorBehavior = "FLOCKING"; break;
+        case HOMING1       : pchErrorBehavior = "HOMING1"; break;
+        case HOMING2       : pchErrorBehavior = "HOMING2"; break;
+
         default:
             pchErrorBehavior = "UNKNOWN"; 
         }
 
-        printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2] -- behavior selected: %s\n", pchSwarmBehavior);
-        printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP ]                        -- behavior selected: %s\n", pchErrorBehavior);
+        printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2,STRLN,RNDWK,CIRCLE,STOP] -- behavior selected: %s\n", pchSwarmBehavior);
+        printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP,AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2]                        -- behavior selected: %s\n", pchErrorBehavior);
         printf("misbehavestep=#     Step when agent starts misbehaving [%d]\n",m_unMisbehaveStep);
         printf("tracknormalagent=#    Id of normal agent to track [%d]\n",  m_unNormalAgentToTrack);
         printf("trackabnormalagent=#  Id of abnormal agent to track [%d]\n",m_unAbnormalAgentToTrack);
@@ -124,93 +173,8 @@ CAgent* CTestExperiment::CreateAgent()
     static CAgent* pcPreviousAgent = NULL;
     
     vector<CBehavior*> vecBehaviors;
+    vecBehaviors = GetAgentBehavior(m_eswarmbehavType, pcPreviousAgent);
 
-    // Dispersion behavior
-    // Parameters: Dispersion range (d)
-    // Robots disperse with the distance between them decided by dispersion range d in CDisperseBehavior(d)
-    // Note that for large value of d (e.g. 50), the robots collapse into each other!
-    if(m_eswarmbehavType == DISPERSION)
-    {
-        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3);
-        vecBehaviors.push_back(pcDisperseBehavior2);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-    }
-
-    // Aggregation behavior: formation of clusters of robots
-    // Parameters: Dispersion range (d), Aggregation range (a)
-    // The number of robots in each cluster seems to be proportional to d/a
-    if(m_eswarmbehavType == AGGREGATION)
-    {
-        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3); //1
-        vecBehaviors.push_back(pcDisperseBehavior2);
-        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
-        vecBehaviors.push_back(pcAggregateBehavior);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-    }
-
-
-    // Homing behavior 2: Ind. robots follow the robot that was placed immediately before them or the first robot
-    // Parameters: Dispersion range (d), Homing range (h)
-    // The dispersion range d > 0, else robots collapse into their individual leaders
-    // If dispersion range d is too high (e.g. 5), other robots besides the leader disrupt the homing behavior - resulting in slowly moving clusters of robots
-    if(m_eswarmbehavType == HOMING2)
-    {
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
-        vecBehaviors.push_back(pcDisperseBehavior);
-        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(10000, pcPreviousAgent);
-        vecBehaviors.push_back(pcHomingBehavior);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-    }
-
-    // Homing behavior 1: All other robots follow a single leader bot
-    // The robots form a single cluster around the leader-bot. The bahavior is quite similar to the aggregation behav.
-    // The dispersion range d > 0 else robots collapse into leader.
-    // Increasing d increases the area occupied by the cluster
-    if(m_eswarmbehavType == HOMING1)
-    {
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
-        vecBehaviors.push_back(pcDisperseBehavior);
-        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(100, pcPreviousAgent);
-        vecBehaviors.push_back(pcHomingBehavior);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-    }
-
-
-    // Flocking behavior:
-    // Parameters: Dispersion range (d), Flocking range (f)
-    // Dispersion range d is proportional to the size of individual flock of robots
-    // Flocking range f influences how fast a flock is formed. Also f > d to initiate flocking
-    if(m_eswarmbehavType == FLOCKING)
-    {
-        //behav. inserted is decreasing order of priority to take control of the agent
-
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(1); //5
-        vecBehaviors.push_back(pcDisperseBehavior);
-        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3); //10
-        vecBehaviors.push_back(pcFlockBehavior);
-        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(5);
-        vecBehaviors.push_back(pcAggregateBehavior);
-
-        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        vecBehaviors.push_back(pcRandomWalkBehavior);
-
-//            CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(4);
-//            vecBehaviors.push_back(pcDisperseBehavior);
-//            CFlockBehavior* pcFlockBehavior = new CFlockBehavior(5);
-//            vecBehaviors.push_back(pcFlockBehavior);
-//            CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
-//            vecBehaviors.push_back(pcAggregateBehavior);
-        //           CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-        //           vecBehaviors.push_back(pcRandomWalkBehavior);
-    }
 
     CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcCRMArguments, vecBehaviors);
 
@@ -230,14 +194,17 @@ CAgent* CTestExperiment::CreateAgent()
     if(m_eswarmbehavType == HOMING1)
     {
         if (pcPreviousAgent == NULL)
+        {
             pcPreviousAgent = pcAgent;
+            pcHomeToAgent   = pcAgent;
+        }
     }
     else
     {
         pcPreviousAgent = pcAgent;
     }
 
-    return pcAgent; //pcPreviousAgent;
+    return pcAgent;
 }
 
 /******************************************************************************/
@@ -256,6 +223,22 @@ void CTestExperiment::PrintVelocityDifference(CAgent* pc_agent, double f_range)
         dir_relativeagentvelocity = Vec2dAngle((*pc_agent->GetVelocity()), tTemp);
     else
         dir_relativeagentvelocity = 0.0;
+
+
+    if(isnan(dir_relativeagentvelocity))
+    {
+        double cosinevalue = Vec2dCosAngle(tTemp, (*pc_agent->GetVelocity()));
+
+        if(fabs(cosinevalue - 1.0) < 1.0e-3)
+            dir_relativeagentvelocity = 0.0;
+        else if(fabs(cosinevalue - -1.0) < 1.0e-3)
+            dir_relativeagentvelocity = M_PI;
+        else
+        {
+            dir_relativeagentvelocity = acos(cosinevalue);
+        }
+    }
+
 
     printf("%f:[ mag: %f, dir: %f ]", f_range, mag_relativeagentvelocity, dir_relativeagentvelocity);
 }
@@ -310,10 +293,10 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     {
         unsigned int unToleraters  = 0;
         unsigned int unAttackers   = 0;
-        unsigned int unUnConverged = 0;
+        unsigned int unNbrsInSensoryRange = 0;
 
-        m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unUnConverged);
-        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, unconvg: %d", un_step_number, unToleraters, unAttackers, unUnConverged);
+        m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange);
+        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
         printf("\nMisbehavingAgentStats: ");
         PrintStatsForAgent(m_pcMisbehaveAgent[0]);
@@ -323,10 +306,10 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     {
         unsigned int unToleraters = 0;
         unsigned int unAttackers  = 0;
-        unsigned int unUnConverged = 0;
+        unsigned int unNbrsInSensoryRange = 0;
 
-        m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unUnConverged);
-        printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, unconvg: %d", un_step_number, unToleraters, unAttackers, unUnConverged);
+        m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange);
+        printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
         printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
         printf("\nNormalAgentStats: ");
         PrintStatsForAgent(m_pcNormalAgentToTrack);
@@ -338,40 +321,124 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         for(int i = 0; i < m_unNumAbnormalAgents; i++)
         {
             vector<CBehavior*> vecBehaviors;
-            if(m_eerrorbehavType == STRAIGHTLINE)
-            {
-                CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.0);
-                vecBehaviors.push_back(pcRandomWalkBehavior);
-            }
-            else if(m_eerrorbehavType == RANDOMWK)
-            {
-                CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
-                vecBehaviors.push_back(pcRandomWalkBehavior);
-            }
-            else if(m_eerrorbehavType == CIRCLE)
-            {
-                CCircleBehavior* pcCircleBehavior = new CCircleBehavior();
-                vecBehaviors.push_back(pcCircleBehavior);
-            }
-            else if(m_eerrorbehavType == STOP)
-            {
-                CStopBehavior* pcStopBehavior = new CStopBehavior();
-                vecBehaviors.push_back(pcStopBehavior);
-            }
-            else
-            {
-                printf("\n No error behavior");
-                exit(-1);
-            }
+            vecBehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
 
             m_pcMisbehaveAgent[i]->SetBehaviors(vecBehaviors);
         }
     }
 }
 
-
-
 /******************************************************************************/
 /******************************************************************************/
 
+vector<CBehavior*> CTestExperiment::GetAgentBehavior(ESwarmBehavType swarmbehavType, CAgent*  previousAgent)
+{
+    vector<CBehavior*> vecBehaviors;
 
+    //behav. pushed is decreasing order of priority to take control of the agent
+
+    // Dispersion behavior
+    // Parameters: Dispersion range (d)
+    // Robots disperse with the distance between them decided by dispersion range d in CDisperseBehavior(d)
+    // Note that for large value of d (e.g. 50), the robots collapse into each other!
+    if(swarmbehavType == DISPERSION)
+    {
+        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
+        vecBehaviors.push_back(pcDisperseBehavior);
+
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+        vecBehaviors.push_back(pcRandomWalkBehavior);
+    }
+
+    // Aggregation behavior: formation of clusters of robots
+    // Parameters: Dispersion range (d), Aggregation range (a)
+    // The number of robots in each cluster seems to be proportional to d/a
+    else if(swarmbehavType == AGGREGATION)
+    {
+        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3); //1
+        vecBehaviors.push_back(pcDisperseBehavior2);
+        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
+        vecBehaviors.push_back(pcAggregateBehavior);
+
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+        vecBehaviors.push_back(pcRandomWalkBehavior);
+    }
+
+    // Homing behavior 2: Ind. robots follow the robot that was placed immediately before them or the first robot
+    // Parameters: Dispersion range (d), Homing range (h)
+    // The dispersion range d > 0, else robots collapse into their individual leaders
+    // If dispersion range d is too high (e.g. 5), other robots besides the leader disrupt the homing behavior - resulting in slowly moving clusters of robots
+    else if(swarmbehavType == HOMING2)
+    {
+        printf("\nHOMING2 behav. not defined any more\n"); exit(-1);
+
+        /*CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
+        vecBehaviors.push_back(pcDisperseBehavior);
+        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(10000, previousAgent);
+        vecBehaviors.push_back(pcHomingBehavior);
+
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+        vecBehaviors.push_back(pcRandomWalkBehavior);*/
+    }
+
+    // Homing behavior 1: All other robots follow a single leader bot
+    // The robots form a single cluster around the leader-bot. The bahavior is quite similar to the aggregation behav.
+    // The dispersion range d > 0 else robots collapse into leader.
+    // Increasing d increases the area occupied by the cluster
+    else if(swarmbehavType == HOMING1)
+    {
+        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
+        vecBehaviors.push_back(pcDisperseBehavior);
+        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(100, previousAgent);
+        vecBehaviors.push_back(pcHomingBehavior);
+
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+        vecBehaviors.push_back(pcRandomWalkBehavior);
+    }
+
+    // Flocking behavior:
+    // Parameters: Dispersion range (d), Flocking range (f)
+    // Dispersion range d is proportional to the size of individual flock of robots
+    // Flocking range f influences how fast a flock is formed. Also f > d to initiate flocking
+    else if(swarmbehavType == FLOCKING)
+    {
+        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(1); //5
+        vecBehaviors.push_back(pcDisperseBehavior);
+        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3); //10
+        vecBehaviors.push_back(pcFlockBehavior);
+        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(5);
+        vecBehaviors.push_back(pcAggregateBehavior);
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+        vecBehaviors.push_back(pcRandomWalkBehavior);
+    }
+    else if(swarmbehavType == STRAIGHTLINE)
+    {
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.0);
+        vecBehaviors.push_back(pcRandomWalkBehavior);
+    }
+    else if(swarmbehavType == RANDOMWK)
+    {
+        CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
+        vecBehaviors.push_back(pcRandomWalkBehavior);
+    }
+    else if(swarmbehavType == CIRCLE)
+    {
+        CCircleBehavior* pcCircleBehavior = new CCircleBehavior();
+        vecBehaviors.push_back(pcCircleBehavior);
+    }
+    else if(swarmbehavType == STOP)
+    {
+        CStopBehavior* pcStopBehavior = new CStopBehavior();
+        vecBehaviors.push_back(pcStopBehavior);
+    }
+    else
+    {
+        printf("\n No behavior selected");
+        exit(-1);
+    }
+
+    return vecBehaviors;
+}
+
+/******************************************************************************/
+/******************************************************************************/

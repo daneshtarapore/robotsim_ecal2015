@@ -22,7 +22,8 @@ bool CCircleBehavior::TakeControl()
 
 void CCircleBehavior::Action()
 {
-    m_ftheta += M_PI*2.0 / 10.0; //200
+    // circle of diameter 1 unit (with 32 tim-steps for a rotation)
+    m_ftheta += M_PI*2.0 / 32.0;//10.0;//200.0;
 
     if (m_ftheta > M_PI*2.0)
         m_ftheta -= M_PI*2.0;
