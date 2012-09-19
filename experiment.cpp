@@ -42,14 +42,14 @@ CExperiment::~CExperiment()
 
 CSimulator* CExperiment::CreateSimulator(unsigned int un_number_of_cycles)
 {
-    CSimulator* pcSimulator = new CSimulator(un_number_of_cycles);
+    m_pcSimulator = new CSimulator(un_number_of_cycles);
 
     m_pcArena = CreateArena();
-    pcSimulator->SetArena(m_pcArena);    
+    m_pcSimulator->SetArena(m_pcArena);    
 
-    CreateAndAddAgents(pcSimulator);
+    CreateAndAddAgents(m_pcSimulator);
 
-    return pcSimulator;
+    return m_pcSimulator;
 }
 
 /******************************************************************************/
