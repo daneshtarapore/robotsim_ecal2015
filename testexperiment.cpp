@@ -339,6 +339,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
 
         printf("Id: %d, FV: %d;   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
+
+        i++;
     }
     printf("\n\n");
 
