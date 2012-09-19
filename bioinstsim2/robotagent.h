@@ -54,7 +54,7 @@ public:
 
     virtual void SetMostWantedList(unsigned unFeatureVector, unsigned int state);
     
-    virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged);
+    virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged, bool b_logs);
 
     virtual unsigned int Attack(CFeatureVector* pc_feature_vector);
 

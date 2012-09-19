@@ -18,7 +18,7 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
                                  CArguments* pc_arena_arguments,
                                  CArguments* pc_agent_arguments,
                                  CArguments* pc_crm_arguments) :
-    CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_crm_arguments)
+CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_crm_arguments)
 {    
     static bool bHelpDisplayed = false;
 
@@ -277,7 +277,7 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
     printf(", ");
     PrintVelocityDifference(pc_agent, 10);
     printf(", ");
-       
+
     printf("\n");
 
 }
@@ -295,7 +295,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unAttackers   = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
-        m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange);
+        m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
         printf("\nMisbehavingAgentStats: ");
@@ -308,7 +308,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unAttackers  = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
-        m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange);
+        m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);
         printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
         printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
         printf("\nNormalAgentStats: ");
@@ -326,6 +326,32 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             m_pcMisbehaveAgent[i]->SetBehaviors(vecBehaviors);
         }
     }
+
+
+    TAgentVector* allagents = this->m_pcSimulator->GetAllAgents();
+    TAgentVectorIterator i = allagents->begin();
+    printf("\nAgentsFeatureVectors: ");
+    while (i != allagents->end())
+    {
+        CRobotAgent* tmp_robotagent  = (CRobotAgent*) (*i);
+        const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
+
+        printf("Id: %d, FV: %d;   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
+
+
+        if(un_step_number > CRMSTARTTIME)
+        {
+            unsigned int unToleraters  = 0;
+            unsigned int unAttackers   = 0;
+            unsigned int unNbrsInSensoryRange = 0;
+
+            tmp_robotagent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);
+            printf("\nStep: %d, AgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
+            printf("\nAgentFeatureVector: %d\n\n", tmp_fv->GetValue());
+        }
+    }
+    printf("\n");
+
 }
 
 /******************************************************************************/

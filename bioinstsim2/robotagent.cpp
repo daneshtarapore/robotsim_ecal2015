@@ -5,7 +5,7 @@
 /******************************************************************************/
 
 CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments, CArguments* pc_crm_arguments, TBehaviorVector vec_behaviors) :
-    CAgent(pch_name, un_identification, pc_arguments), m_vecBehaviors(vec_behaviors)
+        CAgent(pch_name, un_identification, pc_arguments), m_vecBehaviors(vec_behaviors)
 {
     for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
     {
@@ -45,7 +45,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
                CFeatureVector::FEATURE_RANGE,
                m_fResponseRange,
                m_uSelectedNumNearestNbrs
-            );
+               );
     }
 
     m_pbMostWantedList = new unsigned int[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
@@ -209,7 +209,7 @@ CRobotAgent* CRobotAgent::GetRandomRobotWithWeights(double f_range)
     {
         ERROR("The random generator seems to be wrong");
     } 
-        
+
     return (CRobotAgent*) pcAgentSelected;
 } 
 
@@ -338,7 +338,7 @@ void CRobotAgent::Sense(unsigned int u_nearestnbrs)
     for (int i = 1; i < u_nearestnbrs+1; i++)
     {
         CRobotAgent* pcRobot = (CRobotAgent*) tSortedAgents[i];
-                
+
         // Apply noise:
         unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
         if (m_fBitflipProbabililty > 0.00001) 
@@ -382,7 +382,7 @@ void CRobotAgent::Sense(unsigned int u_nearestnbrs)
 //             if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fSenseRangeSquared)
 //             {
 //                 CRobotAgent* pcRobot = (CRobotAgent*) (*j);
-                
+
 //                 // Apply noise:
 //                 unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
 //                 if (m_fBitflipProbabililty > 0.00001) 
@@ -390,7 +390,7 @@ void CRobotAgent::Sense(unsigned int u_nearestnbrs)
 
 //                     for (int k = 0; k < CFeatureVector::NUMBER_OF_FEATURES; k++) 
 //                     {
-  
+
 //                         if (Random::nextDouble() < m_fBitflipProbabililty)
 //                         {
 //                             unsigned int unBitToFlip = k;
@@ -450,7 +450,7 @@ void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, unsigned int state
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_neighborsinsensoryrange)
+void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_neighborsinsensoryrange, bool b_logs)
 {
     (*pun_number_of_toleraters)  = 0;
     (*pun_number_of_attackers)   = 0;
@@ -472,7 +472,7 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         {
             (*pun_number_of_attackers)++;
 
-            if(m_battackeragentlog)
+            if(m_battackeragentlog && b_logs)
             {
                 printf("\nAn attacker agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
                 unsigned int* FeatureVectorsSensed;
@@ -513,7 +513,7 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         {
             (*pun_number_of_toleraters)++;
 
-            if(m_btolerateragentlog)
+            if(m_btolerateragentlog && b_logs)
             {
                 printf("\nA tolerator agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
                 unsigned int* FeatureVectorsSensed;
@@ -555,125 +555,125 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
             (*pun_number_of_unconverged)++;
         }*/
 
-	
+
         unsigned int* FeatureVectorsSensed;
         FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
         if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] > 0.0)
-	{
+        {
             (*pun_number_of_neighborsinsensoryrange)++;
-	}
-	
+        }
 
 
-	{
-                printf("\nAn agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
-                unsigned int* FeatureVectorsSensed;
-                FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
-                for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
+        if(b_logs)
+        {
+            printf("\nAn agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
+            unsigned int* FeatureVectorsSensed;
+            FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
+            for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
+            {
+                if(FeatureVectorsSensed[fv] > 0.0)
                 {
-                    if(FeatureVectorsSensed[fv] > 0.0)
-                    {
-                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-                               fv,
-                               tmp_crm->GetAPC(fv),
-                               fv,
-                               tmp_crm->GetCurrE(fv),
-                               fv,
-                               tmp_crm->GetCurrR(fv),
-                               tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv],
-                               tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv]);
-                    }
+                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
+                           fv,
+                           tmp_crm->GetAPC(fv),
+                           fv,
+                           tmp_crm->GetCurrE(fv),
+                           fv,
+                           tmp_crm->GetCurrR(fv),
+                           tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv],
+                           tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv]);
                 }
+            }
 
 
-                if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
-                {
-                    printf("for the above agentFV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()),
-                           tmp_crm->m_pfSumEffectorsWeightedbyAffinity[m_pcFeatureVector->GetValue()],
-                           tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[m_pcFeatureVector->GetValue()]);
-                }
-	}	
+            if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
+            {
+                printf("for the above agentFV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
+                       m_pcFeatureVector->GetValue(),
+                       tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
+                       m_pcFeatureVector->GetValue(),
+                       tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
+                       m_pcFeatureVector->GetValue(),
+                       tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()),
+                       tmp_crm->m_pfSumEffectorsWeightedbyAffinity[m_pcFeatureVector->GetValue()],
+                       tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[m_pcFeatureVector->GetValue()]);
+            }
+        }
 
     }
 
 
-//    TAgentListList tAgentListList;
-//    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fResponseRange);
-//    TAgentListListIterator i;
-//    double fResponseRangeSquared = m_fResponseRange * m_fResponseRange;
+    //    TAgentListList tAgentListList;
+    //    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fResponseRange);
+    //    TAgentListListIterator i;
+    //    double fResponseRangeSquared = m_fResponseRange * m_fResponseRange;
 
-//    bool m_battackeragentlog=true,m_btolerateragentlog=true;
-//    for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
-//    {
-//        TAgentListIterator j;
-//        for (j = (*i)->begin(); j != (*i)->end(); j++)
-//        {
-//            if ((*j)->GetType() == ROBOT &&
-//                GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared &&
-//                (*j) != this)
-//            {
-//                CRMinRobotAgent* tmp_crm = ((CRobotAgent*) (*j))->GetCRMinRobotAgent();
-//                unsigned int fv_status = ((CRobotAgent*) (*j))->Attack(m_pcFeatureVector);
-//                if (fv_status == 1)
-//                {
-//                    (*pun_number_of_attackers)++;
+    //    bool m_battackeragentlog=true,m_btolerateragentlog=true;
+    //    for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
+    //    {
+    //        TAgentListIterator j;
+    //        for (j = (*i)->begin(); j != (*i)->end(); j++)
+    //        {
+    //            if ((*j)->GetType() == ROBOT &&
+    //                GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared &&
+    //                (*j) != this)
+    //            {
+    //                CRMinRobotAgent* tmp_crm = ((CRobotAgent*) (*j))->GetCRMinRobotAgent();
+    //                unsigned int fv_status = ((CRobotAgent*) (*j))->Attack(m_pcFeatureVector);
+    //                if (fv_status == 1)
+    //                {
+    //                    (*pun_number_of_attackers)++;
 
-//                    if(m_battackeragentlog)
-//                    {
-//                        printf("\nAn attacker agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
-//                        unsigned int* FeatureVectorsSensed;
-//                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
+    //                    if(m_battackeragentlog)
+    //                    {
+    //                        printf("\nAn attacker agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
+    //                        unsigned int* FeatureVectorsSensed;
+    //                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
 
-//                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-//                        {
-//                            if(FeatureVectorsSensed[i] > 0.0)
-//                            {
-//                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
-//                                       tmp_crm->GetAPC(i),
-//                                       tmp_crm->GetCurrE(i),
-//                                       tmp_crm->GetCurrR(i));
-//                            }
-//                        }
-//                        m_battackeragentlog = false;
-//                    }
-//                }
-//                else if(fv_status == 2)
-//                {
-//                    (*pun_number_of_toleraters)++;
+    //                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
+    //                        {
+    //                            if(FeatureVectorsSensed[i] > 0.0)
+    //                            {
+    //                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
+    //                                       tmp_crm->GetAPC(i),
+    //                                       tmp_crm->GetCurrE(i),
+    //                                       tmp_crm->GetCurrR(i));
+    //                            }
+    //                        }
+    //                        m_battackeragentlog = false;
+    //                    }
+    //                }
+    //                else if(fv_status == 2)
+    //                {
+    //                    (*pun_number_of_toleraters)++;
 
-//                    if(m_btolerateragentlog)
-//                    {
-//                        printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
-//                        unsigned int* FeatureVectorsSensed;
-//                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
-//                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-//                        {
-//                            if(FeatureVectorsSensed[i] > 0.0)
-//                            {
-//                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
-//                                       tmp_crm->GetAPC(i),
-//                                       tmp_crm->GetCurrE(i),
-//                                       tmp_crm->GetCurrR(i));
-//                            }
-//                        }
-//                        m_btolerateragentlog = false;
-//                    }
-//                }
+    //                    if(m_btolerateragentlog)
+    //                    {
+    //                        printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
+    //                        unsigned int* FeatureVectorsSensed;
+    //                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
+    //                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
+    //                        {
+    //                            if(FeatureVectorsSensed[i] > 0.0)
+    //                            {
+    //                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
+    //                                       tmp_crm->GetAPC(i),
+    //                                       tmp_crm->GetCurrE(i),
+    //                                       tmp_crm->GetCurrR(i));
+    //                            }
+    //                        }
+    //                        m_btolerateragentlog = false;
+    //                    }
+    //                }
 
-//                if (!tmp_crm->GetConvergenceFlag())
-//                {
-//                    (*pun_number_of_unconverged)++;
-//                }
+    //                if (!tmp_crm->GetConvergenceFlag())
+    //                {
+    //                    (*pun_number_of_unconverged)++;
+    //                }
 
-//            }
-//        }
-//    }
+    //            }
+    //        }
+    //    }
 }
 
 /******************************************************************************/
