@@ -289,6 +289,7 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
+    // detailed log of the responses (minimal log) to abnormal agent
     if (m_pcMisbehaveAgent[0] && un_step_number > CRMSTARTTIME)
     {
         unsigned int unToleraters  = 0;
@@ -302,6 +303,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         PrintStatsForAgent(m_pcMisbehaveAgent[0]);
     }
 
+    // detailed log of the responses (minimal log) to a single normal agent being tracked
     if (m_pcNormalAgentToTrack && un_step_number > CRMSTARTTIME)
     {
         unsigned int unToleraters = 0;
@@ -337,21 +339,29 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
 
         printf("Id: %d, FV: %d;   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
+    }
+    printf("\n\n");
 
 
-        if(un_step_number > CRMSTARTTIME)
+    // logging the responses (minimal log) to all the agents
+    if(un_step_number > CRMSTARTTIME)
+    {
+        TAgentVector* allagents = this->m_pcSimulator->GetAllAgents();
+        TAgentVectorIterator i = allagents->begin();
+        while (i != allagents->end())
         {
+            CRobotAgent* tmp_robotagent  = (CRobotAgent*) (*i);
+            const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
+
             unsigned int unToleraters  = 0;
             unsigned int unAttackers   = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
             tmp_robotagent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);
-            printf("\nStep: %d, AgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
-            printf("\nAgentFeatureVector: %d\n\n", tmp_fv->GetValue());
+            printf("ResponsestoAllAgents. Step: %d, Id: %d, FV: %d, tol: %d, att: %d, neighboursinsensoryrange: %d\n", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unNbrsInSensoryRange);
         }
+        printf("\n");
     }
-    printf("\n");
-
 }
 
 /******************************************************************************/
