@@ -267,15 +267,15 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
            fAverageDistanceToAgentsWithin6, fAverageDistanceToAgentsWithin8, fAverageDistanceToAgentsWithin10);
 
     printf("VelocityDifference: "); 
-    PrintVelocityDifference(pc_agent, 2);
+    PrintVelocityDifference(pc_agent, 2.0);
     printf(", ");
-    PrintVelocityDifference(pc_agent, 4);
+    PrintVelocityDifference(pc_agent, 4.0);
     printf(", ");
-    PrintVelocityDifference(pc_agent, 6);
+    PrintVelocityDifference(pc_agent, 6.0);
     printf(", ");
-    PrintVelocityDifference(pc_agent, 8);
+    PrintVelocityDifference(pc_agent, 8.0);
     printf(", ");
-    PrintVelocityDifference(pc_agent, 10);
+    PrintVelocityDifference(pc_agent, 10.0);
     printf(", ");
 
     printf("\n");
@@ -338,7 +338,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         CRobotAgent* tmp_robotagent  = (CRobotAgent*) (*i);
         const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
 
-        printf("Id: %d, FV: %d;   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
+        printf("%d %d   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
 
         i++;
     }
@@ -360,7 +360,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             unsigned int unNbrsInSensoryRange = 0;
 
             tmp_robotagent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);
-            printf("ResponsestoAllAgents. Step: %d, Id: %d, FV: %d, tol: %d, att: %d, neighboursinsensoryrange: %d\n", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unNbrsInSensoryRange);
+            printf("ResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, neighboursinsensoryrange: %d\n", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unNbrsInSensoryRange);
+            i++;
         }
         printf("\n");
     }
