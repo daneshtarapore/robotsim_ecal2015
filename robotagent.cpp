@@ -23,6 +23,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     m_fBitflipProbabililty    = pc_arguments->GetArgumentAsDoubleOr("bitflipprob", 0.0);
 
     //control at what distances agents can sense one another when FVs have to be communicated
+    // now made redundant with selectnumnearestnbrs
     m_fFVSenseRange               = pc_arguments->GetArgumentAsDoubleOr("fvsenserange", 10.0);
 
     //at what distances agents are considered neighbors when the individual features are computed
