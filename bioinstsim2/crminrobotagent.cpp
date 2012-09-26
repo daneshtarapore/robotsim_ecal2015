@@ -110,8 +110,6 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     m_pfSumRegulatorsWeightedbyAffinity = new double[m_unNumberOfReceptors];
 
 
-    //Allocated and Deleted in RobotAgent class
-    //m_punFeaturesSensed = new unsigned int[m_unNumberOfReceptors];
     m_pfAPCs		      = new double[m_unNumberOfReceptors]; // In this implementation, each type of APC presents one FV.
 
 
@@ -1087,12 +1085,12 @@ void CRMinRobotAgent::UpdateState()
 void CRMinRobotAgent::Sense()
 {
     // Ask the robot you belong to for the number of feature vectors of different types
-    // returns in m_punFeaturesSensed
-    unsigned int* m_punFeaturesSensed  = robotAgent->GetFeaturesSensed();
+    // returns in m_pfFeaturesSensed
+    float* m_pfFeaturesSensed  = robotAgent->GetFeaturesSensed();
 
     for (int i = 0; i < m_unNumberOfReceptors; i++)
     {
-        m_pfAPCs[i] = m_punFeaturesSensed[i];///(M_PI * robotAgent->GetFVSenseRange()  * robotAgent->GetFVSenseRange());
+        m_pfAPCs[i] = (double) m_pfFeaturesSensed[i];///(M_PI * robotAgent->GetFVSenseRange()  * robotAgent->GetFVSenseRange());
         m_pfAPCs[i] = m_fFVtoApcscaling * m_pfAPCs[i];
     }
 }

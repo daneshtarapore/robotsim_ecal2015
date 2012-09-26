@@ -42,6 +42,9 @@ protected:
     virtual void DrawAllAgents();
     virtual void DrawAgent(CAgent* pc_agent);
 
+    virtual void DrawCircle(double f_center_x, double f_center_y, double f_radius);
+    virtual void DrawSolidCircle(double f_center_x, double f_center_y, double f_radius);
+
     virtual void OutputStatistics(unsigned int un_step_number);
 
     virtual TColor3f GetColorFromIndex(unsigned int index);
@@ -52,6 +55,9 @@ protected:
     double    m_fCurrentFrame;
     int       m_nWindowWidth;
     int       m_nWindowHeight;
+
+    double    m_fDetailLevel;
+
     int       m_nCurrentFileFrame;
 
     unsigned int m_unNumberOfAgents;

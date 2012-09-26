@@ -15,6 +15,10 @@
 /******************************************************************************/
 /******************************************************************************/
 
+//#define WILDCARDINFV
+
+/******************************************************************************/
+/******************************************************************************/
 
 class CFeatureVector
 {
@@ -32,6 +36,10 @@ public:
     virtual unsigned int SimulationStep();
 
     virtual std::string ToString();
+
+#ifdef WILDCARDINFV
+    int m_iWildCardBit; // set to -1 if no wildcard bit present in FV
+#endif
     
 protected:
     virtual void ComputeFeatureValues();
@@ -42,6 +50,7 @@ protected:
 
     float*         m_pfFeatureValues;
     int*           m_piLastOccuranceEvent;
+    int*           m_piLastOccuranceNegEvent;
 
     float        m_fLowPassFilterParameter;
     float        m_fThresholdOnNumNbrs;
@@ -49,6 +58,29 @@ protected:
     int          m_iEventSelectionTimeWindow;
 
     double       m_dVelocityThreshold;
+
+
+#ifdef WILDCARDINFV
+
+    /*
+    unsigned int m_unSenMotIntCurrQueueIndex;
+
+    unsigned int m_unSumTimeSteps_SenMotIntNbrsInRange_at1;
+    unsigned int m_unSumTimeSteps_SenMotIntNbrsInRange_at0;
+    unsigned int m_unSumTimeSteps_SenMotIntNbrsInRange_atWC;
+
+    unsigned int m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1;
+    unsigned int m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0;
+    unsigned int m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC;
+
+    // for each time-step
+    //1: if motors respond to sensory input; 0: if motors donot respond to sensory input; and WC (2): if no sensory input present
+    unsigned int* m_punSenMotInt_NbrsInRange;
+
+    //1: if motors respond to absence of sensory input; 0: if motors donot respond to absence of sensory input; and WC (2): if sensory input is present
+    unsigned int* m_punSenMotInt_NbrsNotinRange;*/
+
+#endif
 
 #ifdef ALTERNATESIXBITFV
 
@@ -60,6 +92,7 @@ protected:
 
     unsigned int* m_punNbrsRange0to3AtTimeStep;
     unsigned int* m_punNbrsRange3to6AtTimeStep;
+
 
 
     // keeping track of distance travelled by bot in last 100 time-steps

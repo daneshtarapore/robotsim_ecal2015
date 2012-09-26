@@ -20,21 +20,48 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     //assert(NUMBER_OF_FEATURES == 4);
     NUMBER_OF_FEATURE_VECTORS = 1 << NUMBER_OF_FEATURES;
 
-    m_pfFeatureValues      = new float[m_unLength];
-    m_piLastOccuranceEvent = new int[m_unLength];
+    m_pfFeatureValues         = new float[m_unLength];
+    m_piLastOccuranceEvent    = new int[m_unLength];
+    m_piLastOccuranceNegEvent = new int[m_unLength];
 
     m_fLowPassFilterParameter    = 0.01;
     m_fThresholdOnNumNbrs        = 3.99 ;
     m_fProcessedNumNeighbours    = 0.0;
 
-    m_iEventSelectionTimeWindow = CRMSTARTTIME;
+    m_iEventSelectionTimeWindow = 1500;//CRMSTARTTIME;
 
     for(unsigned int i = 0; i < NUMBER_OF_FEATURES; i++)
     {
-        m_piLastOccuranceEvent[i] = 0;
+        m_piLastOccuranceEvent[i]    = 0;
+        m_piLastOccuranceNegEvent[i] = 0;
     }
 
     m_dVelocityThreshold = 0.05 * (m_pcAgent->GetMaximumSpeed());
+
+
+#if defined(WILDCARDINFV) && defined(ALTERNATESIXBITFV)
+
+    m_iWildCardBit = -1; // set to -1 if no wildcard bit present in FV
+
+/*    m_unSenMotIntCurrQueueIndex = 0;
+
+    m_unSumTimeSteps_SenMotIntNbrsInRange_at1  = 0;
+    m_unSumTimeSteps_SenMotIntNbrsInRange_at0  = 0;
+    m_unSumTimeSteps_SenMotIntNbrsInRange_atWC = 0;
+
+    m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1  = 0;
+    m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0  = 0;
+    m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC = 0;
+
+    // for each time-step
+    //1: if motors respond to sensory input; 0: if motors donot respond to sensory input; and WC (2): if no sensory input present
+    m_punSenMotInt_NbrsInRange    = new unsigned int[m_iEventSelectionTimeWindow];
+
+    //1: if motors respond in absence of sensory input; 0: if motors donot respond to absence of sensory input; and WC (2): if sensory input is present
+    m_punSenMotInt_NbrsNotinRange = new unsigned int[m_iEventSelectionTimeWindow];*/
+
+#endif
+
 
 #ifdef ALTERNATESIXBITFV
 
@@ -69,11 +96,21 @@ CFeatureVector::~CFeatureVector()
 {
     delete m_pfFeatureValues;
     delete m_piLastOccuranceEvent;
+    delete m_piLastOccuranceNegEvent;
+
+#if defined(WILDCARDINFV) && defined(ALTERNATESIXBITFV)
+/*
+    delete m_punSenMotInt_NbrsNotinRange;
+    delete m_punSenMotInt_NbrsInRange;*/
+#endif
+
 
 #ifdef ALTERNATESIXBITFV
+
     delete m_punNbrsRange0to3AtTimeStep;
     delete m_punNbrsRange3to6AtTimeStep;
     delete m_pvecCoordAtTimeStep;
+
 #endif
 }
 
@@ -109,47 +146,6 @@ unsigned int CFeatureVector::SimulationStep()
 
 /******************************************************************************/
 /******************************************************************************/
-
-//void CFeatureVector::ComputeFeatureValues()
-//{
-//    // Number of neighbors:
-//    m_pfFeatureValues[0] = m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT);
-
-//    // Distance to surrounding agents:
-//    m_pfFeatureValues[1] = m_pcAgent->GetAverageDistanceToSurroundingAgents(FEATURE_RANGE, ROBOT);
-
-//    // Velocity magnitude and direction wrt. surrounding agents:
-//    TVector2d tTemp    = m_pcAgent->GetAverageVelocityOfSurroundingAgents(FEATURE_RANGE, ROBOT);
-
-//    float tmp_agentvelocity = Vec2dLength((*m_pcAgent->GetVelocity()));
-//    m_pfFeatureValues[2] = tmp_agentvelocity - Vec2dLength((tTemp));
-
-//    if (Vec2dLength((*m_pcAgent->GetVelocity())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
-//        m_pfFeatureValues[3] = Vec2dAngle((*m_pcAgent->GetVelocity()), tTemp);
-//    else
-//        m_pfFeatureValues[3] = 0.0;
-
-
-
-//    // Acceleration magnitude and direction wrt. surrounding agents:
-//    tTemp                = m_pcAgent->GetAverageAccelerationOfSurroundingAgents(FEATURE_RANGE, ROBOT);
-
-//    float tmp_agentacceleration = Vec2dLength((*m_pcAgent->GetAcceleration()));
-//    m_pfFeatureValues[4] = tmp_agentacceleration - Vec2dLength((tTemp));
-//    if (Vec2dLength((*m_pcAgent->GetAcceleration())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
-//        m_pfFeatureValues[5] = Vec2dAngle((*m_pcAgent->GetAcceleration()), tTemp);
-//    else
-//        m_pfFeatureValues[5] = 0.0;
-
-
-
-//    // Change in velocity direction of individual agent:
-//    m_pfFeatureValues[6] = m_pcAgent->GetChangeInOrientation();
-//}
-
-/******************************************************************************/
-/******************************************************************************/
-
 
 void CFeatureVector::ComputeFeatureValues()
 {
@@ -212,6 +208,165 @@ void CFeatureVector::ComputeFeatureValues()
     m_unNbrsCurrQueueIndex = (m_unNbrsCurrQueueIndex + 1) % m_iEventSelectionTimeWindow;
 
 
+#ifdef WILDCARDINFV
+
+    m_iWildCardBit = -1; // set to -1 if no wildcard bit present in FV
+
+    // Sensors-motor interactions
+    // Set if the occurance of the following event, atleast once in time window X
+    // 3rd: distance to nbrs 0-6 && change in angular acceleration
+    // 4th: no neighbors detected  && change in angular acceleration
+
+    if(dist_nbrsagents < 6)
+    {
+        if(angle_acceleration > 0.1 || angle_acceleration < -0.1)
+            m_piLastOccuranceEvent[0]    = CurrentStepNumber;
+        else
+            m_piLastOccuranceNegEvent[0] = CurrentStepNumber;
+    }
+    else
+    {
+        m_iWildCardBit = 2;
+    }
+
+    if(dist_nbrsagents == 6.0)
+    {
+        if(angle_acceleration > 0.1 || angle_acceleration < -0.1)
+            m_piLastOccuranceEvent[1]    = CurrentStepNumber;
+        else
+            m_piLastOccuranceNegEvent[1] = CurrentStepNumber;
+    }
+    else
+    {
+        m_iWildCardBit = 3;
+    }
+
+    for(unsigned int featureindex = 0; featureindex <=1; featureindex++)
+    {
+        if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
+        {
+            m_pfFeatureValues[featureindex+2] = 1.0;
+            m_iWildCardBit = -1;
+        }
+        else if ((CurrentStepNumber - m_piLastOccuranceNegEvent[featureindex]) <= m_iEventSelectionTimeWindow)
+        {
+            m_pfFeatureValues[featureindex+2] = 0.0;
+            m_iWildCardBit = -1;
+        }
+        else
+        {
+            // default feature value in case of wild card
+            m_pfFeatureValues[featureindex+2] = 0.0;
+        }
+    }
+
+
+    /*
+    // Sensors-motor interactions
+    // Set if the occurance of the following event, MAJORITY OF TIMES in time window X
+    // 3rd: distance to nbrs 0-6 && change in angular acceleration
+    // 4th: no neighbors detected  && change in angular acceleration
+
+    m_iWildCardBit = -1; // set to -1 if no wildcard bit present in FV
+
+    if(CurrentStepNumber >= m_iEventSelectionTimeWindow)
+    {
+        // decision based on the last 1500 (m_iEventSelectionTimeWindow) time-steps
+        if(m_unSumTimeSteps_SenMotIntNbrsInRange_at1 > 0 &&
+           m_unSumTimeSteps_SenMotIntNbrsInRange_at1 >= m_unSumTimeSteps_SenMotIntNbrsInRange_at0)
+        {
+            m_pfFeatureValues[2] = 1.0;
+        }
+        else if(m_unSumTimeSteps_SenMotIntNbrsInRange_at0 > 0 &&
+                m_unSumTimeSteps_SenMotIntNbrsInRange_at0 > m_unSumTimeSteps_SenMotIntNbrsInRange_at1)
+        {
+            m_pfFeatureValues[2] = 0.0;
+        }
+        else
+        {
+            m_iWildCardBit = 2; m_pfFeatureValues[2] = 0.0; // default feature value
+        }
+
+
+        if(m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1 > 0 &&
+           m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1 >= m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0)
+        {
+            m_pfFeatureValues[3] = 1.0;
+        }
+        else if(m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0 > 0 &&
+                m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0 >
+                m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1)
+        {
+            m_pfFeatureValues[3] = 0.0;
+        }
+        else
+        {
+            m_iWildCardBit = 3; m_pfFeatureValues[3] = 0.0; // default feature value
+        }
+
+
+        // removing the fist entry of the moving time window  from the sum
+        if(m_punSenMotInt_NbrsInRange[m_unSenMotIntCurrQueueIndex] == 1)
+            m_unSumTimeSteps_SenMotIntNbrsInRange_at1--;
+        else if(m_punSenMotInt_NbrsInRange[m_unSenMotIntCurrQueueIndex] == 0)
+            m_unSumTimeSteps_SenMotIntNbrsInRange_at0--;
+        else
+            m_unSumTimeSteps_SenMotIntNbrsInRange_atWC--;
+
+
+        if(m_punSenMotInt_NbrsNotinRange[m_unSenMotIntCurrQueueIndex] == 1)
+            m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1--;
+        else if(m_punSenMotInt_NbrsNotinRange[m_unSenMotIntCurrQueueIndex] == 0)
+            m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0--;
+        else
+            m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC--;
+
+    }
+
+
+    // adding new values into the queue
+    if(dist_nbrsagents < 6)
+    {
+        if (angle_acceleration > 0.1 || angle_acceleration < -0.1)
+        {
+            m_punSenMotInt_NbrsInRange[m_unSenMotIntCurrQueueIndex] = 1;
+            m_unSumTimeSteps_SenMotIntNbrsInRange_at1++;
+        }
+        else
+        {
+            m_punSenMotInt_NbrsInRange[m_unSenMotIntCurrQueueIndex] = 0;
+            m_unSumTimeSteps_SenMotIntNbrsInRange_at0++;
+        }
+    }
+    else
+    {
+        m_punSenMotInt_NbrsInRange[m_unSenMotIntCurrQueueIndex] = 2;
+        m_unSumTimeSteps_SenMotIntNbrsInRange_atWC++;
+    }
+
+    if(dist_nbrsagents == 6)
+    {
+        if (angle_acceleration > 0.1 || angle_acceleration < -0.1)
+        {
+            m_punSenMotInt_NbrsNotinRange[m_unSenMotIntCurrQueueIndex] = 1;
+            m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1++;
+        }
+        else
+        {
+            m_punSenMotInt_NbrsNotinRange[m_unSenMotIntCurrQueueIndex] = 0;
+            m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0++;
+        }
+    }
+    else
+    {
+        m_punSenMotInt_NbrsNotinRange[m_unSenMotIntCurrQueueIndex] = 2;
+        m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC++;
+    }
+
+    m_unSenMotIntCurrQueueIndex = (m_unSenMotIntCurrQueueIndex + 1) % m_iEventSelectionTimeWindow;*/
+
+#else
+
     // Sensors-motor interactions
     // Set if the occurance of the following event, atleast once in time window X
     // 3rd: distance to nbrs 0-6 && change in angular acceleration
@@ -238,6 +393,7 @@ void CFeatureVector::ComputeFeatureValues()
             m_pfFeatureValues[featureindex+2] = 0.0;
         }
     }
+#endif
 
 
     // Motors
@@ -368,7 +524,24 @@ void CFeatureVector::ComputeFeatureValues()
                m_pcAgent->GetAcceleration()->x , m_pcAgent->GetAcceleration()->y);
 
 #ifdef ALTERNATESIXBITFV
+#ifdef WILDCARDINFV
+
+/*  printf("Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, TimeSteps_Sen-MotIntNbrsInRange_at1: %d, TimeSteps_Sen-MotIntNbrsInRange_at0: %d, TimeSteps_Sen-MotIntNbrsInRange_atWC: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at1: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at0: %d, TimeSteps_Sen-MotIntNbrsNotInRange_atWC: %d\n",
+
+m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold,
+
+m_unSumTimeSteps_SenMotIntNbrsInRange_at1, m_unSumTimeSteps_SenMotIntNbrsInRange_at0, m_unSumTimeSteps_SenMotIntNbrsInRange_atWC,
+
+m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1, m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0, m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC);*/
+
+        printf("Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold, m_iWildCardBit);
+
+#else
+
         printf("Alternate normal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold);
+
+#endif
+
 #endif
     }
 
@@ -381,7 +554,23 @@ void CFeatureVector::ComputeFeatureValues()
                m_pcAgent->GetAcceleration()->x , m_pcAgent->GetAcceleration()->y);
 
 #ifdef ALTERNATESIXBITFV
+#ifdef WILDCARDINFV
+
+        /*printf("Alternate abnormal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, TimeSteps_Sen-MotIntNbrsInRange_at1: %d, TimeSteps_Sen-MotIntNbrsInRange_at0: %d, TimeSteps_Sen-MotIntNbrsInRange_atWC: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at1: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at0: %d, TimeSteps_Sen-MotIntNbrsNotInRange_atWC: %d\n",
+
+m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold,
+
+m_unSumTimeSteps_SenMotIntNbrsInRange_at1, m_unSumTimeSteps_SenMotIntNbrsInRange_at0, m_unSumTimeSteps_SenMotIntNbrsInRange_atWC,
+
+m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1, m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0, m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC);*/
+
+        printf("Alternate abnormal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold, m_iWildCardBit);
+
+#else
+
+
         printf("Alternate abnormal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold);
+#endif
 #endif
     }
 }

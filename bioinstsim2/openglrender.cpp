@@ -11,6 +11,19 @@
 #include <math.h>
 
 
+#define Vec2dRotate(angle, vec)                         \
+  {                                                     \
+     double xt_ = vec.x;                                 \
+     vec.x = cos(angle) * vec.x - sin(angle) * vec.y;   \
+     vec.y = cos(angle) * vec.y + sin(angle) * xt_;     \
+  }
+
+
+// Find the angle of one vector
+#define Vec2dOwnAngle(vec) \
+     (atan2(vec.y, vec.x))
+
+
 // X11 display info
 static Display *display=0;
 static int screen=0;
@@ -35,6 +48,9 @@ COpenGLRender::COpenGLRender() : CRender("OpenGLRender")
 {
     m_nWindowWidth  = 640;
     m_nWindowHeight  = 480;
+
+    m_fDetailLevel   = 20.0;
+
     m_nCurrentFileFrame = 0;
     m_bOutputStatistics = true;
     
@@ -416,7 +432,7 @@ void COpenGLRender::DrawAllAgents()
 /******************************************************************************/
 /******************************************************************************/
 
-void COpenGLRender::DrawAgent(CAgent* pc_agent)
+/*void COpenGLRender::DrawAgent(CAgent* pc_agent)
 {
 
     const TVector2d* ptPosition = pc_agent->GetPosition();
@@ -457,6 +473,115 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
 
         glEnd();
     }    
+}*/
+
+
+void COpenGLRender::DrawAgent(CAgent* pc_agent)
+{
+
+    const TVector2d* ptPosition = pc_agent->GetPosition();
+
+    double fArenaSizeX;
+    double fArenaSizeY;
+
+
+    CSimulator::GetInstance()->GetArena()->GetSize(&fArenaSizeX, &fArenaSizeY);
+
+    if (pc_agent->GetType() == ROBOT)
+    {
+        unsigned int unColor = pc_agent->GetColor();
+        TColor3f tColor      = GetColorFromIndex(unColor);
+        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+
+        double fCenterX = 2.0 * ptPosition->x / fArenaSizeX;
+        double fCenterY = 2.0 * ptPosition->y / fArenaSizeY;
+
+
+        glColor3f(0.005, 0.005, 0.005);
+        DrawSolidCircle(fCenterX + 0.005, fCenterY - 0.005, CAgent::RADIUS/10.0); //0.02
+
+        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+        DrawSolidCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0); //0.02
+        glColor3f(1.0, 1.0, 1.0);
+        DrawCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0); //0.02
+
+        double fAngle = Vec2dOwnAngle((*pc_agent->GetVelocity()));
+        TVector2d vDot = { 0.0244, 0.0 }; //x was 0.013
+        Vec2dRotate(fAngle, vDot);
+        DrawSolidCircle(fCenterX + vDot.x, fCenterY + vDot.y, 0.0131); //0.007
+
+        glEnd();
+
+//        glPointSize((GLfloat) pc_agent->GetSize());
+//        glBegin(GL_POINTS);
+
+//        unsigned int unColor = pc_agent->GetColor();
+//        TColor3f tColor      = GetColorFromIndex(unColor);
+
+//        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+
+//        glVertex2d(2 * ptPosition->m_fX / fArenaSizeX, 2 * ptPosition->m_fY / fArenaSizeY);
+//        glEnd();
+    }
+
+    else if (pc_agent->GetType() == LIGHT) {
+           glBegin(GL_TRIANGLE_FAN);
+           double fCenterX = 2.0 * ptPosition->x / fArenaSizeX;
+           double fCenterY = 2.0 * ptPosition->y / fArenaSizeY;
+           double fRadius  = 0.0015 *  pc_agent->GetSize();
+
+           unsigned int unColor = pc_agent->GetColor();
+           TColor3f tColor      = GetColorFromIndex(unColor);
+           glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+
+           glVertex2f(fCenterX, fCenterY);
+           for (double fAngle = PI / 4.0; fAngle <= PI * 3.0 + 0.1; fAngle += PI / 2.0)
+           {
+               glVertex2f(fCenterX + sin(fAngle) * fRadius, fCenterY + cos(fAngle) * fRadius);
+           }
+
+           glEnd();
+       }
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void COpenGLRender::DrawCircle(double f_center_x, double f_center_y, double f_radius)
+{
+    double vectorY1 = f_center_y + f_radius;
+    double vectorX1 = f_center_x;
+    glBegin(GL_LINE_STRIP);
+    for(double angle =0.0f; angle <= (2.0f * 3.14159f); angle += 2.0f*3.14159f / (double)m_fDetailLevel)
+    {
+        double vectorX1 = f_center_x + (f_radius * (float) sin ((double) angle));
+        double vectorY1 = f_center_y + (f_radius * (float) cos ((double) angle));
+        glVertex2d(vectorX1, vectorY1);
+//        vectorY1 = vectorY;
+//        vectorX1 = vectorX;
+    }
+    glEnd();
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void COpenGLRender::DrawSolidCircle(double f_center_x, double f_center_y, double f_radius)
+{
+    double vectorY1 = f_center_y + f_radius;
+    double vectorX1 = f_center_x;
+    glBegin(GL_TRIANGLES);
+    for(double angle =0.0f; angle <= (2.0f * 3.14159f); angle += 2.0f*3.14159f / (double) m_fDetailLevel)
+    {
+        double vectorX = f_center_x + (f_radius * (float) sin ((double) angle));
+        double vectorY = f_center_y + (f_radius * (float) cos ((double) angle));
+        glVertex2d(f_center_x, f_center_y);
+        glVertex2d(vectorX1, vectorY1);
+        glVertex2d(vectorX, vectorY);
+        vectorY1 = vectorY;
+        vectorX1 = vectorX;
+    }
+    glEnd();
 }
 
 /******************************************************************************/

@@ -107,7 +107,6 @@ protected:
     double*        m_pfEffectors_prev;
     double*        m_pfRegulators_prev;
 
-    //unsigned int*  m_punFeaturesSensed;
     double*        m_pfAPCs;
 
 

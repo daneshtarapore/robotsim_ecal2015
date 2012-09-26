@@ -14,13 +14,11 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
 
     crminAgent          = new CRMinRobotAgent(this, pc_crm_arguments);
     m_pcFeatureVector   = new CFeatureVector(this);
-    m_punFeaturesSensed = new unsigned int[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
+    m_pfFeaturesSensed  = new float[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
 
     m_fWeight = 0;
 
     static bool bHelpDisplayed = false;
-
-    m_fBitflipProbabililty    = pc_arguments->GetArgumentAsDoubleOr("bitflipprob", 0.0);
 
     //control at what distances agents can sense one another when FVs have to be communicated
     // now made redundant with selectnumnearestnbrs
@@ -35,13 +33,11 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
 
     if (pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
-        printf("bitflipprob=#.#               Probability of flipping each bit in sensed feature vectors [%2.5f]\n"
-               "fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
+        printf("fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
                "featuresenserange=#.#         Range based on which features are computed  [%f]\n"
                "responserange=#.#             Range at which a robot \"reponds\" to other features [%f]\n"
                "selectnumnearestnbrs=#        The number of nearest neighbours for FV sensing and T-cell diffusion (makes fvsenserange redundant) [%d]\n"
                ,
-               m_fBitflipProbabililty,
                m_fFVSenseRange,
                CFeatureVector::FEATURE_RANGE,
                m_fResponseRange,
@@ -67,7 +63,7 @@ CRobotAgent::~CRobotAgent()
         delete (*i);
     }
     delete m_pcFeatureVector;
-    delete m_punFeaturesSensed;
+    delete m_pfFeaturesSensed;
     delete m_pbMostWantedList;
 }
 
@@ -132,9 +128,9 @@ EAgentType CRobotAgent::GetType()
 /******************************************************************************/
 /******************************************************************************/
 
-unsigned int* CRobotAgent::GetFeaturesSensed() const
+float* CRobotAgent::GetFeaturesSensed() const
 {
-    return m_punFeaturesSensed;
+    return m_pfFeaturesSensed;
 }
 
 /******************************************************************************/
@@ -323,12 +319,28 @@ unsigned int CRobotAgent::GetSelectedNumNearestNbrs()
 
 /******************************************************************************/
 /******************************************************************************/
+void CRobotAgent::FVsOfWcFeature(const CFeatureVector* pc_feature_vector, unsigned int *fv1, unsigned int *fv2)
+{
+#if defined(ALTERNATESIXBITFV) && defined(WILDCARDINFV)
+
+    assert(pc_feature_vector->m_iWildCardBit != -1);
+    (*fv1) = pc_feature_vector->GetValue();
+    (*fv2) = pc_feature_vector->GetValue() +
+             (1 << pc_feature_vector->m_iWildCardBit);
+
+    return;
+
+#endif
+}
+
+/******************************************************************************/
+/******************************************************************************/
 
 void CRobotAgent::Sense(unsigned int u_nearestnbrs)
 {
     for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
     {
-        m_punFeaturesSensed[i] = 0;
+        m_pfFeaturesSensed[i] = 0.0;
     }
 
     TAgentVector tSortedAgents;
@@ -339,79 +351,27 @@ void CRobotAgent::Sense(unsigned int u_nearestnbrs)
     for (int i = 1; i < u_nearestnbrs+1; i++)
     {
         CRobotAgent* pcRobot = (CRobotAgent*) tSortedAgents[i];
-
-        // Apply noise:
-        unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
-        if (m_fBitflipProbabililty > 0.00001) 
-        {
-            
-            for (int k = 0; k < CFeatureVector::NUMBER_OF_FEATURES; k++) 
-            {
-                
-                if (Random::nextDouble() < m_fBitflipProbabililty)
-                {
-                    unsigned int unBitToFlip = k;
-                    unFeatureVector ^= 1 << unBitToFlip;
-                }
-            }
-        }              
         
-        m_punFeaturesSensed[unFeatureVector]++;
+#if defined(ALTERNATESIXBITFV) && defined(WILDCARDINFV)
+        if(pcRobot->GetFeatureVector()->m_iWildCardBit != -1)
+        {
+            unsigned int fv1, fv2;
+            FVsOfWcFeature(pcRobot->GetFeatureVector(), &fv1, &fv2);
+            m_pfFeaturesSensed[fv1] += 0.5;
+            m_pfFeaturesSensed[fv2] += 0.5;
+        }
+        else
+        {
+            unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
+            m_pfFeaturesSensed[unFeatureVector] += 1.0;
+        }
+#else
+        unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
+        m_pfFeaturesSensed[unFeatureVector] += 1.0;
+#endif
     }
 }
 
-// OLD VERSION
-
-// void CRobotAgent::Sense()
-// {
-
-//     for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-//     {
-//         m_punFeaturesSensed[i] = 0;
-//     }
-
-//     TAgentListList tAgentListList;
-//     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fFVSenseRange);
-//     TAgentListListIterator i;
-//     double fSenseRangeSquared = m_fFVSenseRange * m_fFVSenseRange;
-
-//     for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
-//     {
-//         TAgentListIterator j;
-//         for (j = (*i)->begin(); j != (*i)->end(); j++)
-//         {
-//             if ((*j)->GetType() == ROBOT && GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fSenseRangeSquared)
-//             {
-//                 CRobotAgent* pcRobot = (CRobotAgent*) (*j);
-
-//                 // Apply noise:
-//                 unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
-//                 if (m_fBitflipProbabililty > 0.00001) 
-//                 {
-
-//                     for (int k = 0; k < CFeatureVector::NUMBER_OF_FEATURES; k++) 
-//                     {
-
-//                         if (Random::nextDouble() < m_fBitflipProbabililty)
-//                         {
-//                             unsigned int unBitToFlip = k;
-//                             unFeatureVector ^= 1 << unBitToFlip;
-//                         }
-//                     }
-//                 }              
-
-// //                unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
-// //                if(CurrentStepNumber > 3250U)
-// //                if(this->m_unIdentification == 25U)
-// //                    if (m_pbMostWantedList[unFeatureVector]) {
-// //                        printf("Attacking agent number: %d. unFeatureVector: %d\n", (*j)->GetIdentification(),unFeatureVector);
-// //                    }
-
-//                 m_punFeaturesSensed[unFeatureVector]++;
-//             }
-//         }
-//     }
-// }
 
 /******************************************************************************/
 /******************************************************************************/
@@ -469,14 +429,14 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         CRobotAgent* pcRobot     = (CRobotAgent*) tSortedAgents[nbrs];
         CRMinRobotAgent* tmp_crm = pcRobot->GetCRMinRobotAgent();
         unsigned int fv_status   = pcRobot->Attack(m_pcFeatureVector);
-        if (fv_status == 1)// && tmp_crm->GetConvergenceError_Perc() <= 0.50)
+        if (fv_status == 1)
         {
             (*pun_number_of_attackers)++;
 
             if(m_battackeragentlog && b_logs)
             {
                 printf("\nAn attacker agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
-                unsigned int* FeatureVectorsSensed;
+                float* FeatureVectorsSensed;
                 FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
 
                 for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
@@ -510,14 +470,14 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                 m_battackeragentlog = false;
             }
         }
-        else if(fv_status == 2)// && tmp_crm->GetConvergenceError_Perc() <= 0.50)
+        else if(fv_status == 2)
         {
             (*pun_number_of_toleraters)++;
 
             if(m_btolerateragentlog && b_logs)
             {
                 printf("\nA tolerator agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
-                unsigned int* FeatureVectorsSensed;
+                float* FeatureVectorsSensed;
                 FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
                 for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
                 {
@@ -551,13 +511,7 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
             }
         }
 
-        /*if (!tmp_crm->GetConvergenceFlag())
-        {
-            (*pun_number_of_unconverged)++;
-        }*/
-
-
-        unsigned int* FeatureVectorsSensed;
+        float* FeatureVectorsSensed;
         FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
         if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] > 0.0)
         {
@@ -568,7 +522,7 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         if(b_logs)
         {
             printf("\nAn agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
-            unsigned int* FeatureVectorsSensed;
+            float* FeatureVectorsSensed;
             FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
             for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
             {
@@ -601,79 +555,6 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
             }
         }
     }
-
-
-    //    TAgentListList tAgentListList;
-    //    CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), m_fResponseRange);
-    //    TAgentListListIterator i;
-    //    double fResponseRangeSquared = m_fResponseRange * m_fResponseRange;
-
-    //    bool m_battackeragentlog=true,m_btolerateragentlog=true;
-    //    for (i = tAgentListList.begin(); i != tAgentListList.end(); i++)
-    //    {
-    //        TAgentListIterator j;
-    //        for (j = (*i)->begin(); j != (*i)->end(); j++)
-    //        {
-    //            if ((*j)->GetType() == ROBOT &&
-    //                GetSquaredDistanceBetweenPositions(&m_tPosition, (*j)->GetPosition()) <= fResponseRangeSquared &&
-    //                (*j) != this)
-    //            {
-    //                CRMinRobotAgent* tmp_crm = ((CRobotAgent*) (*j))->GetCRMinRobotAgent();
-    //                unsigned int fv_status = ((CRobotAgent*) (*j))->Attack(m_pcFeatureVector);
-    //                if (fv_status == 1)
-    //                {
-    //                    (*pun_number_of_attackers)++;
-
-    //                    if(m_battackeragentlog)
-    //                    {
-    //                        printf("\nAn attacker agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
-    //                        unsigned int* FeatureVectorsSensed;
-    //                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
-
-    //                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-    //                        {
-    //                            if(FeatureVectorsSensed[i] > 0.0)
-    //                            {
-    //                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
-    //                                       tmp_crm->GetAPC(i),
-    //                                       tmp_crm->GetCurrE(i),
-    //                                       tmp_crm->GetCurrR(i));
-    //                            }
-    //                        }
-    //                        m_battackeragentlog = false;
-    //                    }
-    //                }
-    //                else if(fv_status == 2)
-    //                {
-    //                    (*pun_number_of_toleraters)++;
-
-    //                    if(m_btolerateragentlog)
-    //                    {
-    //                        printf("\nA tolerator agent. Convg. error %f    ",tmp_crm->GetConvergenceError());
-    //                        unsigned int* FeatureVectorsSensed;
-    //                        FeatureVectorsSensed = ((CRobotAgent*) (*j))->GetFeaturesSensed();
-    //                        for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-    //                        {
-    //                            if(FeatureVectorsSensed[i] > 0.0)
-    //                            {
-    //                                printf("FV:%d, [APC]:%f, [E]:%f, [R]:%f   ",i,
-    //                                       tmp_crm->GetAPC(i),
-    //                                       tmp_crm->GetCurrE(i),
-    //                                       tmp_crm->GetCurrR(i));
-    //                            }
-    //                        }
-    //                        m_btolerateragentlog = false;
-    //                    }
-    //                }
-
-    //                if (!tmp_crm->GetConvergenceFlag())
-    //                {
-    //                    (*pun_number_of_unconverged)++;
-    //                }
-
-    //            }
-    //        }
-    //    }
 }
 
 /******************************************************************************/
@@ -681,7 +562,46 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
 
 unsigned int CRobotAgent::Attack(CFeatureVector* pc_feature_vector)
 {
+#if defined(ALTERNATESIXBITFV) && defined(WILDCARDINFV)
+
+    if(pc_feature_vector->m_iWildCardBit != -1)
+    {
+        CRMinRobotAgent* tmp_crm = GetCRMinRobotAgent(); // Get the CRM of the evaluating robot
+
+        unsigned int fv1, fv2;
+        FVsOfWcFeature(pc_feature_vector, &fv1, &fv2);
+
+        double E  = tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv1] +
+                    tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv2];
+
+        double R = tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv1] +
+                   tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv2];
+
+        printf("\nWC: WCBit=%d, fv1=%u, fv2=%u, E=%f, R=%f", pc_feature_vector->m_iWildCardBit,
+               fv1, fv2, E, R);
+
+        if (((E + R) <= CELLLOWERBOUND) || fabs(E - R) <= CELLLOWERBOUND)
+        {
+            return 0; // Dont know - no T-cells to make decision or E approx. equal to R
+        }
+        else if (E > R)
+        {
+            // Attack
+            return 1;
+        }
+        else if(R > E)
+        {
+            // Tolerate
+            return 2;
+        }
+    }
+    else
+        return m_pbMostWantedList[pc_feature_vector->GetValue()];
+
+#else
     return m_pbMostWantedList[pc_feature_vector->GetValue()];
+#endif
+
 }
 
 /******************************************************************************/

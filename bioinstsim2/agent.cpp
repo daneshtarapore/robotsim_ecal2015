@@ -663,7 +663,7 @@ double CAgent::GetAverageDistanceToSurroundingAgents(double f_range, EAgentType 
     {
         distance /= (double) unCount;
     } else {
-        distance = f_range;
+        distance = f_range; // if no neighbours in range, returns the maximum range
     }
 
     return distance;
