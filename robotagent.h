@@ -37,8 +37,8 @@ public:
     virtual EAgentType   GetType();   
 
     // Gets the number of feature vectors of different types
-    // into m_punFeaturesSensed. Returns the range used to sense the feature vectors
-    virtual unsigned int* GetFeaturesSensed() const;
+    // into m_pfFeaturesSensed.
+    virtual float* GetFeaturesSensed() const;
 
     virtual CRobotAgent* GetRandomRobotWithWeights(double f_range);
     virtual CRobotAgent* GetRandomRobotWithWeights(unsigned int u_nearestnbrs);
@@ -48,6 +48,7 @@ public:
     virtual double GetWeight() const; 
     virtual const CFeatureVector* GetFeatureVector() const;
     virtual void Sense(unsigned int u_nearestnbrs);
+    virtual void FVsOfWcFeature(const CFeatureVector* pc_feature_vector, unsigned int *fv1, unsigned int *fv2);
     virtual double GetFVSenseRange() const;
     virtual unsigned int GetColor();
     virtual unsigned int GetSelectedNumNearestNbrs();
@@ -66,7 +67,7 @@ protected:
     TBehaviorVector     m_vecBehaviors;
     CRMinRobotAgent*    crminAgent;
     double              m_fWeight;
-    unsigned int*       m_punFeaturesSensed;
+    float*              m_pfFeaturesSensed;
     double              m_fBitflipProbabililty;
     unsigned int*       m_pbMostWantedList;
     double              m_fResponseRange;
