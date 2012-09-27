@@ -498,17 +498,17 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
 
 
         glColor3f(0.005, 0.005, 0.005);
-        DrawSolidCircle(fCenterX + 0.005, fCenterY - 0.005, CAgent::RADIUS/10.0); //0.02
+        DrawSolidCircle(fCenterX + 0.005, fCenterY - 0.005, CAgent::RADIUS/10.0 * .6); //0.02
 
         glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
-        DrawSolidCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0); //0.02
+        DrawSolidCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0 * .6); //0.02
         glColor3f(1.0, 1.0, 1.0);
-        DrawCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0); //0.02
+        DrawCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0 * .6); //0.02
 
         double fAngle = Vec2dOwnAngle((*pc_agent->GetVelocity()));
-        TVector2d vDot = { 0.0244, 0.0 }; //x was 0.013
+        TVector2d vDot = { 0.0244 * .6, 0.0 }; //x was 0.013
         Vec2dRotate(fAngle, vDot);
-        DrawSolidCircle(fCenterX + vDot.x, fCenterY + vDot.y, 0.0131); //0.007
+        DrawSolidCircle(fCenterX + vDot.x, fCenterY + vDot.y, 0.0131 * .6); //0.007
 
         glEnd();
 

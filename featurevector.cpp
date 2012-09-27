@@ -28,7 +28,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_fThresholdOnNumNbrs        = 3.99 ;
     m_fProcessedNumNeighbours    = 0.0;
 
-    m_iEventSelectionTimeWindow = 1500;//CRMSTARTTIME;
+    m_iEventSelectionTimeWindow = 450; //CRMSTARTTIME; //1500;
 
     for(unsigned int i = 0; i < NUMBER_OF_FEATURES; i++)
     {
@@ -36,7 +36,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
         m_piLastOccuranceNegEvent[i] = 0;
     }
 
-    m_dVelocityThreshold = 0.05 * (m_pcAgent->GetMaximumSpeed());
+    m_fVelocityThreshold = 0.05 * (m_pcAgent->GetMaximumSpeed());
 
 
 #if defined(WILDCARDINFV) && defined(ALTERNATESIXBITFV)
@@ -79,9 +79,9 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_iDistTravelledTimeWindow = 100;
     m_unCoordCurrQueueIndex    = 0;
 
-    m_dSquaredDistTravelled = 0.0;
-    m_dSquaredDistThreshold = (0.05 * (m_pcAgent->GetMaximumSpeed()*m_iDistTravelledTimeWindow)) *
-                              (0.05 * (m_pcAgent->GetMaximumSpeed()*m_iDistTravelledTimeWindow));
+    m_fSquaredDistTravelled = 0.0;
+    m_fSquaredDistThreshold = (0.05 * (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow)) *
+                              (0.05 * (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow));
 
     m_pvecCoordAtTimeStep = new TVector2d[m_iDistTravelledTimeWindow];
 #endif
@@ -171,12 +171,12 @@ void CFeatureVector::ComputeFeatureValues()
     if(CurrentStepNumber >= m_iEventSelectionTimeWindow)
     {
         // decision based on the last 1500 time-steps
-        if(m_unSumTimeStepsNbrsRange0to3 > (unsigned)(0.5*m_iEventSelectionTimeWindow))
+        if(m_unSumTimeStepsNbrsRange0to3 > (unsigned)(0.5*(double)m_iEventSelectionTimeWindow))
             m_pfFeatureValues[0] = 1.0;
         else
             m_pfFeatureValues[0] = 0.0;
 
-        if(m_unSumTimeStepsNbrsRange3to6 > (unsigned)(0.5*m_iEventSelectionTimeWindow))
+        if(m_unSumTimeStepsNbrsRange3to6 > (unsigned)(0.5*(double)m_iEventSelectionTimeWindow))
             m_pfFeatureValues[1] = 1.0;
         else
             m_pfFeatureValues[1] = 0.0;
@@ -217,7 +217,7 @@ void CFeatureVector::ComputeFeatureValues()
     // 3rd: distance to nbrs 0-6 && change in angular acceleration
     // 4th: no neighbors detected  && change in angular acceleration
 
-    if(dist_nbrsagents < 6)
+    if(dist_nbrsagents < 6.0)
     {
         if(angle_acceleration > 0.1 || angle_acceleration < -0.1)
             m_piLastOccuranceEvent[0]    = CurrentStepNumber;
@@ -372,7 +372,7 @@ void CFeatureVector::ComputeFeatureValues()
     // 3rd: distance to nbrs 0-6 && change in angular acceleration
     // 4th: no neighbors detected  && change in angular acceleration
 
-    if(dist_nbrsagents < 6 && (angle_acceleration > 0.1 || angle_acceleration < -0.1))
+    if(dist_nbrsagents < 6.0 && (angle_acceleration > 0.1 || angle_acceleration < -0.1))
     {
         m_piLastOccuranceEvent[0] = CurrentStepNumber;
     }
@@ -403,13 +403,13 @@ void CFeatureVector::ComputeFeatureValues()
     if(CurrentStepNumber >= m_iDistTravelledTimeWindow)
     {
         // distance travelled in last 100 time-steps
-        m_dSquaredDistTravelled =
+        m_fSquaredDistTravelled =
                 GetSquaredDistanceBetweenPositions(&vecAgentPos,
                                                    &(m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex]));
 
 
         // decision based on distance travelled in the last 100 time-steps
-        if(m_dSquaredDistTravelled >= m_dSquaredDistThreshold)
+        if(m_fSquaredDistTravelled >= m_fSquaredDistThreshold)
             m_pfFeatureValues[4] = 1.0;
         else
             m_pfFeatureValues[4] = 0.0;
@@ -422,7 +422,7 @@ void CFeatureVector::ComputeFeatureValues()
 
 
     //6th: velocity, higher than 5% of speed is accepted as feature=1
-    if(mag_velocity >= m_dVelocityThreshold) // higher than 5% of speed is accepted as moving
+    if(mag_velocity >= m_fVelocityThreshold) // higher than 5% of speed is accepted as moving
         m_pfFeatureValues[5] = 1.0;
     else
         m_pfFeatureValues[5] = 0.0;
@@ -514,10 +514,9 @@ void CFeatureVector::ComputeFeatureValues()
         dir_relativeagentacceleration = 0.0;
 
 
-
-    if (m_pcAgent->GetIdentification() == 1)// && CurrentStepNumber > CRMSTARTTIME)
+    if (m_pcAgent->GetBehavIdentification() == 1)// && CurrentStepNumber > CRMSTARTTIME)
     {
-        printf("\nFV for normal agent %d: #NBRS %d, lpf(#NBRS) %f, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),m_fProcessedNumNeighbours,dist_nbrsagents,angle_acceleration,angle_velocity,
+        printf("\nStep: %d. FV for normal agent %d: #NBRS %d, lpf(#NBRS) %f, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", CurrentStepNumber, m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),m_fProcessedNumNeighbours,dist_nbrsagents,angle_acceleration,angle_velocity,
                mag_relativeagentvelocity,dir_relativeagentvelocity,
                mag_relativeagentacceleration,dir_relativeagentacceleration,
                m_pcAgent->GetVelocity()->x, m_pcAgent->GetVelocity()->y,
@@ -526,28 +525,31 @@ void CFeatureVector::ComputeFeatureValues()
 #ifdef ALTERNATESIXBITFV
 #ifdef WILDCARDINFV
 
-/*  printf("Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, TimeSteps_Sen-MotIntNbrsInRange_at1: %d, TimeSteps_Sen-MotIntNbrsInRange_at0: %d, TimeSteps_Sen-MotIntNbrsInRange_atWC: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at1: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at0: %d, TimeSteps_Sen-MotIntNbrsNotInRange_atWC: %d\n",
+/*  printf("Step: %d. Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, TimeSteps_Sen-MotIntNbrsInRange_at1: %d, TimeSteps_Sen-MotIntNbrsInRange_at0: %d, TimeSteps_Sen-MotIntNbrsInRange_atWC: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at1: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at0: %d, TimeSteps_Sen-MotIntNbrsNotInRange_atWC: %d\n",
 
-m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold,
+CurrentStepNumber,
+
+m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold,
 
 m_unSumTimeSteps_SenMotIntNbrsInRange_at1, m_unSumTimeSteps_SenMotIntNbrsInRange_at0, m_unSumTimeSteps_SenMotIntNbrsInRange_atWC,
 
 m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1, m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0, m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC);*/
 
-        printf("Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold, m_iWildCardBit);
+        printf("Step: %d, Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold, m_iWildCardBit);
 
 #else
 
-        printf("Alternate normal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold);
+        printf("Step: %d, Alternate normal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold);
 
 #endif
 
 #endif
     }
 
-    if (m_pcAgent->GetIdentification() == 15) //&& CurrentStepNumber > CRMSTARTTIME)
+    //if (m_pcAgent->GetIdentification() == 15) //&& CurrentStepNumber > CRMSTARTTIME)
+    if (m_pcAgent->GetBehavIdentification() == -1) //&& CurrentStepNumber > CRMSTARTTIME)
     {
-        printf("\nFV for abnormal agent %d: #NBRS %d, lpf(#NBRS) %f, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),m_fProcessedNumNeighbours,dist_nbrsagents,angle_acceleration,angle_velocity,
+        printf("\nStep: %d, FV for abnormal agent %d: #NBRS %d, lpf(#NBRS) %f, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", CurrentStepNumber, m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),m_fProcessedNumNeighbours,dist_nbrsagents,angle_acceleration,angle_velocity,
                mag_relativeagentvelocity,dir_relativeagentvelocity,
                mag_relativeagentacceleration,dir_relativeagentacceleration,
                m_pcAgent->GetVelocity()->x, m_pcAgent->GetVelocity()->y,
@@ -556,20 +558,22 @@ m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1, m_unSumTimeSteps_SenMotIntNbrsNotI
 #ifdef ALTERNATESIXBITFV
 #ifdef WILDCARDINFV
 
-        /*printf("Alternate abnormal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, TimeSteps_Sen-MotIntNbrsInRange_at1: %d, TimeSteps_Sen-MotIntNbrsInRange_at0: %d, TimeSteps_Sen-MotIntNbrsInRange_atWC: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at1: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at0: %d, TimeSteps_Sen-MotIntNbrsNotInRange_atWC: %d\n",
+        /*printf("Step: %d, Alternate abnormal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, TimeSteps_Sen-MotIntNbrsInRange_at1: %d, TimeSteps_Sen-MotIntNbrsInRange_at0: %d, TimeSteps_Sen-MotIntNbrsInRange_atWC: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at1: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at0: %d, TimeSteps_Sen-MotIntNbrsNotInRange_atWC: %d\n",
 
-m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold,
+CurrentStepNumber,
+
+m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold,
 
 m_unSumTimeSteps_SenMotIntNbrsInRange_at1, m_unSumTimeSteps_SenMotIntNbrsInRange_at0, m_unSumTimeSteps_SenMotIntNbrsInRange_atWC,
 
 m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1, m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0, m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC);*/
 
-        printf("Alternate abnormal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold, m_iWildCardBit);
+        printf("Step: %d, Alternate abnormal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold, m_iWildCardBit);
 
 #else
 
 
-        printf("Alternate abnormal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_dSquaredDistTravelled, m_dSquaredDistThreshold);
+        printf("Step: %d, Alternate abnormal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold);
 #endif
 #endif
     }

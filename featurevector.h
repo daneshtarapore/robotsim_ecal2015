@@ -1,9 +1,19 @@
 #ifndef FEATUREVECTOR_H_
 #define FEATUREVECTOR_H_
 
+/******************************************************************************/
+/******************************************************************************/
+
+class CTestExperiment;
+
+/******************************************************************************/
+/******************************************************************************/
+
 #include "common.h"
 #include "agent.h"
 #include "simulator.h"
+
+//#include "testexperiment.h"
 
 #include <string>
 
@@ -57,7 +67,7 @@ protected:
     float        m_fProcessedNumNeighbours;
     int          m_iEventSelectionTimeWindow;
 
-    double       m_dVelocityThreshold;
+    double       m_fVelocityThreshold;
 
 
 #ifdef WILDCARDINFV
@@ -100,8 +110,8 @@ protected:
 
     unsigned int     m_unCoordCurrQueueIndex;
 
-    double           m_dSquaredDistTravelled;
-    double           m_dSquaredDistThreshold;
+    double           m_fSquaredDistTravelled;
+    double           m_fSquaredDistThreshold;
 
     TVector2d*       m_pvecCoordAtTimeStep;
 

@@ -584,7 +584,7 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
     {
         n_iteration++;
 
-        // a failsafe to prevent endless integrations, because of oscillations in the density of conjugates.If the value of oscillating conjugates is above the error threshold, we will break out of this loop after 50000 iterations
+        // a failsafe to prevent endless integrations, because of oscillations in the density of conjugates.If the value of oscillating conjugates is above the error threshold, we will break out of this loop after 100 iterations
         if (n_iteration > 100U)
             break;
 

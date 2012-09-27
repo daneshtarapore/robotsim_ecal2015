@@ -65,8 +65,8 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
 
     g_unGlobalNumberOfAgentsCreated++;
 
-    m_tPosition.x = 0;
-    m_tPosition.y = 0;
+    m_tPosition.x = 0.0;
+    m_tPosition.y = 0.0;
     
     m_unIdentification = un_identification;
     m_bInteractable    = false;
@@ -215,7 +215,7 @@ void CAgent::SimulationStepUpdatePosition()
     
     if (fSpeedRatio > EPSILON && m_fProportionalDirectionNoise > EPSILON)
     {
-        double fAngle = m_fProportionalDirectionNoise / 360 * (M_PI * 2.0) * fSpeedRatio * Random::nextNormGaussian();        
+        double fAngle = m_fProportionalDirectionNoise / 360.0 * (M_PI * 2.0) * fSpeedRatio * Random::nextNormGaussian();
 
         Vec2dRotate(fAngle, m_tVelocity);
     }
@@ -227,7 +227,7 @@ void CAgent::SimulationStepUpdatePosition()
         {
             fMagnitude = 1.0;
         }
-        
+
         Vec2dMultiplyScalar(m_tVelocity, fMagnitude);
     }
 
@@ -410,6 +410,24 @@ unsigned int CAgent::GetIdentification()
 /******************************************************************************/
 /******************************************************************************/
 
+void CAgent::SetBehavIdentification(int i_behavidentification)
+{
+    m_iBehavIdentification = i_behavidentification;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+int CAgent::GetBehavIdentification()
+{
+    // +1 normal agent
+    // -1 abnormal agent
+    return m_iBehavIdentification;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
 {    
     CArena* pcArena = CSimulator::GetInstance()->GetArena();
@@ -420,7 +438,7 @@ void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
     if (CArena::g_bIsBoundless)
     { 
 
-        if (fabs(t_position.x - m_tPosition.x) > fArenaWidth / 2) 
+        if (fabs(t_position.x - m_tPosition.x) > fArenaWidth / 2.0)
         {
             if (t_position.x < m_tPosition.x)
             {
@@ -430,7 +448,7 @@ void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
             }
         }
 
-        if (fabs(t_position.y - m_tPosition.y) > fArenaHeight / 2) 
+        if (fabs(t_position.y - m_tPosition.y) > fArenaHeight / 2.0)
         {
             if (t_position.y < m_tPosition.y)
             {
@@ -556,7 +574,7 @@ TVector2d CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
             {
                 TVector2d posAgent = { (*j)->GetPosition()->x, (*j)->GetPosition()->y} ;
 
-                if (fabs(posAgent.x - m_tPosition.x) > fArenaWidth / 2) 
+                if (fabs(posAgent.x - m_tPosition.x) > fArenaWidth / 2.0)
                 {
                     if (posAgent.x < m_tPosition.x)
                     {
@@ -566,7 +584,7 @@ TVector2d CAgent::GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType 
                     }
                 }
 
-                if (fabs(posAgent.y - m_tPosition.y) > fArenaHeight / 2) 
+                if (fabs(posAgent.y - m_tPosition.y) > fArenaHeight / 2.0)
                 {
                     if (posAgent.y < m_tPosition.y)
                     {
@@ -642,7 +660,7 @@ double CAgent::GetAverageDistanceToSurroundingAgents(double f_range, EAgentType 
     CSimulator::GetInstance()->GetArena()->GetAgentsCloseTo(&tAgentListList, GetPosition(), f_range);
 
     MarkAgentsWithinRange(&tAgentListList, f_range, e_type);
-    double distance = 0;
+    double distance = 0.0;
 
     TAgentList* ptAgentList  = NULL;
     CAgent* pcAgentSelected  = NULL;
@@ -659,7 +677,7 @@ double CAgent::GetAverageDistanceToSurroundingAgents(double f_range, EAgentType 
         }
     }
 
-    if (unCount > 0) 
+    if (unCount > 0.0)
     {
         distance /= (double) unCount;
     } else {
