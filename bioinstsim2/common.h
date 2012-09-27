@@ -70,11 +70,11 @@ extern double GetSquaredDistanceBetweenPositions(const TVector2d* pt_pos1, const
 
 // Returns the normalized angle in the range [0,2*M_PI)
 #define NormalizeAngle(ang) \
-  (ang < 0 ? fmod(ang, 2*M_PI)+2*M_PI : fmod(ang, 2*M_PI))
+  (ang < 0.0 ? fmod(ang, 2.0*M_PI)+2.0*M_PI : fmod(ang, 2.0*M_PI))
 
 // Returns the normalized angle in the range [-PI,PI)
 #define NormalizeAngleNegativePIPositivePI(ang) \
-  (NormalizeAngle(ang) > M_PI ? NormalizeAngle(ang) - 2*M_PI : NormalizeAngle(ang))
+  (NormalizeAngle(ang) > M_PI ? NormalizeAngle(ang) - 2.0*M_PI : NormalizeAngle(ang))
 
 // Rotate a vector:
 #define Vec2dRotate(angle, vec)                         \

@@ -183,12 +183,14 @@ CAgent* CTestExperiment::CreateAgent()
         if ((id - 1 + i) == m_unAbnormalAgentToTrack)
         {
             m_pcMisbehaveAgent[i] = (CRobotAgent*) pcAgent;
+            pcAgent->SetBehavIdentification(-1); //abnormal agent
         }
     }
 
     if ((id - 1) == m_unNormalAgentToTrack)
     {
         m_pcNormalAgentToTrack = (CRobotAgent*) pcAgent;
+        pcAgent->SetBehavIdentification(1); // normal agent
     }
 
     if(m_eswarmbehavType == HOMING1)
@@ -332,7 +334,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
     TAgentVector* allagents = this->m_pcSimulator->GetAllAgents();
     TAgentVectorIterator i = allagents->begin();
-    printf("\nAgentsFeatureVectors: ");
+    printf("\nStep: %d, AgentsFeatureVectors: ", un_step_number);
     while (i != allagents->end())
     {
         CRobotAgent* tmp_robotagent  = (CRobotAgent*) (*i);
@@ -382,7 +384,7 @@ vector<CBehavior*> CTestExperiment::GetAgentBehavior(ESwarmBehavType swarmbehavT
     // Note that for large value of d (e.g. 50), the robots collapse into each other!
     if(swarmbehavType == DISPERSION)
     {
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
+        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3.0);
         vecBehaviors.push_back(pcDisperseBehavior);
 
         CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
@@ -394,7 +396,7 @@ vector<CBehavior*> CTestExperiment::GetAgentBehavior(ESwarmBehavType swarmbehavT
     // The number of robots in each cluster seems to be proportional to d/a
     else if(swarmbehavType == AGGREGATION)
     {
-        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3); //1
+        CDisperseBehavior* pcDisperseBehavior2 = new CDisperseBehavior(3.0); //1
         vecBehaviors.push_back(pcDisperseBehavior2);
         CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(10);
         vecBehaviors.push_back(pcAggregateBehavior);
@@ -426,9 +428,9 @@ vector<CBehavior*> CTestExperiment::GetAgentBehavior(ESwarmBehavType swarmbehavT
     // Increasing d increases the area occupied by the cluster
     else if(swarmbehavType == HOMING1)
     {
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3);
+        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(3.0);
         vecBehaviors.push_back(pcDisperseBehavior);
-        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(100, previousAgent);
+        CHomingBehavior* pcHomingBehavior = new CHomingBehavior(100.0, previousAgent);
         vecBehaviors.push_back(pcHomingBehavior);
 
         CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
@@ -441,11 +443,11 @@ vector<CBehavior*> CTestExperiment::GetAgentBehavior(ESwarmBehavType swarmbehavT
     // Flocking range f influences how fast a flock is formed. Also f > d to initiate flocking
     else if(swarmbehavType == FLOCKING)
     {
-        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(1); //5
+        CDisperseBehavior* pcDisperseBehavior = new CDisperseBehavior(1.0); //5
         vecBehaviors.push_back(pcDisperseBehavior);
-        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3); //10
+        CFlockBehavior* pcFlockBehavior = new CFlockBehavior(3.0); //10
         vecBehaviors.push_back(pcFlockBehavior);
-        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(5);
+        CAggregateBehavior* pcAggregateBehavior = new CAggregateBehavior(5.0);
         vecBehaviors.push_back(pcAggregateBehavior);
         CRandomWalkBehavior* pcRandomWalkBehavior = new CRandomWalkBehavior(0.01);
         vecBehaviors.push_back(pcRandomWalkBehavior);

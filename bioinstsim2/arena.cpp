@@ -135,28 +135,28 @@ void CArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
         f_radius += max(fCellSizeX, fCellSizeY);
 
         // We translate all coordinates to the first quadrant:
-        tTranslatedPosition.x = pt_position->x + (m_fSizeX / 2);
-        tTranslatedPosition.y = pt_position->y + (m_fSizeY / 2);
+        tTranslatedPosition.x = pt_position->x + (m_fSizeX / 2.0);
+        tTranslatedPosition.y = pt_position->y + (m_fSizeY / 2.0);
 
         double fStartCellX = (tTranslatedPosition.x - f_radius) / fCellSizeX;
         double fStartCellY = (tTranslatedPosition.y - f_radius) / fCellSizeY;
 
-        if (fStartCellX < 0)
+        if (fStartCellX < 0.0)
         {
-            fStartCellX = 0;
+            fStartCellX = 0.0;
         }
 
-        if (fStartCellY < 0)
+        if (fStartCellY < 0.0)
         {
-            fStartCellY = 0;
+            fStartCellY = 0.0;
         }
 
         // Go to the center of the start square:
         double fStartX = (fStartCellX + (double) 0.49) * (double) fCellSizeX;
         double fStartY = (fStartCellY + (double) 0.49) * (double) fCellSizeY;
 
-        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2;
-        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2;
+        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2.0;
+        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2.0;
 
         if (fEndX > m_fSizeX)
         {
@@ -169,7 +169,7 @@ void CArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
         }
 
         double fCellY = fStartCellY;
-        for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1)
+        for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1.0)
         {
             int nCellY = (int) floor(fCellY);
 
@@ -177,7 +177,7 @@ void CArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
             {
                 double fCellX = fStartCellX;
 
-                for (double fX = fStartX; fX < (tTranslatedPosition.x + f_radius) + fCellSizeX / 2 && fX < m_fSizeX; fX += fCellSizeX, fCellX += 1)
+                for (double fX = fStartX; fX < (tTranslatedPosition.x + f_radius) + fCellSizeX / 2.0 && fX < m_fSizeX; fX += fCellSizeX, fCellX += 1.0)
                 {
                     double fRelativeX = fX - tTranslatedPosition.x;
                     double fRelativeY = fY - tTranslatedPosition.y;
@@ -208,8 +208,8 @@ unsigned int CArena::XYToArrayPosition(const TVector2d* pt_position) const
 
 unsigned int CArena::XYToArrayPosition(double f_x, double f_y) const
 {
-    double fX = (((f_x + m_fSizeX / 2) * m_unResX) / m_fSizeX);
-    double fY = (((f_y + m_fSizeY / 2) * m_unResY) / m_fSizeY);
+    double fX = (((f_x + m_fSizeX / 2.0) * (double)m_unResX) / m_fSizeX);
+    double fY = (((f_y + m_fSizeY / 2.0) * (double)m_unResY) / m_fSizeY);
     
     unsigned int unX = (unsigned int) fX;
     unsigned int unY = (unsigned int) fY;
@@ -232,8 +232,8 @@ void CArena::XYToArrayXY(double f_x,
                          unsigned int* pun_x, 
                          unsigned int* pun_y) const
 {
-    double fX = (((f_x + m_fSizeX / 2) * m_unResX) / m_fSizeX);
-    double fY = (((f_y + m_fSizeY / 2) * m_unResY) / m_fSizeY);
+    double fX = (((f_x + m_fSizeX / 2.0) * (double)m_unResX) / m_fSizeX);
+    double fY = (((f_y + m_fSizeY / 2.0) * (double)m_unResY) / m_fSizeY);
 
     (*pun_x) = (unsigned int) fX;
     (*pun_y) = (unsigned int) fY;    

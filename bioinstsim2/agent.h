@@ -102,6 +102,9 @@ public:
     
     virtual unsigned int GetIdentification();
 
+    virtual void SetBehavIdentification(int i_behavidentification);
+    virtual int  GetBehavIdentification();
+
     bool      m_bTempWithInRange;
     double    m_fTempDistance;
 
@@ -140,6 +143,9 @@ protected:
     bool               m_bInteractable;
 
     unsigned int       m_unIdentification;
+
+    unsigned int       m_iBehavIdentification; // -1: abnormal, +1: normal
+
     unsigned int       m_unColor;
 
     double             m_fProportionalDirectionNoise; 

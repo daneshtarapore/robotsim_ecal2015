@@ -21,20 +21,20 @@ CBoundlessArena::CBoundlessArena(const char* pch_name,
 
 void CBoundlessArena::MoveAgent(CAgent* pc_agent, TVector2d* pt_new_position)
 {
-    if (pt_new_position->x > m_fSizeX / 2)
+    if (pt_new_position->x > m_fSizeX / 2.0)
     {
         pt_new_position->x -= m_fSizeX;
     } 
-    else if (pt_new_position->x < -m_fSizeX / 2)
+    else if (pt_new_position->x < -m_fSizeX / 2.0)
     {
         pt_new_position->x += m_fSizeX;
     }
 
-    if (pt_new_position->y > m_fSizeX / 2)
+    if (pt_new_position->y > m_fSizeX / 2.0)
     {
         pt_new_position->y -= m_fSizeY;
     } 
-    else if (pt_new_position->y < -m_fSizeY / 2)
+    else if (pt_new_position->y < -m_fSizeY / 2.0)
     {
         pt_new_position->y += m_fSizeY;
     }
@@ -81,21 +81,21 @@ void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
         f_radius += max(fCellSizeX, fCellSizeY);
 
         // We translate all coordinates to the first quadrant:
-        tTranslatedPosition.x = pt_position->x + (m_fSizeX / 2);
-        tTranslatedPosition.y = pt_position->y + (m_fSizeY / 2);
+        tTranslatedPosition.x = pt_position->x + (m_fSizeX / 2.0);
+        tTranslatedPosition.y = pt_position->y + (m_fSizeY / 2.0);
 
-        double fStartCellX = (tTranslatedPosition.x - f_radius) / fCellSizeX - 1;
-        double fStartCellY = (tTranslatedPosition.y - f_radius) / fCellSizeY - 1;
+        double fStartCellX = (tTranslatedPosition.x - f_radius) / fCellSizeX - 1.0;
+        double fStartCellY = (tTranslatedPosition.y - f_radius) / fCellSizeY - 1.0;
 
         // Go to the center of the start square:
         double fStartX = (fStartCellX + (double) 0.49) * (double) fCellSizeX;
         double fStartY = (fStartCellY + (double) 0.49) * (double) fCellSizeY;
 
-        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2 + 1;
-        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2 + 1;
+        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2.0 + 1.0;
+        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2.0 + 1.0;
 
         double fCellY = fStartCellY;
-        for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1)
+        for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1.0)
         {
             int nCellY = (int) floor(fCellY);
             if (nCellY < 0)         nCellY += m_unResY;
@@ -103,13 +103,13 @@ void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
         
             double fCellX = fStartCellX;
 
-            for (double fX = fStartX; fX < (tTranslatedPosition.x + f_radius) + fCellSizeX / 2 ; fX += fCellSizeX, fCellX += 1)
+            for (double fX = fStartX; fX < (tTranslatedPosition.x + f_radius) + fCellSizeX / 2.0 ; fX += fCellSizeX, fCellX += 1.0)
             {                        
                 double fRelativeX = fabs(fX - tTranslatedPosition.x);
-                if (fRelativeX > m_fSizeX / 2) fRelativeX -= m_fSizeX / 2;
+                if (fRelativeX > m_fSizeX / 2.0) fRelativeX -= m_fSizeX / 2.0;
                 
                 double fRelativeY = fabs(fY - tTranslatedPosition.y);
-                if (fRelativeY > m_fSizeY / 2) fRelativeY -= m_fSizeY / 2;
+                if (fRelativeY > m_fSizeY / 2.0) fRelativeY -= m_fSizeY / 2.0;
 
 
                 if (sqrt(fRelativeX * fRelativeX + fRelativeY * fRelativeY) <= f_radius)

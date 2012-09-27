@@ -16,7 +16,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     m_pcFeatureVector   = new CFeatureVector(this);
     m_pfFeaturesSensed  = new float[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
 
-    m_fWeight = 0;
+    m_fWeight = 0.0;
 
     static bool bHelpDisplayed = false;
 
@@ -91,13 +91,16 @@ void CRobotAgent::SimulationStepUpdatePosition()
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
 
 
-    if (m_unIdentification == 1)// && CurrentStepNumber > CRMSTARTTIME)
+    //if (m_unIdentification == 1)// && CurrentStepNumber > CRMSTARTTIME)
+    if (m_iBehavIdentification == 1)
     {
-        printf("\nFV for normal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
+        printf("\nStep: %d, FV for normal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
-    if (m_unIdentification == 15)// && CurrentStepNumber > CRMSTARTTIME)
+
+    //if (m_unIdentification == 15)// && CurrentStepNumber > CRMSTARTTIME)
+    if (m_iBehavIdentification == -1)
     {
-        printf("\nFV for abnormal agent %d: %s\n", m_unIdentification, m_pcFeatureVector->ToString().c_str());
+        printf("\nStep: %d, FV for abnormal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
 
     Sense(GetSelectedNumNearestNbrs());
@@ -167,15 +170,15 @@ CRobotAgent* CRobotAgent::GetRandomRobotWithWeights(double f_range)
         }
         TAgentListIterator j = (*i)->begin();
 
-        while (j != (*i)->end() && fSelectedWeight > 0) 
+        while (j != (*i)->end() && fSelectedWeight > 0.0)
         {
             if ((*j)->m_bTempWithInRange) 
                 fSelectedWeight -= ((CRobotAgent*) (*j))->GetWeight();
-            if (fSelectedWeight > 0)
+            if (fSelectedWeight > 0.0)
                 j++;
         }
 
-        if (fSelectedWeight > 0)
+        if (fSelectedWeight > 0.0)
             i++;
         else
         {
@@ -215,7 +218,7 @@ CRobotAgent* CRobotAgent::GetRandomRobotWithWeights(double f_range)
 
 double CRobotAgent::CountWeightsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range)
 {
-    double fReturn = 0;
+    double fReturn = 0.0;
     TAgentListListIterator i;
 
     double fSquareRange = f_range * f_range;
@@ -249,7 +252,7 @@ CRobotAgent* CRobotAgent::GetRandomRobotWithWeights(unsigned int u_nearestnbrs)
 
     SortAllAgentsAccordingToDistance(&tSortedAgents);
 
-    double fWeightSum = 0;
+    double fWeightSum = 0.0;
     // 1-11 if u_nearestnbrs is 10, because agent at index 0 is ourselves:
     for (int i = 1; i < u_nearestnbrs+1; i++)
     {
@@ -379,10 +382,21 @@ void CRobotAgent::Sense(unsigned int u_nearestnbrs)
 unsigned int CRobotAgent::GetColor()
 {
     //return m_unIdentification == TRACKAGENT ? GREEN : RED;
-    if(m_unIdentification == 1)
+    /*if(m_unIdentification == 1)
         return GREEN;
     else if (m_unIdentification == 15)
         return RED;
+    else  if (m_unIdentification == 5)
+        return YELLOW;
+     else
+        return BLUE;*/
+
+    if(m_iBehavIdentification  == 1)
+        return GREEN;
+    else if (m_iBehavIdentification  == -1)
+        return RED;
+    else  if (m_unIdentification == 5) // a supposedly normal agent that seems to take long to join the aggregate
+        return YELLOW;
     else
         return BLUE;
 }

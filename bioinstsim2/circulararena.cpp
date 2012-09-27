@@ -5,7 +5,7 @@
 /******************************************************************************/
 
 CCircularArena::CCircularArena(const char* pch_name, double f_radius, unsigned int un_res_x, unsigned int un_res_y) : 
-    CArena(pch_name, f_radius * 2, f_radius * 2, un_res_x, un_res_y), 
+    CArena(pch_name, f_radius * 2.0, f_radius * 2.0, un_res_x, un_res_y),
     m_fRadius(f_radius)    
 {
 }

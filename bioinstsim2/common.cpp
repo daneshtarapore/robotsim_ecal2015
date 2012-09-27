@@ -13,12 +13,12 @@ double GetDistanceBetweenPositions(const TVector2d* pt_pos1, const TVector2d* pt
         pcArena->GetSize(&fSizeX, &fSizeY);
 
         double fX = fabs(pt_pos1->x - pt_pos2->x);
-        if (fX > fSizeX / 2)
+        if (fX > fSizeX / 2.0)
         {
             fX = fSizeX - fX;
         }
         double fY = fabs(pt_pos1->y - pt_pos2->y);
-        if (fY > fSizeY / 2)
+        if (fY > fSizeY / 2.0)
         {
             fY = fSizeY - fY;
         }
@@ -44,12 +44,12 @@ double GetSquaredDistanceBetweenPositions(const TVector2d* pt_pos1, const TVecto
         pcArena->GetSize(&fSizeX, &fSizeY);
 
         double fX = fabs(pt_pos1->x - pt_pos2->x);
-        if (fX > fSizeX / 2)
+        if (fX > fSizeX / 2.0)
         {
             fX = fSizeX - fX;
         }
         double fY = fabs(pt_pos1->y - pt_pos2->y);
-        if (fY > fSizeY / 2)
+        if (fY > fSizeY / 2.0)
         {
             fY = fSizeY - fY;
         }
