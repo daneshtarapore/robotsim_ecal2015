@@ -28,7 +28,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_fThresholdOnNumNbrs        = 3.99 ;
     m_fProcessedNumNeighbours    = 0.0;
 
-    m_iEventSelectionTimeWindow = 450; //CRMSTARTTIME; //1500;
+    m_iEventSelectionTimeWindow = CRMSTARTTIME; //1500;
 
     for(unsigned int i = 0; i < NUMBER_OF_FEATURES; i++)
     {
