@@ -261,10 +261,13 @@ CRobotAgent* CRobotAgent::GetRandomRobotWithWeights(unsigned int u_nearestnbrs)
     }
 
     if (fWeightSum < 1e-10)
-    {
+    {        
         return NULL;
     }
+
     double fSelectedWeight  = Random::nextDouble() * fWeightSum;
+
+
     CAgent* pcAgentSelected  = NULL;
     for (int i = 1; i < u_nearestnbrs+1; i++)
     {

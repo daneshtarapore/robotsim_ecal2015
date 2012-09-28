@@ -297,6 +297,11 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     // Convert the number of feature vectors from robot agents in the vicinity to APCs for the CRM
     Sense();
 
+// DISABLECRM_RETAINRNDCALLS is defined so as to be closer to the same sequence of random numbers generated with the normal working of the CRM, so that the same agent behaviors may be obtained when CRM is disabled.
+// However the result with and without CRM still differ, although somewhat less.
+// Possibly the random number sequence is not exactly similar, since the Random::nextDouble() in CRobotAgent::GetRandomRobotWithWeights is only called when sum of weights (T-cell pop density) is not zero. Since CRM is disabled, its not possible to get these weights
+#ifndef DISABLECRM_RETAINRNDCALLS
+
     int selectedclonaltype;// = Random::nextInt(m_unNumberOfReceptors);
 
     for(selectedclonaltype=0;selectedclonaltype<m_unNumberOfReceptors;selectedclonaltype++)
@@ -307,7 +312,6 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
             m_pfRegulators[selectedclonaltype] += 10.0;
         }
    }
-
 
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
     //PrintCRMDetails();
@@ -491,6 +495,7 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
 //                                 m_dconvergence_error,step_h,m_dconvergence_error/step_h,integration_t);
 //    }
 
+#endif
 
     m_fWeight = 0.0;
     for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
@@ -501,12 +506,13 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     robotAgent->SetWeight(m_fWeight);
 
 
-
     //We set the communication range to be twice that of the FV sensory range
     //CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights(2.0*robotAgent->GetFVSenseRange());
 
     // could we also select the robot from one of the 10 nearest neighbours - but in these expts. comm does not seem to be needed
     CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights((unsigned int)((double)robotAgent->GetSelectedNumNearestNbrs()*1.0));
+
+
 
     if (pcRemoteRobotAgent != NULL)
     {
@@ -536,7 +542,6 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     }
 
     UpdateState();
-
 }
 
 /******************************************************************************/
