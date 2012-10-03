@@ -43,6 +43,8 @@ public:
     virtual unsigned int GetValue() const;
     virtual unsigned int GetLength() const;
 
+    void PrintFeatureDetails();
+
     virtual unsigned int SimulationStep();
 
     virtual std::string ToString();

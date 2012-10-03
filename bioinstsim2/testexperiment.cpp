@@ -291,7 +291,19 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
-    // detailed log of the responses (minimal log) to abnormal agent
+    if (un_step_number == m_unMisbehaveStep)
+    {
+        for(int i = 0; i < m_unNumAbnormalAgents; i++)
+        {
+            vector<CBehavior*> vecBehaviors;
+            vecBehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
+
+            m_pcMisbehaveAgent[i]->SetBehaviors(vecBehaviors);
+        }
+    }
+
+#ifndef DISABLECRM_RETAINRNDCALLS
+    // detailed log of the responses to abnormal agent
     if (m_pcMisbehaveAgent[0] && un_step_number > CRMSTARTTIME)
     {
         unsigned int unToleraters  = 0;
@@ -317,18 +329,6 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
         printf("\nNormalAgentStats: ");
         PrintStatsForAgent(m_pcNormalAgentToTrack);
-    }
-
-
-    if (un_step_number == m_unMisbehaveStep)
-    {
-        for(int i = 0; i < m_unNumAbnormalAgents; i++)
-        {
-            vector<CBehavior*> vecBehaviors;
-            vecBehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
-
-            m_pcMisbehaveAgent[i]->SetBehaviors(vecBehaviors);
-        }
     }
 
 
@@ -367,6 +367,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         }
         printf("\n");
     }
+
+#endif //DISABLECRM_RETAINRNDCALLS
 }
 
 /******************************************************************************/
