@@ -48,6 +48,7 @@ public:
                     CArguments* pc_arena_arguments,
                     CArguments* pc_agent_arguments,
                     CArguments* pc_crm_arguments);
+    ~CTestExperiment();
     
     virtual CAgent*     CreateAgent();
     virtual void SimulationStep(unsigned int un_step_number);
@@ -64,8 +65,12 @@ protected:
     unsigned int    m_unNormalAgentToTrack;
     unsigned int    m_unAbnormalAgentToTrack;
     unsigned int    m_unNumAbnormalAgents;
+    int             m_iSwitchNormalBehavior;
+
     CRobotAgent*    m_pcMisbehaveAgent[20];
     CRobotAgent*    m_pcNormalAgentToTrack;
+
+    CAgent**        m_ppcListAgentsCreated;
 
     CAgent*         pcHomeToAgent;
 
