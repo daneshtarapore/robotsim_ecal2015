@@ -420,6 +420,14 @@ void CRobotAgent::SetBehaviors(TBehaviorVector vec_behaviors)
 /******************************************************************************/
 /******************************************************************************/
 
+TBehaviorVector CRobotAgent::GetBehaviors()
+{
+    return m_vecBehaviors;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, unsigned int state)
 {
     m_pbMostWantedList[unFeatureVector] = state;

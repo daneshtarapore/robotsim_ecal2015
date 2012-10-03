@@ -150,9 +150,6 @@ unsigned int CFeatureVector::SimulationStep()
 void CFeatureVector::ComputeFeatureValues()
 {
     double dist_nbrsagents, angle_acceleration, angle_velocity, mag_velocity;
-    double mag_relativeagentvelocity, dir_relativeagentvelocity,
-    mag_relativeagentacceleration, dir_relativeagentacceleration;
-
 
     dist_nbrsagents    = m_pcAgent->GetAverageDistanceToSurroundingAgents(FEATURE_RANGE, ROBOT);
     angle_acceleration = m_pcAgent->GetAngularAcceleration();

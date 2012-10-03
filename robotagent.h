@@ -33,6 +33,7 @@ public:
     // links etc.
     virtual void SimulationStepUpdatePosition();    
     virtual void SetBehaviors(TBehaviorVector vec_behaviors);
+    virtual TBehaviorVector GetBehaviors();
     
     virtual EAgentType   GetType();   
 

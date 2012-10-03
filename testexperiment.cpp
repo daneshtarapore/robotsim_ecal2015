@@ -108,6 +108,7 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
     m_unNormalAgentToTrack   = pc_experiment_arguments->GetArgumentAsIntOr("tracknormalagent", 0);
     m_unAbnormalAgentToTrack = pc_experiment_arguments->GetArgumentAsIntOr("trackabnormalagent",15);
     m_unNumAbnormalAgents    = pc_experiment_arguments->GetArgumentAsIntOr("numabnormalagents",1);
+    m_iSwitchNormalBehavior  = pc_experiment_arguments->GetArgumentAsIntOr("switchnormalbehav",0);
 
 
     if (pc_experiment_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
@@ -153,6 +154,7 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
         printf("tracknormalagent=#    Id of normal agent to track [%d]\n",  m_unNormalAgentToTrack);
         printf("trackabnormalagent=#  Id of abnormal agent to track [%d]\n",m_unAbnormalAgentToTrack);
         printf("numabnormalagents=#  Number of abnormal agents [%d]\n",m_unNumAbnormalAgents);
+        printf("switchnormalbehav=#  Set to 1 if normal behavior is to be switched during simulation [%d]\n",m_iSwitchNormalBehavior);
 
         bHelpDisplayed = true;
     }
@@ -162,6 +164,21 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
         m_pcMisbehaveAgent[i]     = NULL;
     }
     m_pcNormalAgentToTrack = NULL;
+
+
+    m_ppcListAgentsCreated = new CAgent*[m_unNumberOfAgents];
+    for(int i = 0; i < m_unNumberOfAgents; i++)
+    {
+        m_ppcListAgentsCreated[i]     = NULL;
+    }
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+CTestExperiment::~CTestExperiment()
+{
+    delete m_ppcListAgentsCreated;
 }
 
 /******************************************************************************/
@@ -206,6 +223,7 @@ CAgent* CTestExperiment::CreateAgent()
         pcPreviousAgent = pcAgent;
     }
 
+    m_ppcListAgentsCreated[id-1] = pcAgent;
     return pcAgent;
 }
 
@@ -291,6 +309,34 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
+
+
+    if(un_step_number == 2500U && m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
+    {
+        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
+        {
+            // All agents switch behaviors since this was meant to see tolerance to normal behav and its transitions. No abnormal behavs
+
+            //if(m_ppcListAgentsCreated[agentindex]->GetBehavIdentification() != -1) // normal behavior, +1 is assigned ONLY to the logged normal behaving agent. Since only one agent behaves faulty and is assigned -1, a check on NOT -1 can be used to change normal behaving agents
+            {
+
+                TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+                for (TBehaviorVectorIterator i = vec_behaviors.begin(); i != vec_behaviors.end(); i++)
+                {
+                    (*i)->SetAgent(NULL);
+                    //vec_behaviors.pop_back(); //Doesnot seem to work, the pop back function. loop hangs
+                }
+                vec_behaviors.clear();
+
+
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+
+            }
+        }
+    }
+
+
     if (un_step_number == m_unMisbehaveStep)
     {
         for(int i = 0; i < m_unNumAbnormalAgents; i++)
