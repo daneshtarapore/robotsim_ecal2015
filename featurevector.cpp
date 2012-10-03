@@ -170,7 +170,7 @@ void CFeatureVector::ComputeFeatureValues()
 
     if(CurrentStepNumber >= m_iEventSelectionTimeWindow)
     {
-        // decision based on the last 1500 time-steps
+        // decision based on the last X time-steps
         if(m_unSumTimeStepsNbrsRange0to3 > (unsigned)(0.5*(double)m_iEventSelectionTimeWindow))
             m_pfFeatureValues[0] = 1.0;
         else
@@ -365,7 +365,7 @@ void CFeatureVector::ComputeFeatureValues()
 
     m_unSenMotIntCurrQueueIndex = (m_unSenMotIntCurrQueueIndex + 1) % m_iEventSelectionTimeWindow;*/
 
-#else
+#else //not WILDCARDINFV
 
     // Sensors-motor interactions
     // Set if the occurance of the following event, atleast once in time window X
@@ -393,7 +393,7 @@ void CFeatureVector::ComputeFeatureValues()
             m_pfFeatureValues[featureindex+2] = 0.0;
         }
     }
-#endif
+#endif //WILDCARDINFV
 
 
     // Motors
@@ -427,7 +427,7 @@ void CFeatureVector::ComputeFeatureValues()
     else
         m_pfFeatureValues[5] = 0.0;
 
-#else
+#else //not ALTERNATESIXBITFV
 
     int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
 
@@ -489,7 +489,22 @@ void CFeatureVector::ComputeFeatureValues()
         m_pfFeatureValues[5] = 0.0;
 
 
-#endif
+#endif //ALTERNATESIXBITFV
+
+    PrintFeatureDetails();
+
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CFeatureVector::PrintFeatureDetails()
+{
+    int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
+
+    double dist_nbrsagents, angle_acceleration, angle_velocity;
+    double mag_relativeagentvelocity, dir_relativeagentvelocity,
+    mag_relativeagentacceleration, dir_relativeagentacceleration;
 
     // Velocity magnitude and direction wrt. surrounding agents:
     TVector2d tTemp    = m_pcAgent->GetAverageVelocityOfSurroundingAgents(FEATURE_RANGE, ROBOT);
@@ -514,7 +529,7 @@ void CFeatureVector::ComputeFeatureValues()
         dir_relativeagentacceleration = 0.0;
 
 
-    if (m_pcAgent->GetBehavIdentification() == 1)// && CurrentStepNumber > CRMSTARTTIME)
+    if (m_pcAgent->GetBehavIdentification() == 1)
     {
         printf("\nStep: %d. FV for normal agent %d: #NBRS %d, lpf(#NBRS) %f, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", CurrentStepNumber, m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),m_fProcessedNumNeighbours,dist_nbrsagents,angle_acceleration,angle_velocity,
                mag_relativeagentvelocity,dir_relativeagentvelocity,
@@ -525,25 +540,31 @@ void CFeatureVector::ComputeFeatureValues()
 #ifdef ALTERNATESIXBITFV
 #ifdef WILDCARDINFV
 
-/*  printf("Step: %d. Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, TimeSteps_Sen-MotIntNbrsInRange_at1: %d, TimeSteps_Sen-MotIntNbrsInRange_at0: %d, TimeSteps_Sen-MotIntNbrsInRange_atWC: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at1: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at0: %d, TimeSteps_Sen-MotIntNbrsNotInRange_atWC: %d\n",
-
-CurrentStepNumber,
-
-m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold,
-
-m_unSumTimeSteps_SenMotIntNbrsInRange_at1, m_unSumTimeSteps_SenMotIntNbrsInRange_at0, m_unSumTimeSteps_SenMotIntNbrsInRange_atWC,
-
-m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1, m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0, m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC);*/
-
         printf("Step: %d, Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold, m_iWildCardBit);
 
 #else
 
         printf("Step: %d, Alternate normal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold);
 
-#endif
+#ifdef DISABLECRM_RETAINRNDCALLS // additional behav stats data
+        double f_MaxSquareDistTravelled =
+                (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow)*
+                (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow);
 
-#endif
+        int sensorymotorinteract    = (m_piLastOccuranceEvent[0]==CurrentStepNumber)?1:0;
+        int negsensorymotorinteract = (m_piLastOccuranceEvent[1]==CurrentStepNumber)?1:0;
+
+        printf("AdditionalNormBehavData: Step: %d, NbrsInRange0to3: %d, NbrsInRange3to6: %d, Sensor-Motor interaction: %d, ~Sensor-Motor interaction: %d, SquaredDistTravelled: %f, MaxSquaredDist: %f\n",
+               CurrentStepNumber,
+               m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT),
+               m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT)-m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT),
+               sensorymotorinteract, negsensorymotorinteract,
+               m_fSquaredDistTravelled, f_MaxSquareDistTravelled);
+#endif //DISABLECRM_RETAINRNDCALLS
+
+#endif //WILDCARDINFV
+
+#endif //ALTERNATESIXBITFV
     }
 
     //if (m_pcAgent->GetIdentification() == 15) //&& CurrentStepNumber > CRMSTARTTIME)
@@ -557,25 +578,31 @@ m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1, m_unSumTimeSteps_SenMotIntNbrsNotI
 
 #ifdef ALTERNATESIXBITFV
 #ifdef WILDCARDINFV
-
-        /*printf("Step: %d, Alternate abnormal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, TimeSteps_Sen-MotIntNbrsInRange_at1: %d, TimeSteps_Sen-MotIntNbrsInRange_at0: %d, TimeSteps_Sen-MotIntNbrsInRange_atWC: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at1: %d, TimeSteps_Sen-MotIntNbrsNotInRange_at0: %d, TimeSteps_Sen-MotIntNbrsNotInRange_atWC: %d\n",
-
-CurrentStepNumber,
-
-m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold,
-
-m_unSumTimeSteps_SenMotIntNbrsInRange_at1, m_unSumTimeSteps_SenMotIntNbrsInRange_at0, m_unSumTimeSteps_SenMotIntNbrsInRange_atWC,
-
-m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1, m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0, m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC);*/
-
         printf("Step: %d, Alternate abnormal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold, m_iWildCardBit);
 
 #else
 
-
         printf("Step: %d, Alternate abnormal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold);
-#endif
-#endif
+
+#ifdef DISABLECRM_RETAINRNDCALLS // additional behav stats data
+        double f_MaxSquareDistTravelled =
+                (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow)*
+                (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow);
+
+        int sensorymotorinteract    = (m_piLastOccuranceEvent[0]==CurrentStepNumber)?1:0;
+        int negsensorymotorinteract = (m_piLastOccuranceEvent[1]==CurrentStepNumber)?1:0;
+
+        printf("AdditionalAbnormBehavData: Step: %d, NbrsInRange0to3: %d, NbrsInRange3to6: %d, Sensor-Motor interaction: %d, ~Sensor-Motor interaction: %d, SquaredDistTravelled: %f, MaxSquaredDist: %f\n",
+               CurrentStepNumber,
+               m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT),
+               m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT)-m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT),
+               sensorymotorinteract, negsensorymotorinteract,
+               m_fSquaredDistTravelled, f_MaxSquareDistTravelled);
+#endif //DISABLECRM_RETAINRNDCALLS
+
+#endif //WILDCARDINFV
+
+#endif //ALTERNATESIXBITFV
     }
 }
 
