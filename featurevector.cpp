@@ -34,6 +34,8 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     {
         m_piLastOccuranceEvent[i]    = 0;
         m_piLastOccuranceNegEvent[i] = 0;
+
+	m_pfFeatureValues[i]         = 0.0;
     }
 
     m_fVelocityThreshold = 0.05 * (m_pcAgent->GetMaximumSpeed());
