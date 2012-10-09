@@ -10,6 +10,16 @@
 #include <stdarg.h>
 #include <math.h>
 
+#include <fstream>  
+#include <iostream>  
+
+using namespace std;
+
+#define NEUTRAL   0
+#define TOLERATED 1
+#define ATTACKED  2
+
+
 
 #define Vec2dRotate(angle, vec)                         \
   {                                                     \
@@ -44,8 +54,50 @@ static GC  gc;
 /******************************************************************************/
 /******************************************************************************/
 
-COpenGLRender::COpenGLRender() : CRender("OpenGLRender")
+COpenGLRender::COpenGLRender(const char* pch_agent_color_filename, unsigned int un_number_of_agents, unsigned int un_number_of_simulation_steps) : CRender("OpenGLRender")
 {
+    if (pch_agent_color_filename)
+    {
+        m_bSetAgentColorsFromFile = true;
+        m_ppunColors = new unsigned int*[un_number_of_simulation_steps];
+        for (unsigned int i = 0; i < un_number_of_simulation_steps; i++)
+        {
+            m_ppunColors[i] = new unsigned int[un_number_of_agents];
+            for (unsigned int j = 0; j < un_number_of_agents; j++)
+            {
+                m_ppunColors[i][j] = NEUTRAL;
+            }
+        }
+
+        unsigned int step;
+        unsigned int id;
+        unsigned int fv;
+        unsigned int tol;
+        unsigned int attck;
+        unsigned int nbrswithfv;
+
+        ifstream myfile (pch_agent_color_filename);
+        
+        if (!myfile.is_open())
+        {
+            ERROR1("Unable to open %s for reading", pch_agent_color_filename);
+            exit(0);
+
+        }
+
+        while (! myfile.eof() )
+        {
+            myfile >> step >> id >> fv >> tol >> attck >> nbrswithfv;            
+
+            if (tol > attck)
+                m_ppunColors[step][id] = TOLERATED;
+            else if (tol < attck)                
+                m_ppunColors[step][id] = ATTACKED;
+            else 
+                m_ppunColors[step][id] = NEUTRAL;
+        }
+    }
+    
     m_nWindowWidth  = 640;
     m_nWindowHeight  = 480;
 
@@ -399,18 +451,17 @@ void COpenGLRender::DrawAllAgents()
     for (i = ptAllAgents->begin(); i != ptAllAgents->end(); i++)
     {
         if ((*i)->GetType() == LIGHT) {
+            DrawAgent(*i, m_unNumberOfLightAgents);
             m_unNumberOfLightAgents++;
-            DrawAgent(*i);
         }            
-
     }
 
     for (i = ptAllAgents->begin(); i != ptAllAgents->end(); i++)
     {
         if ((*i)->GetType() == ROBOT) 
         {
-            m_unNumberOfRobotAgents++;
-            DrawAgent(*i);
+            DrawAgent(*i, m_unNumberOfRobotAgents);
+            m_unNumberOfRobotAgents++;            
         } 
     }
 }
@@ -476,7 +527,7 @@ void COpenGLRender::DrawAllAgents()
 }*/
 
 
-void COpenGLRender::DrawAgent(CAgent* pc_agent)
+void COpenGLRender::DrawAgent(CAgent* pc_agent, unsigned int un_agent_number)
 {
 
     const TVector2d* ptPosition = pc_agent->GetPosition();
@@ -502,7 +553,24 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
 
         glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
         DrawSolidCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0 * .6); //0.02
-        glColor3f(1.0, 1.0, 1.0);
+        
+        if (m_bSetAgentColorsFromFile) {
+            unsigned int unStep = CSimulator::GetInstance()->GetSimulationStepNumber();
+            if (m_ppunColors[unStep][un_agent_number] == NEUTRAL)
+            {
+                glColor3f(1.0, 1.0, 1.0);
+            } 
+            else if (m_ppunColors[unStep][un_agent_number] == ATTACKED)
+            {
+                glColor3f(1.0, 0.0, 0.0);
+            }
+            else if (m_ppunColors[unStep][un_agent_number] == TOLERATED)
+            {
+                glColor3f(0.0, 1.0, 0.0);
+            }
+        } else {
+            glColor3f(1.0, 1.0, 1.0);
+        }
         DrawCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0 * .6); //0.02
 
         double fAngle = Vec2dOwnAngle((*pc_agent->GetVelocity()));
@@ -511,17 +579,6 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent)
         DrawSolidCircle(fCenterX + vDot.x, fCenterY + vDot.y, 0.0131 * .6); //0.007
 
         glEnd();
-
-//        glPointSize((GLfloat) pc_agent->GetSize());
-//        glBegin(GL_POINTS);
-
-//        unsigned int unColor = pc_agent->GetColor();
-//        TColor3f tColor      = GetColorFromIndex(unColor);
-
-//        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
-
-//        glVertex2d(2 * ptPosition->m_fX / fArenaSizeX, 2 * ptPosition->m_fY / fArenaSizeY);
-//        glEnd();
     }
 
     else if (pc_agent->GetType() == LIGHT) {

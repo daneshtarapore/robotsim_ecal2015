@@ -24,7 +24,7 @@
 class COpenGLRender : public CRender
 {
 public:
-    COpenGLRender();
+    COpenGLRender(const char* pch_agent_color, unsigned int un_number_of_agents, unsigned int un_number_of_simulation_steps);
     virtual ~COpenGLRender();
 
     virtual void SimulationStep(unsigned int un_step_number);
@@ -40,7 +40,7 @@ protected:
     virtual void CaptureFrame (int num);
 
     virtual void DrawAllAgents();
-    virtual void DrawAgent(CAgent* pc_agent);
+    virtual void DrawAgent(CAgent* pc_agent, unsigned int un_agent_number);
 
     virtual void DrawCircle(double f_center_x, double f_center_y, double f_radius);
     virtual void DrawSolidCircle(double f_center_x, double f_center_y, double f_radius);
@@ -72,6 +72,8 @@ protected:
     unsigned int        m_unNumberOfColors;
     TColor3f*           m_ptColors;
 
+    bool            m_bSetAgentColorsFromFile;
+    unsigned int**  m_ppunColors;
 };
 
 /******************************************************************************/

@@ -41,6 +41,7 @@ struct option CBioInstSim::m_tLongOptions[] = {
     {"number-of-cycles", 1, 0,              'n'},
     {"enable-analysis",  1, 0,              'Z'},
     {"silent",           0, 0,              'S'},
+    {"color-file",       1, 0,              'c'},
     {0, 0, 0, 0}
 };
 
@@ -61,7 +62,8 @@ CBioInstSim::CBioInstSim(int argc, char** argv) :
     m_pcArenaArguments(NULL),
     m_pcCRMArguments(NULL),
     m_pcPopulationAnalyzerArguments(NULL),
-    m_bOutputStatistics(true)
+    m_bOutputStatistics(true),
+    m_pchColorFilename(NULL)
 
 {
     for (int i = 0; i < argc; i++) 
@@ -98,7 +100,7 @@ void CBioInstSim::Run()
     
     if (m_bRendering)
     {
-        COpenGLRender* pcRender = new COpenGLRender();
+        COpenGLRender* pcRender = new COpenGLRender(m_pchColorFilename, m_pcSimulator->GetAllAgents()->size(), m_unNumberOfCycles);
         m_pcSimulator->AddChild(pcRender);
         pcRender->SetOutputStatistics(m_bOutputStatistics);
     }
@@ -126,7 +128,7 @@ void CBioInstSim::ParseArguments()
 
     // First parse the options:
     while ((cOption = getopt_long(m_argc, m_argv, 
-                                  "hvs:a:e:T:M:A:zn:SZ:", 
+                                  "hvs:a:e:T:M:A:zn:SZ:c:", 
                                   m_tLongOptions, &nOptionIndex)) != -1)
     {
         if (nOptionIndex <= 0)
@@ -196,6 +198,11 @@ void CBioInstSim::ParseArguments()
             m_unNumberOfCycles = atoi(optarg);
             break;
 
+        case 'c':
+            m_pchColorFilename = new char[strlen(optarg) + 2];
+            strcpy(m_pchColorFilename, optarg);
+            break;
+
         case 'S':
             m_bOutputStatistics = false;
             break;
@@ -247,9 +254,11 @@ void CBioInstSim::PrintUsage()
            "-z, --no-rendering                      Disable rendering\n"
            "-Z, --enable-analysis                   Enable agent distribution analysis and set the arguments (e.g. -Z updateperiod=100)\n"
            "-S, --silent                            Disable output\n"
+           "-c, --color-file #.#                    Name of file with agent colors [%s]\n"
            ,
            m_unRandomSeed,
-           m_unNumberOfCycles);
+           m_unNumberOfCycles,
+           m_pchColorFilename == NULL ? "#none#" : m_pchColorFilename);
 }
 
 /******************************************************************************/

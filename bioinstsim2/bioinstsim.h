@@ -75,6 +75,7 @@ protected:
     unsigned int        m_unRandomSeed;
     unsigned int        m_unNumberOfCycles;
 
+    char*               m_pchColorFilename;
 
     CSimulator*         m_pcSimulator;
     bool                m_bRendering;
