@@ -329,9 +329,11 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
                 vec_behaviors.clear();
 
 
-                TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
-                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+                //TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+                //((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(FLOCKING, pcHomeToAgent);
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
             }
         }
     }
