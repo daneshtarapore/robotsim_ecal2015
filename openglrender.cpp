@@ -232,7 +232,7 @@ void COpenGLRender::SimulationStep(unsigned int un_step_number)
 
     m_fCurrentFrame -= 1;
 
-    if (m_fCurrentFrame <= 0)
+    while (m_fCurrentFrame <= 0)
     {    
         DrawFrame();
 
@@ -252,6 +252,7 @@ void COpenGLRender::SimulationStep(unsigned int un_step_number)
         XSync (display,0);
 
         m_fCurrentFrame += m_fFrameRate;
+
     }
 }
 
