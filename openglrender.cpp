@@ -96,6 +96,8 @@ COpenGLRender::COpenGLRender(const char* pch_agent_color_filename, unsigned int 
             else 
                 m_ppunColors[step][id] = NEUTRAL;
         }
+    } else {
+        m_bSetAgentColorsFromFile = false;
     }
     
     m_nWindowWidth  = 640;
