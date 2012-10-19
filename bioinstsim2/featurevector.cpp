@@ -245,17 +245,25 @@ void CFeatureVector::ComputeFeatureValues()
         if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
         {
             m_pfFeatureValues[featureindex+2] = 1.0;
-            m_iWildCardBit = -1;
+
+            if (m_iWildCardBit == (int)(featureindex+2))
+                m_iWildCardBit = -1;
         }
         else if ((CurrentStepNumber - m_piLastOccuranceNegEvent[featureindex]) <= m_iEventSelectionTimeWindow)
         {
             m_pfFeatureValues[featureindex+2] = 0.0;
-            m_iWildCardBit = -1;
+
+            if (m_iWildCardBit == (int)(featureindex+2))
+                m_iWildCardBit = -1;
         }
         else
         {
             // default feature value in case of wild card
             m_pfFeatureValues[featureindex+2] = 0.0;
+
+            if ((featureindex+2) == 3 && m_iWildCardBit == 2){
+                printf("\nBoth bits 2 and 3 cannot have WC");
+                exit(-1);}
         }
     }
 
