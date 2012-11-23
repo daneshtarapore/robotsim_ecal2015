@@ -1,18 +1,23 @@
 #ifndef CRMINROBOTAGENT_H
 #define CRMINROBOTAGENT_H
 
-
 /******************************************************************************/
 /******************************************************************************/
-
 #include <assert.h>
+#include <limits.h>
 #include <math.h>
 #include "arguments.h"
 #include "featurevector.h"
 #include "random.h"
 #include "robotagent.h"
 
-#define CELLLOWERBOUND 1e-3
+/******************************************************************************/
+/******************************************************************************/
+
+#define CELLLOWERBOUND 1e-3 //todo: set as percentage instead of absolute value
+// note: could result in euler-huen diff at 0, for high error thresholds. In that case, lower this value
+
+#define CONJUGATION_OVERFLOW_LIMIT 1.0e-15  //todo: set as percentage instead of absolute value
 
 /******************************************************************************/
 /******************************************************************************/
@@ -63,9 +68,13 @@ public:
 
     virtual void SimulationStepUpdatePosition();
 
+    void ScaleDownConjugates(double** f_Conjugates);
+
     double* m_pfSumEffectorsWeightedbyAffinity;
     double* m_pfSumRegulatorsWeightedbyAffinity;
 
+
+    static unsigned int GetNumberOfSetBits(unsigned int x);
 
 protected:
 
@@ -159,11 +168,6 @@ protected:
     double          m_dconvergence_error;
     double          m_dpercconvergence_error;
 };
-
-/******************************************************************************/
-/******************************************************************************/
-
-unsigned int GetNumberOfSetBits(unsigned int x);
 
 /******************************************************************************/
 /******************************************************************************/

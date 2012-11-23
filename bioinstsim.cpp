@@ -60,7 +60,7 @@ CBioInstSim::CBioInstSim(int argc, char** argv) :
     m_pcExperimentArguments(NULL),
     m_pcAgentArguments(NULL),
     m_pcArenaArguments(NULL),
-    m_pcCRMArguments(NULL),
+    m_pcModelArguments(NULL),
     m_pcPopulationAnalyzerArguments(NULL),
     m_bOutputStatistics(true),
     m_pchColorFilename(NULL)
@@ -181,11 +181,11 @@ void CBioInstSim::ParseArguments()
             break;
             
         case 'T':
-            m_pcAgentArguments    = new CArguments(optarg);
+            m_pcAgentArguments      = new CArguments(optarg);
             break;
 
         case 'M':
-            m_pcCRMArguments        = new CArguments(optarg);
+            m_pcModelArguments      = new CArguments(optarg);
             break;
 
         case 'Z':
@@ -228,9 +228,9 @@ void CBioInstSim::ParseArguments()
         m_pcArenaArguments = new CArguments("");
     }
 
-    if (m_pcCRMArguments == NULL)
+    if (m_pcModelArguments == NULL)
     {
-        m_pcCRMArguments = new CArguments("");
+        m_pcModelArguments = new CArguments("");
     }
 
     printf("Setting random-seed to %d\n", m_unRandomSeed);
@@ -282,7 +282,7 @@ CExperiment* CBioInstSim::CreateExperiment()
         pcExperiment = new CExperiment(m_pcExperimentArguments, 
                                        m_pcArenaArguments,                                     
                                        m_pcAgentArguments,
-                                       m_pcCRMArguments);
+                                       m_pcModelArguments);
         
     } else {
         const char* pchExperimentName = m_pcExperimentArguments->GetArgumentAsString("name");
@@ -291,7 +291,7 @@ CExperiment* CBioInstSim::CreateExperiment()
             pcExperiment = new CTestExperiment(m_pcExperimentArguments, 
                                                m_pcArenaArguments,                                     
                                                m_pcAgentArguments,
-                                               m_pcCRMArguments);
+                                               m_pcModelArguments);
             
         } 
     }

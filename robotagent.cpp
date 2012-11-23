@@ -4,7 +4,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments, CArguments* pc_crm_arguments, TBehaviorVector vec_behaviors) :
+CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, CArguments* pc_arguments, CArguments* pc_model_arguments, TBehaviorVector vec_behaviors) :
         CAgent(pch_name, un_identification, pc_arguments), m_vecBehaviors(vec_behaviors)
 {
     for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
@@ -12,7 +12,14 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
         (*i)->SetAgent(this);
     }
 
-    crminAgent          = new CRMinRobotAgent(this, pc_crm_arguments);
+    crminAgent = NULL; ctrnninAgent = NULL;
+    if(FDMODELTYPE == CRM)
+        crminAgent          = new CRMinRobotAgent(this, pc_model_arguments);
+    else if(FDMODELTYPE == CTRNN)
+        ctrnninAgent        = new CTRNNinRobotAgent(this, pc_model_arguments);
+    else {
+        printf("\nUnknown model type"); exit(-1);}
+
     m_pcFeatureVector   = new CFeatureVector(this);
     m_pfFeaturesSensed  = new float[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
 
@@ -91,13 +98,13 @@ void CRobotAgent::SimulationStepUpdatePosition()
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
 
 
-    //if (m_unIdentification == 1)// && CurrentStepNumber > CRMSTARTTIME)
+    //if (m_unIdentification == 1)// && CurrentStepNumber > MODELSTARTTIME)
     if (m_iBehavIdentification == 1)
     {
         printf("\nStep: %d, FV for normal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
 
-    //if (m_unIdentification == 15)// && CurrentStepNumber > CRMSTARTTIME)
+    //if (m_unIdentification == 15)// && CurrentStepNumber > MODELSTARTTIME)
     if (m_iBehavIdentification == -1)
     {
         printf("\nStep: %d, FV for abnormal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
@@ -105,9 +112,12 @@ void CRobotAgent::SimulationStepUpdatePosition()
 
     Sense(GetSelectedNumNearestNbrs());
 
-    if(CurrentStepNumber > CRMSTARTTIME)
+    if(CurrentStepNumber > MODELSTARTTIME)
     {
-        crminAgent->SimulationStepUpdatePosition();
+        if(FDMODELTYPE == CRM)
+            crminAgent->SimulationStepUpdatePosition();
+        else
+            ctrnninAgent->SimulationStepUpdatePosition();
     }
     CAgent::SimulationStepUpdatePosition();
 }
@@ -294,6 +304,14 @@ CRMinRobotAgent* CRobotAgent::GetCRMinRobotAgent()
 /******************************************************************************/
 /******************************************************************************/
 
+CTRNNinRobotAgent* CRobotAgent::GetCTRNNinRobotAgent()
+{
+    return ctrnninAgent;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CRobotAgent::SetWeight(double f_weight)
 {
     m_fWeight = f_weight;
@@ -363,8 +381,16 @@ void CRobotAgent::Sense(unsigned int u_nearestnbrs)
         {
             unsigned int fv1, fv2;
             FVsOfWcFeature(pcRobot->GetFeatureVector(), &fv1, &fv2);
-            m_pfFeaturesSensed[fv1] += 0.5;
-            m_pfFeaturesSensed[fv2] += 0.5;
+
+            if(WILDCARDINFV == 0.5){
+                m_pfFeaturesSensed[fv1] += 0.5;
+                m_pfFeaturesSensed[fv2] += 0.5;}
+            else if(WILDCARDINFV == 1.0){
+                m_pfFeaturesSensed[fv1] += 1.0;
+                m_pfFeaturesSensed[fv2] += 1.0;}
+            else{
+                printf("\n WILDCARDINFV is to take values at 0.5 or 1.0 and not %f",WILDCARDINFV);
+                exit(-1);}
         }
         else
         {
@@ -452,7 +478,8 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
     for (unsigned int nbrs = 1; nbrs < m_uSelectedNumNearestNbrs+1; nbrs++)
     {
         CRobotAgent* pcRobot     = (CRobotAgent*) tSortedAgents[nbrs];
-        CRMinRobotAgent* tmp_crm = pcRobot->GetCRMinRobotAgent();
+        CRMinRobotAgent*   tmp_crm   = pcRobot->GetCRMinRobotAgent();
+        CTRNNinRobotAgent* tmp_ctrnn = pcRobot->GetCTRNNinRobotAgent();
         unsigned int fv_status   = pcRobot->Attack(m_pcFeatureVector);
         if (fv_status == 1)
         {
@@ -460,38 +487,11 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
 
             if(m_battackeragentlog && b_logs)
             {
-                printf("\nAn attacker agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
+                printf("\nAn attacker agent.");
                 float* FeatureVectorsSensed;
                 FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
 
-                for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
-                {
-                    if(FeatureVectorsSensed[fv] > 0.0)
-                    {
-                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-                               fv,
-                               tmp_crm->GetAPC(fv),
-                               fv,
-                               tmp_crm->GetCurrE(fv),
-                               fv,
-                               tmp_crm->GetCurrR(fv),
-                               tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv],
-                               tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv]);
-                    }
-                }
-
-                if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
-                {
-                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()),
-                           tmp_crm->m_pfSumEffectorsWeightedbyAffinity[m_pcFeatureVector->GetValue()],
-                           tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[m_pcFeatureVector->GetValue()]);
-                }
+                PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, FeatureVectorsSensed);
                 m_battackeragentlog = false;
             }
         }
@@ -501,37 +501,10 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
 
             if(m_btolerateragentlog && b_logs)
             {
-                printf("\nA tolerator agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
+                printf("\nA tolerator agent.");
                 float* FeatureVectorsSensed;
                 FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
-                for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
-                {
-                    if(FeatureVectorsSensed[fv] > 0.0)
-                    {
-                        printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-                               fv,
-                               tmp_crm->GetAPC(fv),
-                               fv,
-                               tmp_crm->GetCurrE(fv),
-                               fv,
-                               tmp_crm->GetCurrR(fv),
-                               tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv],
-                               tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv]);
-                    }
-                }
-
-                if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
-                {
-                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
-                           m_pcFeatureVector->GetValue(),
-                           tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()),
-                           tmp_crm->m_pfSumEffectorsWeightedbyAffinity[m_pcFeatureVector->GetValue()],
-                           tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[m_pcFeatureVector->GetValue()]);
-                }
+                PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, FeatureVectorsSensed);
                 m_btolerateragentlog = false;
             }
         }
@@ -539,45 +512,86 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         float* FeatureVectorsSensed;
         FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
         if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] > 0.0)
-        {
             (*pun_number_of_neighborsinsensoryrange)++;
-        }
 
 
         if(b_logs)
         {
-            printf("\nAn agent. Convg. error %f (%fperc)    ",tmp_crm->GetConvergenceError(), tmp_crm->GetConvergenceError_Perc());
+            printf("\nAn agent.");
             float* FeatureVectorsSensed;
             FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
-            for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
-            {
-                if(FeatureVectorsSensed[fv] > 0.0)
-                {
-                    printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-                           fv,
-                           tmp_crm->GetAPC(fv),
-                           fv,
-                           tmp_crm->GetCurrE(fv),
-                           fv,
-                           tmp_crm->GetCurrR(fv),
-                           tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv],
-                           tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv]);
-                }
-            }
+            PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, FeatureVectorsSensed);
+        }
+    }
+}
 
+/******************************************************************************/
+/******************************************************************************/
 
-            if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] == 0.0)
+void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAgent* model_crminagent, CTRNNinRobotAgent* model_ctrnninagent, float* FeatureVectorsSensed)
+{
+    if(FDMODELTYPE == CRM)
+    {
+        printf("  Convg. error %f (%fperc)    ",model_crminagent->GetConvergenceError(), model_crminagent->GetConvergenceError_Perc());
+        for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
+        {
+            if(FeatureVectorsSensed[fv] > 0.0)
             {
-                printf("for the above agentFV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-                       m_pcFeatureVector->GetValue(),
-                       tmp_crm->GetAPC(m_pcFeatureVector->GetValue()),
-                       m_pcFeatureVector->GetValue(),
-                       tmp_crm->GetCurrE(m_pcFeatureVector->GetValue()),
-                       m_pcFeatureVector->GetValue(),
-                       tmp_crm->GetCurrR(m_pcFeatureVector->GetValue()),
-                       tmp_crm->m_pfSumEffectorsWeightedbyAffinity[m_pcFeatureVector->GetValue()],
-                       tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[m_pcFeatureVector->GetValue()]);
+                printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
+                       fv,
+                       model_crminagent->GetAPC(fv),
+                       fv,
+                       model_crminagent->GetCurrE(fv),
+                       fv,
+                       model_crminagent->GetCurrR(fv),
+                       model_crminagent->m_pfSumEffectorsWeightedbyAffinity[fv],
+                       model_crminagent->m_pfSumRegulatorsWeightedbyAffinity[fv]);
             }
+        }
+
+        // if the neighbour doesnot have your fv
+        if(FeatureVectorsSensed[m_pcFV->GetValue()] == 0.0)
+        {
+            printf(",for the evaluated agent's FV that is not in the deciding agent's repertoire: FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
+                   m_pcFV->GetValue(),
+                   model_crminagent->GetAPC(m_pcFV->GetValue()),
+                   m_pcFV->GetValue(),
+                   model_crminagent->GetCurrE(m_pcFV->GetValue()),
+                   m_pcFV->GetValue(),
+                   model_crminagent->GetCurrR(m_pcFV->GetValue()),
+                   model_crminagent->m_pfSumEffectorsWeightedbyAffinity[m_pcFV->GetValue()],
+                   model_crminagent->m_pfSumRegulatorsWeightedbyAffinity[m_pcFV->GetValue()]);
+        }
+    }
+    else //model_ctrnninagent
+    {
+        printf("  HN-Convg.error %f (%f%%)      ON-Convg. error %f (%f%%)    ",model_ctrnninagent->GetConvergenceError(HiddenLayer), model_ctrnninagent->GetConvergenceError_Perc(HiddenLayer),model_ctrnninagent->GetConvergenceError(OutputLayer), model_ctrnninagent->GetConvergenceError_Perc(OutputLayer));
+        for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
+        {
+            if(FeatureVectorsSensed[fv] > 0.0)
+            {
+                printf("FV:%d, [APC]:%f, [HN%d]:%f,  [ON%d]:%f (%f)   ",
+                       fv,
+                       model_ctrnninagent->GetAPC(fv),
+                       fv,
+                       model_ctrnninagent->GetHN(fv),
+                       fv,
+                       model_ctrnninagent->GetON(fv),
+                       model_ctrnninagent->GetInputsToON(fv));
+            }
+        }
+
+        // if the evaluating neighbour doesnot have your fv
+        if(FeatureVectorsSensed[m_pcFV->GetValue()] == 0.0)
+        {
+            printf(",for the evaluated agent's FV that is not in the deciding agent's repertoire: FV:%d, [APC]:%f, [HN%d]:%f, [ON%d]:%f (%f)   ",
+                   m_pcFV->GetValue(),
+                   model_ctrnninagent->GetAPC(m_pcFV->GetValue()),
+                   m_pcFV->GetValue(),
+                   model_ctrnninagent->GetHN(m_pcFV->GetValue()),
+                   m_pcFV->GetValue(),
+                   model_ctrnninagent->GetON(m_pcFV->GetValue()),
+                   model_ctrnninagent->GetInputsToON(m_pcFV->GetValue()));
         }
     }
 }
@@ -587,7 +601,7 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
 
 unsigned int CRobotAgent::Attack(CFeatureVector* pc_feature_vector)
 {
-#if defined(ALTERNATESIXBITFV) && defined(WILDCARDINFV)
+#if defined(ALTERNATESIXBITFV) && defined(WILDCARDINFV) && (FDMODELTYPE==CRM)
 
     if(pc_feature_vector->m_iWildCardBit != -1)
     {
