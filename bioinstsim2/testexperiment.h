@@ -47,7 +47,7 @@ public:
     CTestExperiment(CArguments* pc_experiment_arguments,
                     CArguments* pc_arena_arguments,
                     CArguments* pc_agent_arguments,
-                    CArguments* pc_crm_arguments);
+                    CArguments* pc_model_arguments);
     ~CTestExperiment();
     
     virtual CAgent*     CreateAgent();

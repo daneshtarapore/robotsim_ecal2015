@@ -28,7 +28,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_fThresholdOnNumNbrs        = 3.99 ;
     m_fProcessedNumNeighbours    = 0.0;
 
-    m_iEventSelectionTimeWindow = CRMSTARTTIME; //1500;
+    m_iEventSelectionTimeWindow = MODELSTARTTIME; //1500;
 
     for(unsigned int i = 0; i < NUMBER_OF_FEATURES; i++)
     {
@@ -553,7 +553,7 @@ void CFeatureVector::PrintFeatureDetails()
 
         printf("Step: %d, Alternate normal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold);
 
-#ifdef DISABLECRM_RETAINRNDCALLS // additional behav stats data
+#ifdef DISABLEMODEL_RETAINRNDCALLS // additional behav stats data
         double f_MaxSquareDistTravelled =
                 (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow)*
                 (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow);
@@ -567,15 +567,15 @@ void CFeatureVector::PrintFeatureDetails()
                m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT)-m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT),
                sensorymotorinteract, negsensorymotorinteract,
                m_fSquaredDistTravelled, f_MaxSquareDistTravelled);
-#endif //DISABLECRM_RETAINRNDCALLS
+#endif //DISABLEMODEL_RETAINRNDCALLS
 
 #endif //WILDCARDINFV
 
 #endif //ALTERNATESIXBITFV
     }
 
-    //if (m_pcAgent->GetIdentification() == 15) //&& CurrentStepNumber > CRMSTARTTIME)
-    if (m_pcAgent->GetBehavIdentification() == -1) //&& CurrentStepNumber > CRMSTARTTIME)
+    //if (m_pcAgent->GetIdentification() == 15) //&& CurrentStepNumber > MODELSTARTTIME)
+    if (m_pcAgent->GetBehavIdentification() == -1) //&& CurrentStepNumber > MODELSTARTTIME)
     {
         printf("\nStep: %d, FV for abnormal agent %d: #NBRS %d, lpf(#NBRS) %f, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", CurrentStepNumber, m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),m_fProcessedNumNeighbours,dist_nbrsagents,angle_acceleration,angle_velocity,
                mag_relativeagentvelocity,dir_relativeagentvelocity,
@@ -591,7 +591,7 @@ void CFeatureVector::PrintFeatureDetails()
 
         printf("Step: %d, Alternate abnormal FV info, TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold);
 
-#ifdef DISABLECRM_RETAINRNDCALLS // additional behav stats data
+#ifdef DISABLEMODEL_RETAINRNDCALLS // additional behav stats data
         double f_MaxSquareDistTravelled =
                 (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow)*
                 (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow);
@@ -605,7 +605,7 @@ void CFeatureVector::PrintFeatureDetails()
                m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT)-m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT),
                sensorymotorinteract, negsensorymotorinteract,
                m_fSquaredDistTravelled, f_MaxSquareDistTravelled);
-#endif //DISABLECRM_RETAINRNDCALLS
+#endif //DISABLEMODEL_RETAINRNDCALLS
 
 #endif //WILDCARDINFV
 

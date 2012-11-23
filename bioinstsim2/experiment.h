@@ -17,7 +17,7 @@ public:
     CExperiment(CArguments* pc_experiment_arguments,
                 CArguments* pc_arena_arguments,
                 CArguments* pc_agent_arguments,
-                CArguments* pc_crm_arguments);
+                CArguments* pc_model_arguments);
     virtual ~CExperiment();
 
     // The following methods creates the various parts of the
@@ -39,7 +39,7 @@ protected:
     CArguments*         m_pcExperimentArguments;
     CArguments*         m_pcArenaArguments;
     CArguments*         m_pcAgentArguments;
-    CArguments*         m_pcCRMArguments;
+    CArguments*         m_pcModelArguments;
 
     CArena*             m_pcArena;
     CSimulator*         m_pcSimulator;

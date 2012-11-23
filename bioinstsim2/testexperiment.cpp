@@ -17,8 +17,8 @@
 CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
                                  CArguments* pc_arena_arguments,
                                  CArguments* pc_agent_arguments,
-                                 CArguments* pc_crm_arguments) :
-CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_crm_arguments)
+                                 CArguments* pc_model_arguments) :
+CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_model_arguments)
 {    
     static bool bHelpDisplayed = false;
 
@@ -193,7 +193,7 @@ CAgent* CTestExperiment::CreateAgent()
     vecBehaviors = GetAgentBehavior(m_eswarmbehavType, pcPreviousAgent);
 
 
-    CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcCRMArguments, vecBehaviors);
+    CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcModelArguments, vecBehaviors);
 
     for(int i = 0; i < m_unNumAbnormalAgents; i++)
     {
@@ -309,8 +309,6 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
-
-
     if(un_step_number == 2500U && m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
     {
         for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
@@ -350,9 +348,9 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         }
     }
 
-#ifndef DISABLECRM_RETAINRNDCALLS
+#ifndef DISABLEMODEL_RETAINRNDCALLS
     // detailed log of the responses to abnormal agent
-    if (m_pcMisbehaveAgent[0] && un_step_number > CRMSTARTTIME)
+    if (m_pcMisbehaveAgent[0] && un_step_number > MODELSTARTTIME)
     {
         unsigned int unToleraters  = 0;
         unsigned int unAttackers   = 0;
@@ -366,7 +364,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     }
 
     // detailed log of the responses (minimal log) to a single normal agent being tracked
-    if (m_pcNormalAgentToTrack && un_step_number > CRMSTARTTIME)
+    if (m_pcNormalAgentToTrack && un_step_number > MODELSTARTTIME)
     {
         unsigned int unToleraters = 0;
         unsigned int unAttackers  = 0;
@@ -396,7 +394,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
 
     // logging the responses (minimal log) to all the agents
-    if(un_step_number > CRMSTARTTIME)
+    if(un_step_number > MODELSTARTTIME)
     {
         TAgentVector* allagents = this->m_pcSimulator->GetAllAgents();
         TAgentVectorIterator i = allagents->begin();
@@ -410,13 +408,13 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             unsigned int unNbrsInSensoryRange = 0;
 
             tmp_robotagent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);
-            printf("ResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, neighboursinsensoryrange: %d\n", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unNbrsInSensoryRange);
+            printf("\nResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unNbrsInSensoryRange);
             i++;
         }
         printf("\n");
     }
 
-#endif //DISABLECRM_RETAINRNDCALLS
+#endif //DISABLEMODEL_RETAINRNDCALLS
 }
 
 /******************************************************************************/

@@ -3,19 +3,25 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#define TCELL_UPPERLIMIT_STEPSIZE 500000
+#define TCELL_UPPERLIMIT_STEPSIZE 500000.0 //todo: could be set as a propotion of the INTEGRATION_TIME
 #define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
 
-#define CONJ_UPPERLIMIT_STEPSIZE 10
+#define CONJ_UPPERLIMIT_STEPSIZE 10.0
 #define CONJ_LOWERLIMIT_STEPSIZE 1.0e-6
 
-#define ERRORALLOWED_TCELL_STEPSIZE 1.0e-2
-#define ERRORALLOWED_CONJ_STEPSIZE  1.0e-3
+#define ERRORALLOWED_TCELL_STEPSIZE 1.0e-2 //todo: set as percentage instead of absolute value
+#define ERRORALLOWED_CONJ_STEPSIZE  1.0e-3 //todo: set as percentage instead of absolute value; else will introduce problems when m_fFVtoApcscaling is reduced, and dealing with density of conjugates in order of 1e-6
+
 
 #define INTEGRATION_TIME  5.0e+7 // was 1.5e+7 on elephant01a  earlier 1.0e+7
+#define FAILSAFE_CONJ_INTEGRATION_TIME  5.0e+5 // a failsafe to prevent endless integrations of a stiff system.
+//TODO: Could instead use the differences in the error values (between time-steps), being same over a period of time as a requirement to reduce time-step
+#define REDUCESTEPSIZE_CONJ_INTEGRATION_TIME 1.0e+5 // lowers the step size when the conjugation integration has passed this limit, and the error allowed is high (>1e-3).
 
-#define TCELL_CONVERGENCE  0.01
-#define CONJ_CONVERGENCE   0.001
+
+
+#define TCELL_CONVERGENCE  1.0e-2 //todo: set as percentage instead of absolute value. Already using the percentage values to break out of integration loop
+#define CONJ_CONVERGENCE   1.0e-3 //todo: set as percentage instead of absolute value
 
 
 /******************************************************************************/
@@ -297,10 +303,8 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     // Convert the number of feature vectors from robot agents in the vicinity to APCs for the CRM
     Sense();
 
-// DISABLECRM_RETAINRNDCALLS is defined so as to be closer to the same sequence of random numbers generated with the normal working of the CRM, so that the same agent behaviors may be obtained when CRM is disabled.
-// However the result with and without CRM still differ, although somewhat less.
-// Possibly the random number sequence is not exactly similar, since the Random::nextDouble() in CRobotAgent::GetRandomRobotWithWeights is only called when sum of weights (T-cell pop density) is not zero. Since CRM is disabled, its not possible to get these weights
-#ifndef DISABLECRM_RETAINRNDCALLS
+#ifndef DISABLEMODEL_RETAINRNDCALLS // DISABLEMODEL_RETAINRNDCALLS is defined so as to be closer to the same sequence of random numbers generated with the normal working of the CRM, so that the same agent behaviors may be obtained when CRM is disabled.
+
 
     int selectedclonaltype;// = Random::nextInt(m_unNumberOfReceptors);
 
@@ -314,7 +318,6 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
    }
 
     // --- Numerical integration to compute m_pfEffectors[] and m_pfRegulators[] to reflect m_pfAPCs[]
-    //PrintCRMDetails();
     m_bConvergenceFlag = false;
     m_dconvergence_error = 10.0;
     double convergence_errormax = -1.0, perc_convergence_errormax;
@@ -323,7 +326,6 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     bool b_prevdiff0occurance = false;
     while(integration_t < INTEGRATION_TIME)
     {
-        //PrintCRMDetails();
 
         // Compute number of conjugates for T cells m_pfEffectors[..] + m_pfRegulators[..];
         // Stored in m_pfConjugates[i][j], the conjugates of Ti to APCj
@@ -421,10 +423,6 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
             step_h = TCELL_LOWERLIMIT_STEPSIZE;}
 
 
-        /*if(CSimulator::GetInstance()->GetSimulationStepNumber() >= 1586)
-            printf("\nintegration_t = %f,absDiffHuenEuler = %e,new step_h = %f",integration_t,absDiffHuenEuler,step_h);*/
-
-
         convergence_errormax = -1.0;
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
@@ -461,21 +459,8 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
             }
         }
 
-
         m_dconvergence_error     = convergence_errormax;
         m_dpercconvergence_error = perc_convergence_errormax;
-
-        /*if(CSimulator::GetInstance()->GetSimulationStepNumber() >= 1586)
-            printf("\n agent %d: m_dconvergence_error=%e,step_h=%f,slope=%e,integration time %f",
-              robotAgent->GetIdentification(),
-              m_dconvergence_error,step_h,m_dconvergence_error/step_h,integration_t);*/
-
-
-       /*if((m_dconvergence_error - TCELL_CONVERGENCE) <= 0.00001)
-        {
-            m_bConvergenceFlag = true;
-            break;
-        }*/
 
         if(m_dpercconvergence_error <= 0.001)
         {
@@ -483,17 +468,8 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
             break;
         }
 
-
         integration_t += step_h;
-
     }
-
-    //PrintCRMDetails(70);
-//    if(robotAgent->GetIdentification() == 70)
-//    {
-//        printf("\n agent 70: m_dconvergence_error=%e,step_h=%f,slope=%e,integration time %f",
-//                                 m_dconvergence_error,step_h,m_dconvergence_error/step_h,integration_t);
-//    }
 
 #endif
 
@@ -509,7 +485,7 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     //We set the communication range to be twice that of the FV sensory range
     //CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights(2.0*robotAgent->GetFVSenseRange());
 
-    // could we also select the robot from one of the 10 nearest neighbours - but in these expts. comm does not seem to be needed
+    // select the robot from one of the 10 nearest neighbours - but in these expts. comm does not seem to be needed
     CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights((unsigned int)((double)robotAgent->GetSelectedNumNearestNbrs()*1.0));
 
 
@@ -553,45 +529,40 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
     {
         for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
         {
-            // since we are now deleting pathogens and the rate of deletion mayb be faster than the unbindingrate, we always start with 0 conjugates to compute QSS values
+            // since we are now deleting pathogens and the rate of deletion mayb be faster than the conjugate unbindingrate, we always start with 0 conjugates to compute QSS values
             C[thtype][apctype] = 0.0;
         }
     }
 
-
-    /*if(CSimulator::GetInstance()->GetSimulationStepNumber() >= 1586)
-    {
-        printf("\n\n\n\n\n");
-        for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
-        {
-            if(m_pfAPCs[apctype]>0.0)
-                printf("APC[%d]=%f  ",apctype,m_pfAPCs[apctype]);
-        }
-
-        // Print Effector and regulatory clonaltypes
-        printf("\n=================================\n");
-        for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
-        {
-            if((E[thtype] + R[thtype]) > CELLLOWERBOUND)
-                printf("E[%d]=%f,R[%d]=%f  ",thtype,E[thtype],thtype,R[thtype]);
-        }
-    }*/
-
-
-
-    conjstep_h = 0.001;
+    
+    conjstep_h = CONJ_LOWERLIMIT_STEPSIZE;
     double error = 1.0;
     double conjintegration_t = 0.0;
-    unsigned long n_iteration = 0;
+    unsigned n_iteration = 0;
     bool b_prevdiff0occurance=false;
 
-    while(((error - CONJ_CONVERGENCE) > 0.00001))
+    //while(((error - CONJ_CONVERGENCE) > 0.00001))
+    while(error > CONJ_CONVERGENCE)
     {
         n_iteration++;
 
         // a failsafe to prevent endless integrations, because of oscillations in the density of conjugates.If the value of oscillating conjugates is above the error threshold, we will break out of this loop after 100 iterations
-        if (n_iteration > 100U)
+        //if (n_iteration > 100U)
+        //    break;
+        //        if (n_iteration >= UINT_MAX-1)
+        //        {
+        //            // a failsafe to prevent endless integrations, because of oscillations in the density of conjugates.If the value of oscillating conjugates is above the error threshold, we will break out of this loop after 100 iterations
+
+        //            printf("\n The numerical integration of conjugates has undergone %d iterations. And yet the error is %f (CONJ_CONVERGENCE=%f)\n",UINT_MAX-1,error,CONJ_CONVERGENCE);
+        //            exit(-1);
+        //        }
+        if(conjintegration_t > FAILSAFE_CONJ_INTEGRATION_TIME)
+        {
+            printf("\nAttention. The numerical integration of conjugates has undergone %d iterations. And yet the error is %f (CONJ_CONVERGENCE=%f). Breaking off now\n",n_iteration,error,CONJ_CONVERGENCE);
             break;
+        }
+
+
 
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
@@ -599,29 +570,59 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
             {
                 for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
                 {
-                    m_pfDeltaConjugates_k0[thtype][apctype] =
-                            ((kon * m_pfAffinities[thtype][apctype] *
-                              FreeThCells(E, R, C, thtype) *
-                              AvailableBindingSites(C, apctype)) -
-                             koff*C[thtype][apctype]);
+                    if(m_pfAPCs[apctype] > 0.0)
+                    {
+                        m_pfDeltaConjugates_k0[thtype][apctype] =
+                                ((kon * m_pfAffinities[thtype][apctype] *
+                                  FreeThCells(E, R, C, thtype) *
+                                  AvailableBindingSites(C, apctype)) -
+                                 koff*C[thtype][apctype]);
+                    }
+                    else
+                        m_pfDeltaConjugates_k0[thtype][apctype] = 0.0;
+                }
+            }
+            else
+            {
+                for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+                {
+                    m_pfDeltaConjugates_k0[thtype][apctype] = 0.0;
                 }
             }
         }
 
+
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
             if(!(E[thtype] + R[thtype] <= CELLLOWERBOUND))
             {
                 for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
                 {
-                    m_pfConj_tmp_Eu[thtype][apctype] = C[thtype][apctype] + conjstep_h *
-                                                       m_pfDeltaConjugates_k0[thtype][apctype];
+                    if(m_pfAPCs[apctype] > 0.0)
+                    {
+                        m_pfConj_tmp_Eu[thtype][apctype] = C[thtype][apctype] + conjstep_h *
+                                                           m_pfDeltaConjugates_k0[thtype][apctype];
 
-                    if(m_pfConj_tmp_Eu[thtype][apctype] < 0.0)
+                        if(m_pfConj_tmp_Eu[thtype][apctype] < 0.0)
+                            m_pfConj_tmp_Eu[thtype][apctype] = 0.0;
+                    }
+                    else
                         m_pfConj_tmp_Eu[thtype][apctype] = 0.0;
                 }
             }
+            else
+            {
+                for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+                {
+                    m_pfConj_tmp_Eu[thtype][apctype] = 0.0;
+                }
+            }
         }
+
+
+        //-----Scaling down conjugates, that may have overflowed because of nuemercal errors in integration. Particularly relevant at relatively high error thresholds of 1e-3
+        ScaleDownConjugates(m_pfConj_tmp_Eu);
+
 
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
@@ -629,14 +630,27 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
             {
                 for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
                 {
-                    m_pfDeltaConjugates_k1[thtype][apctype] =
-                            ((kon * m_pfAffinities[thtype][apctype] *
-                              FreeThCells(E, R, m_pfConj_tmp_Eu, thtype) *
-                              AvailableBindingSites(m_pfConj_tmp_Eu, apctype)) -
-                             koff*m_pfConj_tmp_Eu[thtype][apctype]);
+                    if(m_pfAPCs[apctype] > 0.0)
+                    {
+                        m_pfDeltaConjugates_k1[thtype][apctype] =
+                                ((kon * m_pfAffinities[thtype][apctype] *
+                                  FreeThCells(E, R, m_pfConj_tmp_Eu, thtype) *
+                                  AvailableBindingSites(m_pfConj_tmp_Eu, apctype)) -
+                                 koff*m_pfConj_tmp_Eu[thtype][apctype]);
+                    }
+                    else
+                        m_pfDeltaConjugates_k1[thtype][apctype] = 0.0;
+                }
+            }
+            else
+            {
+                for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+                {
+                    m_pfDeltaConjugates_k1[thtype][apctype] = 0.0;
                 }
             }
         }
+
 
         double absDiffHuenEuler = -1.0;
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
@@ -645,50 +659,35 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
             {
                 for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
                 {
-                    m_pfConj_tmp_Hu[thtype][apctype] = C[thtype][apctype] + 0.5 * conjstep_h * (m_pfDeltaConjugates_k0[thtype][apctype] + m_pfDeltaConjugates_k1[thtype][apctype]);
-
-                    if(m_pfConj_tmp_Hu[thtype][apctype] < 0.0)
-                        m_pfConj_tmp_Hu[thtype][apctype] = 0.0;
-
-
-                    if(fabs(m_pfConj_tmp_Hu[thtype][apctype] - m_pfConj_tmp_Eu[thtype][apctype]) > absDiffHuenEuler)
+                    if(m_pfAPCs[apctype] > 0.0)
                     {
-                        absDiffHuenEuler = fabs(m_pfConj_tmp_Hu[thtype][apctype] - m_pfConj_tmp_Eu[thtype][apctype]);
+                        m_pfConj_tmp_Hu[thtype][apctype] = C[thtype][apctype] + 0.5 * conjstep_h * (m_pfDeltaConjugates_k0[thtype][apctype] + m_pfDeltaConjugates_k1[thtype][apctype]);
+
+                        if(m_pfConj_tmp_Hu[thtype][apctype] < 0.0)
+                            m_pfConj_tmp_Hu[thtype][apctype] = 0.0;
+
+
+                        if(fabs(m_pfConj_tmp_Hu[thtype][apctype] - m_pfConj_tmp_Eu[thtype][apctype]) > absDiffHuenEuler)
+                        {
+                            absDiffHuenEuler = fabs(m_pfConj_tmp_Hu[thtype][apctype] - m_pfConj_tmp_Eu[thtype][apctype]);
+                        }
                     }
+                    else
+                        m_pfConj_tmp_Hu[thtype][apctype] = 0.0;
+                }
+            }
+            else
+            {
+                for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+                {
+                    m_pfConj_tmp_Hu[thtype][apctype] = 0.0;
                 }
             }
         }
 
 
-        /*if(CSimulator::GetInstance()->GetSimulationStepNumber() >= 1586)
-        {
-            printf("\n\n\n\n\n");
-            for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
-            {
-                if(m_pfAPCs[apctype]>0.0)
-                    printf("APC[%d]=%f  ",apctype,m_pfAPCs[apctype]);
-            }
-
-            // Print Effector and regulatory clonaltypes
-            printf("\n=================================\n");
-            for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
-            {
-                printf("E[%d]=%f,R[%d]=%f  ",thtype,E[thtype],thtype,R[thtype]);
-            }
-
-
-            // Print table of conjugates
-            printf("\n==============ConjEu===================\n");
-            for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
-            {
-                printf("\nCj:%d\t",apctype);
-                for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
-                {
-                    printf("%e  ",m_pfConj_tmp_Eu[thtype][apctype]);
-                }
-            }
-        }*/
-
+        //-----Scaling down conjugates, that may have overflowed because of nuemercal errors in integration. Particularly relevant at relatively high error thresholds of 1e-3
+        ScaleDownConjugates(m_pfConj_tmp_Hu);
 
 
         if(absDiffHuenEuler == 0.0)
@@ -704,7 +703,7 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
             if(conjstep_h < CONJ_LOWERLIMIT_STEPSIZE) {
                         conjstep_h = CONJ_LOWERLIMIT_STEPSIZE;}
 
-            printf("\n new conjugation step %f, n_iteration %lu",conjstep_h,n_iteration);
+            printf("\n new conjugation step %f, n_iteration %u",conjstep_h,n_iteration);
 
             b_prevdiff0occurance = true;
 
@@ -714,11 +713,28 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
         b_prevdiff0occurance = false;
 
         assert(absDiffHuenEuler >= 0.0);
-        conjstep_h *= sqrt(ERRORALLOWED_CONJ_STEPSIZE/absDiffHuenEuler);
-        if(conjstep_h > CONJ_UPPERLIMIT_STEPSIZE) {
-            conjstep_h = CONJ_UPPERLIMIT_STEPSIZE;}
-        else if(conjstep_h < CONJ_LOWERLIMIT_STEPSIZE) {
-            conjstep_h = CONJ_LOWERLIMIT_STEPSIZE;}
+
+
+        if(conjintegration_t > REDUCESTEPSIZE_CONJ_INTEGRATION_TIME && ERRORALLOWED_CONJ_STEPSIZE >= 1.0e-3)
+        {
+            /*The system is most likely stiff and oscillating around the "true" value, as the slope approaches 0*/
+            /*we reduce the step size to reduce the difference between the oscillating values*/
+
+            /*If the error allowed was lower, the corresponding step sizes would alreadz be lower,
+            and so would be the differences between oscillating values*/
+            conjstep_h /= 2.0;
+            if(conjstep_h < CONJ_LOWERLIMIT_STEPSIZE) {
+                            conjstep_h = CONJ_LOWERLIMIT_STEPSIZE;}
+        }
+        else
+        {
+            conjstep_h *= sqrt(ERRORALLOWED_CONJ_STEPSIZE/absDiffHuenEuler);
+            if(conjstep_h > CONJ_UPPERLIMIT_STEPSIZE) {
+                conjstep_h = CONJ_UPPERLIMIT_STEPSIZE;}
+            else if(conjstep_h < CONJ_LOWERLIMIT_STEPSIZE) {
+                conjstep_h = CONJ_LOWERLIMIT_STEPSIZE;}
+        }
+
 
 
         double error_max = -1.0;
@@ -735,45 +751,33 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
             {
                 for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
                 {
-                    C[thtype][apctype] = C[thtype][apctype] + conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype];
-                    if(C[thtype][apctype] < 0.0)
+                    if(m_pfAPCs[apctype] > 0.0)
                     {
-                        C[thtype][apctype] = 0.0;
-                    }
-                    else
-                    {
-                        if(fabs(conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype]) > error_max)
+                        C[thtype][apctype] = C[thtype][apctype] + conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype];
+                        if(C[thtype][apctype] < 0.0)
                         {
-                            error_max = fabs(conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype]);
+                            C[thtype][apctype] = 0.0;
+                        }
+                        else
+                        {
+                            if(fabs(conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype]) > error_max)
+                            {
+                                error_max = fabs(conjstep_h * m_pfDeltaConjugates_k0[thtype][apctype]);
+                            }
                         }
                     }
+                    else
+                        C[thtype][apctype] = 0.0;
                 }
             }
         }
 
+        //-----Scaling down conjugates, that may have overflowed because of nuemercal errors in integration. Particularly relevant at relatively high error thresholds of 1e-3
+        ScaleDownConjugates(C);
+
+
         conjintegration_t = conjintegration_t + conjstep_h;
         error = error_max;
-
-
-        /*if(CSimulator::GetInstance()->GetSimulationStepNumber() >= 1586)
-            printf("\nConj.step=%f,error=%e,n_iterations=%lu,integration_t=%f",conjstep_h,error,n_iteration,conjintegration_t);
-
-
-        if(CSimulator::GetInstance()->GetSimulationStepNumber() >= 1586)
-        {
-            printf("\n\n");
-
-            // Print table of conjugates
-            printf("==============Conj===================\n");
-            for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
-            {
-                for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
-                {
-                    if(C[thtype][apctype] != 0.0)
-                        printf("[Apc:%d,Th:%d,C:%e]    ",apctype, thtype, C[thtype][apctype]);
-                }
-            }
-        }*/
     }
 
 
@@ -814,6 +818,9 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
     //   }
 }
 
+/******************************************************************************/
+/******************************************************************************/
+
 void CRMinRobotAgent::Derivative(double *E, double *R, double **C, double *deltaE, double *deltaR)
 {
     // Dividing the conjugates into Effector and Regulator type
@@ -821,6 +828,7 @@ void CRMinRobotAgent::Derivative(double *E, double *R, double **C, double *delta
     {
         if((E[thtype] + R[thtype]) <= CELLLOWERBOUND)
         {
+            //TODO: check I think we are doing this initialization to 0, twice. done before in computation of conjugates (ConjugateQSS(...))
             for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
             {
                 m_pfEffectorConjugates[thtype][apctype]  =  0.0;
@@ -851,6 +859,9 @@ void CRMinRobotAgent::Derivative(double *E, double *R, double **C, double *delta
             m_pfEffectorConjugatesPerAPC[apctype]  += m_pfEffectorConjugates[thtype][apctype];
             m_pfRegulatorConjugatesPerAPC[apctype] += m_pfRegulatorConjugates[thtype][apctype];
         }
+
+        assert((m_pfEffectorConjugatesPerAPC[apctype]+m_pfRegulatorConjugatesPerAPC[apctype]) -
+               m_pfAPCs[apctype]*((double)sites) <= CONJUGATION_OVERFLOW_LIMIT);
     }
 
 
@@ -893,25 +904,14 @@ void CRMinRobotAgent::Derivative(double *E, double *R, double **C, double *delta
     }
 }
 
+/******************************************************************************/
+/******************************************************************************/
 
 double CRMinRobotAgent::FreeThCells(double* E, double* R, double** C, unsigned int thtype)
 {
     double conjugatedcells = 0.0;
     for(unsigned apctype = 0; apctype < m_unNumberOfReceptors; apctype++)
     {
-//        if(C[thtype][apctype] < 0.0)
-//        {
-//            printf("\nC[%d][%d]=%f",thtype,apctype,C[thtype][apctype]);
-//            printf("\nRobot id:%d, Step:%d",robotAgent->GetIdentification(),CSimulator::GetInstance()->GetSimulationStepNumber());
-//            exit(-1);
-//        }
-//        if(E[thtype] < 0.0 || R[thtype] < 0.0)
-//        {
-//            printf("\nE[%d]=%e;R[%d]=%e",thtype,E[thtype],thtype,R[thtype]);
-//            printf("\nRobot id:%d, Step:%d",robotAgent->GetIdentification(),CSimulator::GetInstance()->GetSimulationStepNumber());
-//            exit(-1);
-//        }
-
         conjugatedcells += C[thtype][apctype];
     }
 
@@ -927,6 +927,45 @@ double CRMinRobotAgent::AvailableBindingSites(double** C, unsigned int apctype)
     {
         conjugatedcells += C[thtype][apctype];
     }
+
+    assert(conjugatedcells - (m_pfAPCs[apctype]*((double)sites)) <= CONJUGATION_OVERFLOW_LIMIT);
+
+    //    if(conjugatedcells > (m_pfAPCs[apctype]*((double)sites)))
+    //{
+
+    //    printf("\nThe errant APC type: %d\n\n",apctype);
+
+    //    // Print NonZero APCs
+    //    printf("\n");
+    //    for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+    //    {
+    //        if(m_pfAPCs[apctype]>0.0)
+    //            printf("APC[%d]=%f  ",apctype,m_pfAPCs[apctype]);
+    //    }
+
+    //    // Print table of conjugates
+    //    printf("\n=================================\n");
+    //    for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+    //    {
+    //        printf("\nAPC:%d\t",apctype);
+    //        for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+    //        {
+    //            printf("%e  ",C[thtype][apctype]);
+    //        }
+    //    }
+
+
+    //    // Print Effector and regulatory clonaltypes
+    //    printf("\n=================================\n");
+    //    for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+    //    {
+    //   if(!(m_pfEffectors[thtype] + m_pfRegulators[thtype] <= CELLLOWERBOUND))
+    //           printf("E[%d]=%e,R[%d]=%e  ",thtype,m_pfEffectors[thtype],thtype,m_pfRegulators[thtype]);
+    //    }
+
+    //	exit(-1);
+    //}
+
 
     return m_pfAPCs[apctype]*sites - conjugatedcells;
 }
@@ -1110,7 +1149,7 @@ double CRMinRobotAgent::NormalizedAffinity(unsigned int v1, unsigned int v2)
 
     /* Number of 1's from the result of the previous XOR operation,  at positions preset by mask */
     /* how do we decide whose mask should be used */
-    unsigned int unMatching  = GetNumberOfSetBits(unXoredString);
+    unsigned int unMatching  = CRMinRobotAgent::GetNumberOfSetBits(unXoredString);
 
     //TODO: Have to change affinity computation
     return (double) (CFeatureVector::NUMBER_OF_FEATURES - unMatching) / (double)
@@ -1131,7 +1170,7 @@ double CRMinRobotAgent::NegExpDistAffinity(unsigned int v1, unsigned int v2, dou
 
     /* Number of 1's from the result of the previous XOR operation,  at positions preset by mask */
     /* how do we decide whose mask should be used */
-    unsigned int hammingdistance  = GetNumberOfSetBits(unXoredString);
+    unsigned int hammingdistance  = CRMinRobotAgent::GetNumberOfSetBits(unXoredString);
 
     //return 1.0 * exp(-(1.0/k) * (double)hammingdistance);
     // Should we normalize the hammingdistance when input to the exp function, or as above?
@@ -1222,7 +1261,37 @@ double CRMinRobotAgent::GetConvergenceError_Perc()
 /******************************************************************************/
 /******************************************************************************/
 
-unsigned int GetNumberOfSetBits(unsigned int x)
+void CRMinRobotAgent::ScaleDownConjugates(double** pf_Conjugates)
+{
+    for(unsigned int apctype = 0; apctype < m_unNumberOfReceptors; apctype++)
+    {
+        if(m_pfAPCs[apctype] > 0.0)
+        {
+
+            double f_ConjugatesOnAPC = 0.0;
+            for(unsigned int thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
+            {
+                f_ConjugatesOnAPC += pf_Conjugates[thtype][apctype];
+            }
+
+            if(f_ConjugatesOnAPC > (m_pfAPCs[apctype]*(double)sites))
+            {
+                double scaledownfactor = f_ConjugatesOnAPC/(m_pfAPCs[apctype]*(double)sites);
+
+                for(unsigned int thtype = 0; thtype < m_unNumberOfReceptors; thtype++)
+                {
+                    pf_Conjugates[thtype][apctype] /= scaledownfactor;
+                }
+            }
+
+        }
+    }
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+unsigned int CRMinRobotAgent::GetNumberOfSetBits(unsigned int x)
 {
     // from http://stackoverflow.com/questions/1639723/ruby-count-the-number-of-1s-in-a-binary-number
     unsigned int m1 = 0x55555555;
