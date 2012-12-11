@@ -15,23 +15,18 @@
 
 
 #define NN_CONVERGENCE  ERRORALLOWED_NN_STEPSIZE
-#define COMPETITION_FACTOR 1.0
-#define ACTIVATION_FACTOR  1.0
-#define OUTPUTGAIN_FACTOR  1.0
 
 // bias on output neurons
 //#define FIXEDBIAS
 #define AFFINITYPLASTICBIAS
 
-#ifdef FIXEDBIAS
-#define OUTPUTNEURONBIAS 0.003
-#elif defined AFFINITYPLASTICBIAS // affinity specific bias
-#define BIASWEIGHT               0.0 // doesnot do well when inputs are scaled large (e.g. 10 fold or .1 fold change to all) // what it does is translate the output values
-#define INHIBTIONSCALINGFACTOR   1.0 //0.25 // what it does is scaling the output values
-#define EXTERNALBIASWEIGHT       0.0 // in case of only one type of object in agents local env. Not needed for fault detection, where they would always be a reference normal repertoire of agents
-#else // a generic plastic bias
-#define BIASWEIGHT 1.0 //1.0
-#endif
+//#ifdef FIXEDBIAS
+//#define m_fOUTPUTNEURONBIAS 0.003
+//#elif defined AFFINITYPLASTICBIAS // affinity specific bias
+//#define m_fBIASWEIGHT               0.0 // doesnot do well when inputs are scaled large (e.g. 10 fold or .1 fold change to all) // what it does is translate the output values
+//#define m_fINHIBTIONSCALINGFACTOR   1.0 //0.25 // what it does is scaling the output values
+//#define EXTERNALm_fBIASWEIGHT       0.0 // in case of only one type of object in agents local env. Not needed for fault detection, where they would always be a reference normal repertoire of agents
+//#endif
 /******************************************************************************/
 /******************************************************************************/
 
@@ -46,32 +41,81 @@ CTRNNinRobotAgent::CTRNNinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_
     CFeatureVector::NUMBER_OF_FEATURES = m_ctrnnArguments->GetArgumentAsIntOr("numberoffeatures", 6);
     m_fcross_affinity                  = m_ctrnnArguments->GetArgumentAsDoubleOr("cross-affinity", 0.15);
     m_fTryExchangeProbability          = m_ctrnnArguments->GetArgumentAsDoubleOr("exchangeprob", 0.5);
-    m_fFVtoApcscaling                  = m_ctrnnArguments->GetArgumentAsDoubleOr("fvapcscaling", 2.0e-3); //2.0E-3
+    m_fFVtoApcscaling                  = m_ctrnnArguments->GetArgumentAsDoubleOr("fvapcscaling", 1.0); //2.0E-3
 
+    /******************************************************************************/
+    //Hidden neurons
+    m_fCOMPETITION_FACTOR              = m_ctrnnArguments->GetArgumentAsDoubleOr("hn_competition", 1.0);
+    m_fACTIVATION_FACTOR               = m_ctrnnArguments->GetArgumentAsDoubleOr("hn_activation", 1.0);
+    /******************************************************************************/
+    ////Output neurons
+    m_fOUTPUTGAIN_FACTOR               = m_ctrnnArguments->GetArgumentAsDoubleOr("on_gain", 1.0);//10.0
+
+    // AFFINITYPLASTICBIAS
+    // Scales the output values. The inhibition factor is reduced so as to treat more than one agent with the same FV, as normal.
+    m_fINHIBTIONSCALINGFACTOR          = m_ctrnnArguments->GetArgumentAsDoubleOr("on_inhibitionscaling", 0.4); //20.0
+    m_fBIASWEIGHT                      = m_ctrnnArguments->GetArgumentAsDoubleOr("on_biaswt", 0.0);
+    m_fEXTERNALBIASWEIGHT              = m_ctrnnArguments->GetArgumentAsDoubleOr("on_extbiaswt", 0.0);
+
+    //Reducing this rate shifts or translates the output values up (uniformly increases the values).
+    m_fSIGMOIDSATURATION               = m_ctrnnArguments->GetArgumentAsDoubleOr("on_sigmoidsaturation", 1.0); //0.05
+    // or FIXED (NONPLASTIC) BIAS
+    m_fOUTPUTNEURONBIAS                = m_ctrnnArguments->GetArgumentAsDoubleOr("on_nonplasticbiaswt", 0.004); //0.004
+    /******************************************************************************/
 
     if (m_ctrnnArguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
-        printf("numberoffeatures=#             Number of features in a single FV [%d]\n"
+        printf("numberoffeatures=#            Number of features in a single FV [%d]\n"
                "exchangeprob=#.#              Probability of trying to exchange cells with other robots [%f]\n"
                "cross-affinity=#.#            Level of cross-affinity (>0)     [%2.5f]\n"
-               "fvapcscaling=#.#              Scaling parameter of [FV] to [APC] [%e]\n",
+               "fvapcscaling=#.#              Scaling parameter of [FV] to [APC] [%e]\n"
+
+
+               "hn_competition=#.#            Scaling parameter of competition between hidden neurons [%e]\n"
+               "hn_activation=#.#             Scaling parameter of activation of hidden neurons [%e]\n"
+
+
+               "on_gain=#.#                   Multiplicative gain applied to inputs of output neurons [%e]\n"
+#ifdef FIXEDBIAS
+               "on_nonplasticbiaswt=#.#       Fixed non-plastic bias weight on output neurons (bias activation: -1) [%e]\n",
+#elif defined AFFINITYPLASTICBIAS
+               "on_inhibitionscaling=#.#      Scaling parameter on inhibitions between output neurons [%e]\n"
+               "on_biaswt=#.#                 Bias weight on output neurons [%e]\n"
+               "on_extbiaswt=#.#              External bias weight applied on final activations of output neurons (bias activation: -1) [%e]\n"
+               "on_sigmoidsaturation=#.#      Saturation parameter of output neuron sigmoid function [%e]\n",
+#endif
                CFeatureVector::NUMBER_OF_FEATURES,
                m_fTryExchangeProbability,
                m_fcross_affinity,
-               m_fFVtoApcscaling);
+               m_fFVtoApcscaling,
+
+               m_fCOMPETITION_FACTOR,
+               m_fACTIVATION_FACTOR,
+               m_fOUTPUTGAIN_FACTOR,
+
+#ifdef FIXEDBIAS
+               m_fOUTPUTNEURONBIAS
+#elif defined AFFINITYPLASTICBIAS
+               m_fINHIBTIONSCALINGFACTOR,
+               m_fBIASWEIGHT,
+               m_fEXTERNALBIASWEIGHT,
+               m_fSIGMOIDSATURATION
+#endif
+               );
         bHelpDisplayed = true;
     }
 
     m_unNumberOfReceptors = 1 << (CFeatureVector::NUMBER_OF_FEATURES);
 
-    m_pfAPCs		      = new double[m_unNumberOfReceptors]; // In this implementation, each type of APC presents one FV.
+    m_pfAPCs		        = new double[m_unNumberOfReceptors]; // In this implementation, each type of APC presents one FV.
 
-    m_pfAffinities = new double* [m_unNumberOfReceptors];
-    m_pfAffinities[0] = new double [m_unNumberOfReceptors * m_unNumberOfReceptors];
-    for (unsigned int i = 1; i < m_unNumberOfReceptors; ++i)
-    {
-        m_pfAffinities[i] = m_pfAffinities[i-1] + m_unNumberOfReceptors;
-    }
+
+//    m_pfAffinities = new double* [m_unNumberOfReceptors];
+//    m_pfAffinities[0] = new double [m_unNumberOfReceptors * m_unNumberOfReceptors];
+//    for (unsigned int i = 1; i < m_unNumberOfReceptors; ++i)
+//    {
+//        m_pfAffinities[i] = m_pfAffinities[i-1] + m_unNumberOfReceptors;
+//    }
 
 
     m_pfHiddenNeurons       = new double[m_unNumberOfReceptors];
@@ -102,13 +146,13 @@ CTRNNinRobotAgent::CTRNNinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_
         m_pfOutputNeurons[i]          = 0.0;
         m_pfInputToOutputNeurons[i]   = 0.0;
 
-        m_pfAPCs[i]            = 0.0;
+        m_pfAPCs[i]                   = 0.0;
 
-        for (unsigned int j = 0; j < m_unNumberOfReceptors; j++)
-        {
-            m_pfAffinities[i][j]              = NegExpDistAffinity(i,j,m_fcross_affinity);
-            //printf("Af(%d,%d)=%f\n",i,j,m_pfAffinities[i][j]);
-        }
+//        for (unsigned int j = 0; j < m_unNumberOfReceptors; j++)
+//        {
+//            //m_pfAffinities[i][j]      = NegExpDistAffinity(i,j,m_fcross_affinity);
+//            //printf("Af(%d,%d)=%f\n",i,j,GetAf(i,j));
+//        }
     }
 
     step_h = 1.0;
@@ -136,8 +180,8 @@ CTRNNinRobotAgent::~CTRNNinRobotAgent()
 
     delete m_pfAPCs;
 
-    delete [] m_pfAffinities[0];
-    delete [] m_pfAffinities;
+//    delete [] m_pfAffinities[0];
+//    delete [] m_pfAffinities;
 }
 
 
@@ -208,12 +252,12 @@ void CTRNNinRobotAgent::Derivative(double *n, double *deltaN, NNLAYER layer)
         if(layer == HiddenLayer)
         {
             for(unsigned inindex=0; inindex < m_unNumberOfReceptors; inindex++) // from layer below
-                deltaN[index] += ACTIVATION_FACTOR * m_pfAffinities[index][inindex] * m_pfAPCs[inindex];
+                deltaN[index] += m_fACTIVATION_FACTOR * GetAf(index, inindex) * m_pfAPCs[inindex];
 
             for(unsigned index1=0; index1 < m_unNumberOfReceptors; index1++) // from same layer
             {
                 if(index != index1)
-                    deltaN[index] -=COMPETITION_FACTOR * m_pfAffinities[index][index1] * n[index1];
+                    deltaN[index] -=m_fCOMPETITION_FACTOR * GetAf(index,index1) * n[index1];
             }
             deltaN[index] -= n[index];
         }
@@ -228,9 +272,9 @@ void CTRNNinRobotAgent::Derivative(double *n, double *deltaN, NNLAYER layer)
                 {
                     if(index != index1)
                         if(m_pfAPCs[index1] > 0.0)  // if the output node at index1 exists
-                            deltaN[index] -=  (INHIBTIONSCALINGFACTOR *
-                                               (1.0 - m_pfAffinities[index][index1])) *
-                                               GetSigmoid(n[index1] - BIASWEIGHT);
+                            deltaN[index] -=   m_fINHIBTIONSCALINGFACTOR *
+                                               (1.0 - GetAf(index,index1)) *
+                                               Sigmoid(n[index1] - m_fBIASWEIGHT, m_fSIGMOIDSATURATION);
                 }
 
                 deltaN[index] -= n[index];
@@ -254,7 +298,7 @@ void CTRNNinRobotAgent::PrintCTRNNDetails(unsigned id)
     for (unsigned i = 0; i < m_unNumberOfReceptors; i++)
     {
         if(m_pfAPCs[i] > 0.0)
-            printf("FV:%2d (APCs:%f). HN=%f, ON=%f (%f)\n", i, m_pfAPCs[i],m_pfHiddenNeurons[i],m_pfOutputNeurons[i],m_pfInputToOutputNeurons[i]);
+            printf("Sig(on[%d])=%f (%f,%f) [APC:%f] [Status:%d]\n",i, Sigmoid(m_pfOutputNeurons[i], m_fSIGMOIDSATURATION),m_pfOutputNeurons[i],m_pfInputToOutputNeurons[i],m_pfAPCs[i],robotAgent->GetMostWantedList()[i]);
     }
 }
 
@@ -324,7 +368,7 @@ void CTRNNinRobotAgent::NumericalIntegration(double totalintegration_t, double* 
                 printf("\n N_Hu %e, N_Eu %e", m_pfNeurons_Hu[onindex],
                        m_pfNeurons_Eu[onindex]);
 
-            printf("\n Stepsize %e, m_foutputconvergence_error %e, m_foutputpercconvergence_error %e  ",
+            printf("\n Stepsize %e, m_foutputconvergence_error %e, m_foutputpercconvergence_error %e  \n",
                    step_h,(*convg_error),(*percconvg_error));
 #endif
 
@@ -337,8 +381,8 @@ void CTRNNinRobotAgent::NumericalIntegration(double totalintegration_t, double* 
             if(b_prevdiff0occurance && step_h == NN_LOWERLIMIT_STEPSIZE)
             {
 #ifdef DEBUG
-                printf("\n NN layer %d", layer);
-                printf("\nThe neurons solution is stalled, or solution at start may already be at steady state");
+                printf("\n NN layer %d.", layer);
+                printf(" The neurons solution is stalled, or solution at start may already be at steady state\n");
 #endif
 
                 break; // exit(-1);
@@ -349,8 +393,8 @@ void CTRNNinRobotAgent::NumericalIntegration(double totalintegration_t, double* 
                 step_h = NN_LOWERLIMIT_STEPSIZE;}
 
 #ifdef DEBUG
-            printf("\n NN layer %d", layer);
-            printf("\n Layer: New stepsize %f - integration time %e",step_h, integration_t);
+            printf("\nNN layer %d.", layer);
+            printf(" New stepsize %f - integration time %e",step_h, integration_t);
 #endif
 
             b_prevdiff0occurance = true;
@@ -410,6 +454,9 @@ void CTRNNinRobotAgent::NumericalIntegration(double totalintegration_t, double* 
 
 void CTRNNinRobotAgent::UpdateState()
 {
+#ifndef DISABLEMODEL_RETAINRNDCALLS // DISABLEMODEL_RETAINRNDCALLS is defined so as to be closer to the same sequence of random numbers generated with the normal working of the CTRNN, so that the same agent behaviors may be obtained when CTRNN is disabled.
+
+
 #ifdef FIXEDBIAS
     for(unsigned onindex=0; onindex < m_unNumberOfReceptors; onindex++)
     {
@@ -419,15 +466,15 @@ void CTRNNinRobotAgent::UpdateState()
         if(m_pfAPCs[onindex] > 0.0)
         {
             for(unsigned hnindex=0; hnindex < m_unNumberOfReceptors; hnindex++)
-                m_pfOutputNeurons[onindex] += m_pfAffinities[hnindex][onindex] *
+                m_pfOutputNeurons[onindex] += GetAf(hnindex,onindex) *
                                               m_pfHiddenNeurons[hnindex];
         }
-        m_pfOutputNeurons[onindex] *= OUTPUTGAIN_FACTOR;
+        m_pfOutputNeurons[onindex] *= m_fOUTPUTGAIN_FACTOR;
 
         if((m_pfOutputNeurons[onindex] <= HIDDENNEURONACTIVATIONLOWERBOUND) || (m_pfAPCs[onindex] == 0.0))
             // Dont know - no Hidden Neuron Activ to make decision
             robotAgent->SetMostWantedList(onindex, 0);
-        else if (m_pfOutputNeurons[onindex] < OUTPUTNEURONBIAS)
+        else if (m_pfOutputNeurons[onindex] < m_fOUTPUTNEURONBIAS)
             // Attack
             robotAgent->SetMostWantedList(onindex, 1);
         else
@@ -446,12 +493,12 @@ void CTRNNinRobotAgent::UpdateState()
         {
             for(unsigned hnindex=0; hnindex < m_unNumberOfReceptors; hnindex++)
             {
-                m_pfInputToOutputNeurons[onindex] += m_pfAffinities[hnindex][onindex] *
+                m_pfInputToOutputNeurons[onindex] += GetAf(hnindex,onindex) *
                                                      m_pfHiddenNeurons[hnindex];
             }
-            m_pfInputToOutputNeurons[onindex] *= OUTPUTGAIN_FACTOR;
+            m_pfInputToOutputNeurons[onindex] *= m_fOUTPUTGAIN_FACTOR;
         }
-        m_pfOutputNeurons[onindex] = 0.0; // lets try initialization to 0, first. I.E. no preservation of state of output neurons since the output layer is restructured at each timestep
+        m_pfOutputNeurons[onindex] = 0.0; // lets try initialization to 0, first. I.E. no preservation of state of output neurons since the output layer is restructured at each timestep, and consequently new output nodes may suddenly appear with outdated values - that would have to be integrated to a more updated values. To be safe, lets always reset seed value to 0.
     }
 
     NumericalIntegration(INTEGRATION_TIME_SIMSTART, m_pfOutputNeurons, m_pfOutputNeurons_prev, &m_folconvergence_error, &m_folpercconvergence_error, &m_bolconvergence_flag, OutputLayer);
@@ -462,56 +509,7 @@ void CTRNNinRobotAgent::UpdateState()
         if (m_pfAPCs[onindex] == 0.0)
             // Dont know - no Hidden Neuron Activ to make decision
             robotAgent->SetMostWantedList(onindex, 0);
-        else if (m_pfOutputNeurons[onindex] <= (0.0+EXTERNALBIASWEIGHT))
-            // Attack
-            robotAgent->SetMostWantedList(onindex, 1);
-        else
-            // Tolerate
-            robotAgent->SetMostWantedList(onindex, 2);
-    }
-
-#else // general plastic bias
-
-    double mf_sumoutputs = 0.0;
-    double mf_countnonzeroapcs = 0.0;
-    for(unsigned onindex=0; onindex < m_unNumberOfReceptors; onindex++)
-    {
-        m_pfInputToOutputNeurons[onindex] = 0.0;
-
-        // if no apc's of specific type, how can i make a decision
-        // output layer same as input layer
-        if(m_pfAPCs[onindex] > 0.0)
-        {
-            for(unsigned hnindex=0; hnindex < m_unNumberOfReceptors; hnindex++)
-            {
-                m_pfInputToOutputNeurons[onindex] += m_pfAffinities[hnindex][onindex] *
-                                                     m_pfHiddenNeurons[hnindex];
-            }
-            m_pfInputToOutputNeurons[onindex] *= OUTPUTGAIN_FACTOR;
-            mf_countnonzeroapcs += 1.0;
-        }
-        mf_sumoutputs += m_pfInputToOutputNeurons[onindex];
-    }
-
-    for(unsigned onindex=0; onindex < m_unNumberOfReceptors; onindex++)
-    {
-        m_pfOutputNeurons[onindex] = 0.0;
-
-        if(m_pfAPCs[onindex] > 0.0)
-        {
-            m_pfOutputNeurons[onindex] = (-m_pfInputToOutputNeurons[onindex]) +
-                                         (-m_pfInputToOutputNeurons[onindex]*BIASWEIGHT*
-                                          (mf_countnonzeroapcs-1.0)) +
-                                         (mf_sumoutputs-m_pfInputToOutputNeurons[onindex])*BIASWEIGHT;
-
-            m_pfOutputNeurons[onindex] /= - (1.0 + mf_countnonzeroapcs*BIASWEIGHT);
-        }
-
-
-        if (m_pfAPCs[onindex] == 0.0)
-            // Dont know - no Hidden Neuron Activ to make decision
-            robotAgent->SetMostWantedList(onindex, 0);
-        else if (m_pfOutputNeurons[onindex] <= 0.0)
+        else if (Sigmoid(m_pfOutputNeurons[onindex], m_fSIGMOIDSATURATION) <= (0.0+m_fEXTERNALBIASWEIGHT))
             // Attack
             robotAgent->SetMostWantedList(onindex, 1);
         else
@@ -519,6 +517,7 @@ void CTRNNinRobotAgent::UpdateState()
             robotAgent->SetMostWantedList(onindex, 2);
     }
 #endif
+#endif // DISABLEMODEL_RETAINRNDCALLS
 }
 
 /******************************************************************************/
@@ -553,6 +552,14 @@ double CTRNNinRobotAgent::NormalizedAffinity(unsigned int v1, unsigned int v2)
     //TODO: Have to change affinity computation
     return (double) (CFeatureVector::NUMBER_OF_FEATURES - unMatching) / (double)
             CFeatureVector::NUMBER_OF_FEATURES;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CTRNNinRobotAgent::GetAf(unsigned int i, unsigned int j)
+{
+    return NegExpDistAffinity(i,j,m_fcross_affinity);
 }
 
 /******************************************************************************/
@@ -686,9 +693,20 @@ unsigned int CTRNNinRobotAgent::GetNumberOfSetBits(unsigned int x)
 /******************************************************************************/
 /******************************************************************************/
 
-double GetSigmoid(double f_currActv)
+double CTRNNinRobotAgent::Sigmoid(double f_currActv, double f_Saturation)
 {
-    return tanh(f_currActv);
+    double maxcapacity = 1.0;
+    double tmp = exp(f_Saturation * -f_currActv);
+
+    return maxcapacity*(1.0 - tmp) / (1.0 + tmp);
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CTRNNinRobotAgent::GetSigmoidSaturation()
+{
+    return m_fSIGMOIDSATURATION;
 }
 
 /******************************************************************************/

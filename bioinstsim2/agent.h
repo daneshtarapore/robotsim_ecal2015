@@ -15,7 +15,7 @@ enum faultdetectionmodeltype {CRM, CTRNN};
 /******************************************************************************/
 /******************************************************************************/
 
-//#define DISABLEMODEL_RETAINRNDCALLS
+#define DISABLEMODEL_RETAINRNDCALLS
 
 /******************************************************************************/
 /******************************************************************************/
@@ -91,6 +91,16 @@ public:
 
     // Get the current velocity of the agent:
     virtual void SetVelocity(TVector2d* pt_velocity_position);
+
+    // Get the magnitude and direction of agent's relative velocity
+    virtual void GetRelativeVelocity(double* mag_relvelocity, double* dir_relvelocity, double feature_range);
+
+    // Get the magnitude and direction of agent's relative acceleration
+    virtual void GetRelativeAcceleration(double *mag_relacceleration, double *dir_relacceleration, double feature_range);
+
+
+    // Get the angle between the two vectors (acos)
+    virtual double GetVectorAngle(TVector2d vector1, TVector2d vector2);
        
     // This method is called if the agent moves to a new arena square.
     // Useful to calculate distances to other agents, update physical
@@ -100,6 +110,8 @@ public:
 
     virtual void   SetMaximumSpeed(double f_max_speed);
     virtual double GetMaximumSpeed() const;
+
+    virtual double GetMaximumAngularVelocity() const;
 
     static unsigned int g_unGlobalNumberOfAgentsCreated;
     

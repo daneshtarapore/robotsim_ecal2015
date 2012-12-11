@@ -345,7 +345,9 @@ unsigned int CRobotAgent::GetSelectedNumNearestNbrs()
 /******************************************************************************/
 void CRobotAgent::FVsOfWcFeature(const CFeatureVector* pc_feature_vector, unsigned int *fv1, unsigned int *fv2)
 {
-#if defined(ALTERNATESIXBITFV) && defined(WILDCARDINFV)
+    if(CFeatureVector::NUMBER_OF_FEATURES == 6)
+    {
+#ifdef WILDCARDINFV
 
     assert(pc_feature_vector->m_iWildCardBit != -1);
     (*fv1) = pc_feature_vector->GetValue();
@@ -355,6 +357,7 @@ void CRobotAgent::FVsOfWcFeature(const CFeatureVector* pc_feature_vector, unsign
     return;
 
 #endif
+    }
 }
 
 /******************************************************************************/
@@ -375,9 +378,10 @@ void CRobotAgent::Sense(unsigned int u_nearestnbrs)
     for (int i = 1; i < u_nearestnbrs+1; i++)
     {
         CRobotAgent* pcRobot = (CRobotAgent*) tSortedAgents[i];
-        
-#if defined(ALTERNATESIXBITFV) && defined(WILDCARDINFV)
-        if(pcRobot->GetFeatureVector()->m_iWildCardBit != -1)
+
+#ifdef WILDCARDINFV
+        if((CFeatureVector::NUMBER_OF_FEATURES == 6) &&
+           (pcRobot->GetFeatureVector()->m_iWildCardBit != -1))
         {
             unsigned int fv1, fv2;
             FVsOfWcFeature(pcRobot->GetFeatureVector(), &fv1, &fv2);
@@ -393,14 +397,11 @@ void CRobotAgent::Sense(unsigned int u_nearestnbrs)
                 exit(-1);}
         }
         else
+#endif
         {
             unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
             m_pfFeaturesSensed[unFeatureVector] += 1.0;
         }
-#else
-        unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
-        m_pfFeaturesSensed[unFeatureVector] += 1.0;
-#endif
     }
 }
 
@@ -420,13 +421,13 @@ unsigned int CRobotAgent::GetColor()
      else
         return BLUE;*/
 
-    if(m_iBehavIdentification  == 1)
+    /*if(m_iBehavIdentification  == 1)
         return GREEN;
     else if (m_iBehavIdentification  == -1)
         return RED;
     else  if (m_unIdentification == 5) // a supposedly normal agent that seems to take long to join the aggregate
         return YELLOW;
-    else
+    else*/
         return BLUE;
 }
 
@@ -457,6 +458,14 @@ TBehaviorVector CRobotAgent::GetBehaviors()
 void CRobotAgent::SetMostWantedList(unsigned unFeatureVector, unsigned int state)
 {
     m_pbMostWantedList[unFeatureVector] = state;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+unsigned int* CRobotAgent::GetMostWantedList()
+{
+    return m_pbMostWantedList;
 }
 
 /******************************************************************************/
@@ -570,12 +579,13 @@ void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAg
         {
             if(FeatureVectorsSensed[fv] > 0.0)
             {
-                printf("FV:%d, [APC]:%f, [HN%d]:%f,  [ON%d]:%f (%f)   ",
+                printf("FV:%d, [APC]:%f, [HN%d]:%f,  [ON%d]:Sg%f (%f,%f)   ",
                        fv,
                        model_ctrnninagent->GetAPC(fv),
                        fv,
                        model_ctrnninagent->GetHN(fv),
                        fv,
+                       model_ctrnninagent->Sigmoid(model_ctrnninagent->GetON(fv),model_ctrnninagent->GetSigmoidSaturation()),
                        model_ctrnninagent->GetON(fv),
                        model_ctrnninagent->GetInputsToON(fv));
             }
@@ -584,12 +594,13 @@ void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAg
         // if the evaluating neighbour doesnot have your fv
         if(FeatureVectorsSensed[m_pcFV->GetValue()] == 0.0)
         {
-            printf(",for the evaluated agent's FV that is not in the deciding agent's repertoire: FV:%d, [APC]:%f, [HN%d]:%f, [ON%d]:%f (%f)   ",
+            printf(",for the evaluated agent's FV that is not in the deciding agent's repertoire: FV:%d, [APC]:%f, [HN%d]:%f, [ON%d]:Sg%f (%f,%f)   ",
                    m_pcFV->GetValue(),
                    model_ctrnninagent->GetAPC(m_pcFV->GetValue()),
                    m_pcFV->GetValue(),
                    model_ctrnninagent->GetHN(m_pcFV->GetValue()),
                    m_pcFV->GetValue(),
+                   model_ctrnninagent->Sigmoid(model_ctrnninagent->GetON(m_pcFV->GetValue()),model_ctrnninagent->GetSigmoidSaturation()),
                    model_ctrnninagent->GetON(m_pcFV->GetValue()),
                    model_ctrnninagent->GetInputsToON(m_pcFV->GetValue()));
         }
@@ -601,42 +612,43 @@ void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAg
 
 unsigned int CRobotAgent::Attack(CFeatureVector* pc_feature_vector)
 {
-#if defined(ALTERNATESIXBITFV) && defined(WILDCARDINFV) && (FDMODELTYPE==CRM)
 
-    if(pc_feature_vector->m_iWildCardBit != -1)
-    {
-        CRMinRobotAgent* tmp_crm = GetCRMinRobotAgent(); // Get the CRM of the evaluating robot
+#if defined(WILDCARDINFV) && (FDMODELTYPE==CRM)
 
-        unsigned int fv1, fv2;
-        FVsOfWcFeature(pc_feature_vector, &fv1, &fv2);
-
-        double E  = tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv1] +
-                    tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv2];
-
-        double R = tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv1] +
-                   tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv2];
-
-        printf("\nWC: WCBit=%d, fv1=%u, fv2=%u, E=%f, R=%f", pc_feature_vector->m_iWildCardBit,
-               fv1, fv2, E, R);
-
-        if (((E + R) <= CELLLOWERBOUND) || fabs(E - R) <= CELLLOWERBOUND)
+    if(CFeatureVector::NUMBER_OF_FEATURES == 6 &&
+       pc_feature_vector->m_iWildCardBit != -1)
         {
-            return 0; // Dont know - no T-cells to make decision or E approx. equal to R
-        }
-        else if (E > R)
-        {
-            // Attack
-            return 1;
-        }
-        else if(R > E)
-        {
-            // Tolerate
-            return 2;
-        }
-    }
-    else
-        return m_pbMostWantedList[pc_feature_vector->GetValue()];
+            CRMinRobotAgent* tmp_crm = GetCRMinRobotAgent(); // Get the CRM of the evaluating robot
 
+            unsigned int fv1, fv2;
+            FVsOfWcFeature(pc_feature_vector, &fv1, &fv2);
+
+            double E  = tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv1] +
+                        tmp_crm->m_pfSumEffectorsWeightedbyAffinity[fv2];
+
+            double R = tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv1] +
+                       tmp_crm->m_pfSumRegulatorsWeightedbyAffinity[fv2];
+
+            printf("\nWC: WCBit=%d, fv1=%u, fv2=%u, E=%f, R=%f", pc_feature_vector->m_iWildCardBit,
+                   fv1, fv2, E, R);
+
+            if (((E + R) <= CELLLOWERBOUND) || fabs(E - R) <= CELLLOWERBOUND)
+            {
+                return 0; // Dont know - no T-cells to make decision or E approx. equal to R
+            }
+            else if (E > R)
+            {
+                // Attack
+                return 1;
+            }
+            else if(R > E)
+            {
+                // Tolerate
+                return 2;
+            }
+        }
+        else
+            return m_pbMostWantedList[pc_feature_vector->GetValue()];
 #else
     return m_pbMostWantedList[pc_feature_vector->GetValue()];
 #endif

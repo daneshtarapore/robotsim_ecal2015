@@ -63,6 +63,7 @@ public:
     virtual unsigned int GetSelectedNumNearestNbrs();
 
     virtual void SetMostWantedList(unsigned unFeatureVector, unsigned int state);
+    virtual unsigned int*  GetMostWantedList();
     
     virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged, bool b_logs);
 

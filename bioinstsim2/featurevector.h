@@ -20,10 +20,6 @@ class CTestExperiment;
 /******************************************************************************/
 /******************************************************************************/
 
-#define ALTERNATESIXBITFV
-
-/******************************************************************************/
-/******************************************************************************/
 // the agents with wc in fvs are divided into two (wc on 1 bit), or replicated in both the fvs
 
 //#define WILDCARDINFV 1.0
@@ -66,37 +62,19 @@ protected:
     int*           m_piLastOccuranceEvent;
     int*           m_piLastOccuranceNegEvent;
 
-    float        m_fLowPassFilterParameter;
-    float        m_fThresholdOnNumNbrs;
-    float        m_fProcessedNumNeighbours;
     int          m_iEventSelectionTimeWindow;
 
     double       m_fVelocityThreshold;
+    double       m_fAccelerationThreshold;
+
+    double       m_tAngularVelocityThreshold;
+    double       m_tAngularAccelerationThreshold;
+
+    double       m_fRelativeVelocityMagThreshold;
+    double       m_fRelativeVelocityDirThreshold;
 
 
-#ifdef WILDCARDINFV
 
-    /*
-    unsigned int m_unSenMotIntCurrQueueIndex;
-
-    unsigned int m_unSumTimeSteps_SenMotIntNbrsInRange_at1;
-    unsigned int m_unSumTimeSteps_SenMotIntNbrsInRange_at0;
-    unsigned int m_unSumTimeSteps_SenMotIntNbrsInRange_atWC;
-
-    unsigned int m_unSumTimeSteps_SenMotIntNbrsNotInRange_at1;
-    unsigned int m_unSumTimeSteps_SenMotIntNbrsNotInRange_at0;
-    unsigned int m_unSumTimeSteps_SenMotIntNbrsNotInRange_atWC;
-
-    // for each time-step
-    //1: if motors respond to sensory input; 0: if motors donot respond to sensory input; and WC (2): if no sensory input present
-    unsigned int* m_punSenMotInt_NbrsInRange;
-
-    //1: if motors respond to absence of sensory input; 0: if motors donot respond to absence of sensory input; and WC (2): if sensory input is present
-    unsigned int* m_punSenMotInt_NbrsNotinRange;*/
-
-#endif
-
-#ifdef ALTERNATESIXBITFV
 
     // keeping track of neighbors in last m_iEventSelectionTimeWindow time-steps
     unsigned int m_unNbrsCurrQueueIndex;
@@ -120,7 +98,6 @@ protected:
     TVector2d*       m_pvecCoordAtTimeStep;
 
 
-#endif
 };
 
 /******************************************************************************/

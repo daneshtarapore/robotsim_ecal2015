@@ -141,6 +141,69 @@ double CAgent::GetAngularAcceleration()
 /******************************************************************************/
 /******************************************************************************/
 
+void CAgent::GetRelativeVelocity(double* mag_relvelocity, double* dir_relvelocity, double feature_range)
+{
+    // Velocity magnitude and direction wrt. surrounding agents:
+    TVector2d tTemp    = GetAverageVelocityOfSurroundingAgents(feature_range, ROBOT);
+
+    float tmp_agentvelocity = Vec2dLength(m_tVelocity);
+    (*mag_relvelocity)      = tmp_agentvelocity - Vec2dLength(tTemp);
+    (*dir_relvelocity)      = GetVectorAngle(m_tVelocity, tTemp);
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CAgent::GetRelativeAcceleration(double *mag_relacceleration, double *dir_relacceleration, double feature_range)
+{
+
+    TVector2d tTemp    = GetAverageAccelerationOfSurroundingAgents(feature_range, ROBOT);
+
+    float tmp_agentacceleration      = Vec2dLength(m_tAcceleration);
+    (*mag_relacceleration)           = tmp_agentacceleration - Vec2dLength(tTemp);
+    (*dir_relacceleration) = GetVectorAngle(m_tAcceleration, tTemp);
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CAgent::GetVectorAngle(TVector2d vector1, TVector2d vector2)
+{
+    double vectorangle = 0.0;
+    if (Vec2dLength(vector1) > EPSILON && Vec2dLength(vector2) > EPSILON)
+    {
+        vectorangle = acos(Vec2dCosAngle(vector1,vector2));
+    }
+    else
+    {
+        vectorangle = 0.0;
+    }
+
+    if(std::isnan(vectorangle))
+    {
+        double cosinevalue = Vec2dCosAngle(vector2,vector1);
+
+        if(fabs(cosinevalue - 1.0) < 1.0e-3)
+            vectorangle = 0.0;
+        else if(fabs(cosinevalue - -1.0) < 1.0e-3)
+            vectorangle = M_PI;
+        else
+        {
+            vectorangle = acos(cosinevalue);
+
+            if(std::isnan(vectorangle))
+            {
+                printf("Error in computing acos - getting nan");
+                exit(-1);
+            }
+        }
+    }
+    return vectorangle;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CAgent::SimulationStep(unsigned int un_step_number)
 {
     TVector2d tTemp = m_tVelocity;
@@ -151,57 +214,7 @@ void CAgent::SimulationStep(unsigned int un_step_number)
     m_tAcceleration.x -= tTemp.x;
     m_tAcceleration.y -= tTemp.y;
 
-
-    if (Vec2dLength(tTemp) > EPSILON && Vec2dLength(m_tVelocity) > EPSILON)
-    {
-        //m_tAngularVelocity = acos(Vec2dCosAngle(tTemp,m_tVelocity));
-        m_tAngularVelocity = acos(Vec2dCosAngle(m_tVelocity,tTemp));
-        //double cosineangle   = Vec2dCosAngle(m_tVelocity,tTemp);
-        //m_tAngularVelocity   = acos(cosineangle);
-    }
-    else
-    {
-        m_tAngularVelocity = 0.0;
-    }
-
-    if(std::isnan(m_tAngularVelocity))
-    {
-        printf("\n Vector lengths: %f,%f",Vec2dLength(tTemp),Vec2dLength(m_tVelocity));
-        printf("\n vector1: [%f,%f]",tTemp.x,tTemp.y);
-        printf("\n vector2: [%f,%f]",m_tVelocity.x,m_tVelocity.y);
-
-        double cosinevalue = Vec2dCosAngle(tTemp,m_tVelocity);
-        printf("\n cosinevalue: %e",cosinevalue);
-
-
-        if(fabs(cosinevalue - 1.0) < 1.0e-3)
-            m_tAngularVelocity = 0.0;
-        else if(fabs(cosinevalue - -1.0) < 1.0e-3)
-            m_tAngularVelocity = M_PI;
-        else
-        {
-            m_tAngularVelocity = acos(cosinevalue);
-            printf("\n angle in rad.: %e", m_tAngularVelocity);
-
-            if(std::isnan(m_tAngularVelocity))
-                exit(-1);
-        }
-
-
-        /*if(Vec2dCosAngle(tTemp,m_tVelocity) >= 1.0)
-            m_tAngularVelocity = 0.0;
-        else if(Vec2dCosAngle(tTemp,m_tVelocity) <= -1.0)
-            m_tAngularVelocity = M_PI;
-        else
-        {
-            double angle = acos(cosinevalue);
-            printf("\n angle in rad.: %e",angle);
-            printf("\n angle in rad.: %e",acos(Vec2dCosAngle(m_tVelocity,tTemp)));
-
-            exit(-1);
-        }*/
-    }
-
+    m_tAngularVelocity     = GetVectorAngle(m_tVelocity,tTemp);
     m_tAngularAcceleration = m_tAngularVelocity - tTempAngVelocity;
 }
 
@@ -273,6 +286,14 @@ void CAgent::SetMaximumSpeed(double f_max_speed)
 double CAgent::GetMaximumSpeed() const
 {
     return m_fMaximumSpeed;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CAgent::GetMaximumAngularVelocity() const
+{
+    return M_PI;
 }
 
 /******************************************************************************/

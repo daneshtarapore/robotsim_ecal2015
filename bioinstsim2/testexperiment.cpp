@@ -309,6 +309,13 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
+
+//    if(un_step_number > MODELSTARTTIME)
+//        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
+//        {
+//            printf("\nStepforfv: %d, Agent_id: %d, Agent_fv: %d",un_step_number,m_ppcListAgentsCreated[agentindex]->GetIdentification(),((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetFeatureVector()->GetValue());
+//        }
+
     if(un_step_number == 2500U && m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
     {
         for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
