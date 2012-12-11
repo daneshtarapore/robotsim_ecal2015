@@ -63,6 +63,9 @@ public:
     virtual void SimulationStepUpdatePosition();
 
     static unsigned int GetNumberOfSetBits(unsigned int x);
+    static double Sigmoid(double f_currActv, double f_Saturation);
+
+    virtual double GetSigmoidSaturation();
 
 protected:
 
@@ -70,6 +73,7 @@ protected:
 
     static double NormalizedAffinity(unsigned int v1, unsigned int v2);
     static double NegExpDistAffinity(unsigned int v1, unsigned int v2, double k);
+    double GetAf(unsigned int v1, unsigned int v2);
 
 
     virtual void Derivative(double *hn, double *deltaHN, NNLAYER layer);
@@ -88,6 +92,21 @@ protected:
     // For communication of hidden neuron activation levels between robots
     double m_fTryExchangeProbability; // Probability of trying to exchange cells with other robots
     //double m_fExchangeRange;
+
+    // hidden neurons
+    double         m_fCOMPETITION_FACTOR;
+    double         m_fACTIVATION_FACTOR;
+
+    // output neurons
+    double         m_fOUTPUTGAIN_FACTOR;
+    // PLASTIC BIAS
+    double         m_fINHIBTIONSCALINGFACTOR;
+    double         m_fBIASWEIGHT;
+    double         m_fEXTERNALBIASWEIGHT;
+    double         m_fSIGMOIDSATURATION;
+
+    // or FIXED (NONPLASTIC) BIAS
+    double         m_fOUTPUTNEURONBIAS;
 
 
     double*        m_pfOutputNeurons;
@@ -109,7 +128,7 @@ protected:
 
 
     double*        m_pfAPCs;
-    double**       m_pfAffinities;
+    //double**       m_pfAffinities;
     unsigned int   m_unNumberOfReceptors;
 
 
@@ -126,11 +145,6 @@ protected:
     double          m_folconvergence_error;
     double          m_folpercconvergence_error;
 };
-
-/******************************************************************************/
-/******************************************************************************/
-
-double GetSigmoid(double f_currActv);
 
 /******************************************************************************/
 /******************************************************************************/
