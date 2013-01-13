@@ -310,11 +310,11 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
 
-//    if(un_step_number > MODELSTARTTIME)
-//        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
-//        {
-//            printf("\nStepforfv: %d, Agent_id: %d, Agent_fv: %d",un_step_number,m_ppcListAgentsCreated[agentindex]->GetIdentification(),((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetFeatureVector()->GetValue());
-//        }
+    //    if(un_step_number > MODELSTARTTIME)
+    //        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
+    //        {
+    //            printf("\nStepforfv: %d, Agent_id: %d, Agent_fv: %d",un_step_number,m_ppcListAgentsCreated[agentindex]->GetIdentification(),((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetFeatureVector()->GetValue());
+    //        }
 
     if(un_step_number == 2500U && m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
     {
@@ -356,6 +356,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     }
 
 #ifndef DISABLEMODEL_RETAINRNDCALLS
+
     // detailed log of the responses to abnormal agent
     if (m_pcMisbehaveAgent[0] && un_step_number > MODELSTARTTIME)
     {
@@ -363,41 +364,45 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unAttackers   = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
-        m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);
+        m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);//true
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
+
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
         printf("\nMisbehavingAgentStats: ");
         PrintStatsForAgent(m_pcMisbehaveAgent[0]);
     }
 
-    // detailed log of the responses (minimal log) to a single normal agent being tracked
-    if (m_pcNormalAgentToTrack && un_step_number > MODELSTARTTIME)
+    if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
     {
-        unsigned int unToleraters = 0;
-        unsigned int unAttackers  = 0;
-        unsigned int unNbrsInSensoryRange = 0;
+        // detailed log of the responses (minimal log) to a single normal agent being tracked
+        if (m_pcNormalAgentToTrack && un_step_number > MODELSTARTTIME)
+        {
+            unsigned int unToleraters = 0;
+            unsigned int unAttackers  = 0;
+            unsigned int unNbrsInSensoryRange = 0;
 
-        m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);
-        printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
-        printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
-        printf("\nNormalAgentStats: ");
-        PrintStatsForAgent(m_pcNormalAgentToTrack);
+            m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);
+            printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
+            printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
+            printf("\nNormalAgentStats: ");
+            PrintStatsForAgent(m_pcNormalAgentToTrack);
+        }
+
+        TAgentVector* allagents = this->m_pcSimulator->GetAllAgents();
+        TAgentVectorIterator i = allagents->begin();
+        printf("\nStep: %d, AgentsFeatureVectors: ", un_step_number);
+        while (i != allagents->end())
+        {
+            CRobotAgent* tmp_robotagent  = (CRobotAgent*) (*i);
+            const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
+
+            printf("%d %d   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
+
+            i++;
+        }
     }
 
-
-    TAgentVector* allagents = this->m_pcSimulator->GetAllAgents();
-    TAgentVectorIterator i = allagents->begin();
-    printf("\nStep: %d, AgentsFeatureVectors: ", un_step_number);
-    while (i != allagents->end())
-    {
-        CRobotAgent* tmp_robotagent  = (CRobotAgent*) (*i);
-        const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
-
-        printf("%d %d   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
-
-        i++;
-    }
-    printf("\n\n");
+    printf("\n");
 
 
     // logging the responses (minimal log) to all the agents

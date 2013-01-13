@@ -56,6 +56,9 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
     m_fFVtoApcscaling         = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling", 1.0e-3);
 
 
+    if(FDMODELTYPE == CRM_TCELLSINEXCESS)
+        assert(kon == koff);
+
     if (m_crmArguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
         printf("numberoffeatures=#             Number of features in a single FV [%d]\n"
@@ -88,6 +91,8 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
                m_fFVtoApcscaling);
         bHelpDisplayed = true;
     }
+
+
 
     m_unNumberOfReceptors = 1 << (CFeatureVector::NUMBER_OF_FEATURES);
 
@@ -525,6 +530,27 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
 
 void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
 {
+    if(FDMODELTYPE == CRM_TCELLSINEXCESS)
+    {
+        for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+        {
+            if(m_pfAPCs[apctype])
+            {
+                double tcellsweightedaffinity = 0.0;
+                for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+                    tcellsweightedaffinity += m_pfAffinities[thtype][apctype] * (E[thtype] + R[thtype]);
+
+                // storing all the conjuagtes for APC of subpopulation apctype at the position of the first T-cell clonaltype. will factorize it into effector and regulatory conjuagtes at the Derivative function
+                C[0][apctype] = (m_pfAPCs[apctype]*((double)sites)*tcellsweightedaffinity) /
+                                (tcellsweightedaffinity + 1.0);
+            }
+            else
+                C[0][apctype] = 0.0;
+
+        }
+        return;
+    }
+
     for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
     {
         for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
@@ -823,45 +849,111 @@ void CRMinRobotAgent::ConjugatesQSS(double *E, double *R, double **C)
 
 void CRMinRobotAgent::Derivative(double *E, double *R, double **C, double *deltaE, double *deltaR)
 {
-    // Dividing the conjugates into Effector and Regulator type
-    for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+    if(FDMODELTYPE == CRM)
     {
-        if((E[thtype] + R[thtype]) <= CELLLOWERBOUND)
-        {
-            //TODO: check I think we are doing this initialization to 0, twice. done before in computation of conjugates (ConjugateQSS(...))
-            for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
-            {
-                m_pfEffectorConjugates[thtype][apctype]  =  0.0;
-                m_pfRegulatorConjugates[thtype][apctype] =  0.0;
-            }
-        }
-        else
-        {
-            for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
-            {
-                m_pfEffectorConjugates[thtype][apctype] =
-                            (E[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
-
-                m_pfRegulatorConjugates[thtype][apctype] =
-                            (R[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
-            }
-        }
-    }
-
-    // Computing the total number of effector and regulator conjugates per APC
-    for(unsigned apctype = 0; apctype < m_unNumberOfReceptors; apctype++)
-    {
-        m_pfEffectorConjugatesPerAPC[apctype]  = 0.0;
-        m_pfRegulatorConjugatesPerAPC[apctype] = 0.0;
-
+        // Dividing the conjugates into Effector and Regulator type
         for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
         {
-            m_pfEffectorConjugatesPerAPC[apctype]  += m_pfEffectorConjugates[thtype][apctype];
-            m_pfRegulatorConjugatesPerAPC[apctype] += m_pfRegulatorConjugates[thtype][apctype];
+            if((E[thtype] + R[thtype]) <= CELLLOWERBOUND)
+            {
+                //TODO: check I think we are doing this initialization to 0, twice. done before in computation of conjugates (ConjugateQSS(...))
+                for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+                {
+                    m_pfEffectorConjugates[thtype][apctype]  =  0.0;
+                    m_pfRegulatorConjugates[thtype][apctype] =  0.0;
+                }
+            }
+            else
+            {
+                for(unsigned apctype=0; apctype < m_unNumberOfReceptors; apctype++)
+                {
+                    m_pfEffectorConjugates[thtype][apctype] =
+                                (E[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
+
+                    m_pfRegulatorConjugates[thtype][apctype] =
+                                (R[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
+                }
+            }
         }
 
-        assert((m_pfEffectorConjugatesPerAPC[apctype]+m_pfRegulatorConjugatesPerAPC[apctype]) -
-               m_pfAPCs[apctype]*((double)sites) <= CONJUGATION_OVERFLOW_LIMIT);
+        // Computing the total number of effector and regulator conjugates per APC
+        for(unsigned apctype = 0; apctype < m_unNumberOfReceptors; apctype++)
+        {
+            m_pfEffectorConjugatesPerAPC[apctype]  = 0.0;
+            m_pfRegulatorConjugatesPerAPC[apctype] = 0.0;
+
+            for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+            {
+                m_pfEffectorConjugatesPerAPC[apctype]  += m_pfEffectorConjugates[thtype][apctype];
+                m_pfRegulatorConjugatesPerAPC[apctype] += m_pfRegulatorConjugates[thtype][apctype];
+            }
+
+            assert((m_pfEffectorConjugatesPerAPC[apctype]+m_pfRegulatorConjugatesPerAPC[apctype]) -
+                   m_pfAPCs[apctype]*((double)sites) <= CONJUGATION_OVERFLOW_LIMIT);
+        }
+    }
+    else
+    {
+        //CRM_TCELLSINEXCESS
+        for(unsigned apctype = 0; apctype < m_unNumberOfReceptors; apctype++)
+        {
+            if(m_pfAPCs[apctype] == 0.0)
+            {
+                m_pfEffectorConjugatesPerAPC[apctype] = 0.0;
+                m_pfRegulatorConjugatesPerAPC[apctype] = 0.0;
+
+                for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+                {
+                    m_pfEffectorConjugates[thtype][apctype]  = 0.0;
+                    m_pfRegulatorConjugates[thtype][apctype] = 0.0;
+                }
+            }
+            else
+            {
+                double tcellsweightedaffinity = 0.0, ecellsweightedaffinity = 0.0,
+                rcellsweightedaffinity = 0.0;
+
+                for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+                {
+                    tcellsweightedaffinity += m_pfAffinities[thtype][apctype] * (E[thtype] + R[thtype]);
+                    ecellsweightedaffinity += m_pfAffinities[thtype][apctype] * E[thtype];
+                    rcellsweightedaffinity += m_pfAffinities[thtype][apctype] * R[thtype];
+                }
+
+            // using the conjuagtes for APC of subpopulation apctype that was stored at the position of the first T-cell clonaltype. will factorize it into effector and regulatory conjuagtes at the Derivative function
+                m_pfEffectorConjugatesPerAPC[apctype]  = C[0][apctype] *
+                                                         ecellsweightedaffinity/tcellsweightedaffinity;
+                m_pfRegulatorConjugatesPerAPC[apctype] = C[0][apctype] *
+                                                          rcellsweightedaffinity/tcellsweightedaffinity;
+
+                assert((m_pfEffectorConjugatesPerAPC[apctype]+m_pfRegulatorConjugatesPerAPC[apctype]) -
+                       m_pfAPCs[apctype]*((double)sites) <= CONJUGATION_OVERFLOW_LIMIT);
+
+
+                double totalconjugatesonapc = C[0][apctype];
+                for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+                {
+                    if((E[thtype] + R[thtype]) <= CELLLOWERBOUND)
+                    {
+                        m_pfEffectorConjugates[thtype][apctype]  =  0.0;
+                        m_pfRegulatorConjugates[thtype][apctype] =  0.0;
+                    }
+                    else
+                    {
+                        C[thtype][apctype] = totalconjugatesonapc *
+                                             m_pfAffinities[thtype][apctype] * (E[thtype] + R[thtype]) /
+                                             tcellsweightedaffinity;
+
+
+                        m_pfEffectorConjugates[thtype][apctype] =
+                                (E[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
+
+                        m_pfRegulatorConjugates[thtype][apctype] =
+                                (R[thtype]/(E[thtype] + R[thtype])) * C[thtype][apctype];
+                    }
+                }
+            }
+        }
     }
 
 

@@ -19,11 +19,18 @@ class CTRNNinRobotAgent;
 /******************************************************************************/
 /******************************************************************************/
 
+class LINEQinRobotAgent;
+
+/******************************************************************************/
+/******************************************************************************/
+
+
 #include "common.h"
 #include "agent.h"
 #include "behavior.h"
 #include "crminrobotagent.h"
 #include "ctrnninrobotagent.h"
+#include "lineqinrobotagent.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -52,6 +59,7 @@ public:
 
     virtual CRMinRobotAgent*   GetCRMinRobotAgent();
     virtual CTRNNinRobotAgent* GetCTRNNinRobotAgent();
+    virtual LINEQinRobotAgent* GetLINEQinRobotAgent();
 
     virtual void   SetWeight(double f_weight);
     virtual double GetWeight() const; 
@@ -67,7 +75,7 @@ public:
     
     virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged, bool b_logs);
 
-    virtual void PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAgent* model_crminagent, CTRNNinRobotAgent* model_ctrnninagent, float* FeatureVectorsSensed);
+    virtual void PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAgent* model_crminagent, CTRNNinRobotAgent* model_ctrnninagent, LINEQinRobotAgent* model_lineqinagent, float* FeatureVectorsSensed);
 
     virtual unsigned int Attack(CFeatureVector* pc_feature_vector);
 
@@ -79,6 +87,8 @@ protected:
     TBehaviorVector     m_vecBehaviors;
     CRMinRobotAgent*    crminAgent;
     CTRNNinRobotAgent*  ctrnninAgent;
+    LINEQinRobotAgent*  lineqinAgent;
+
     double              m_fWeight;
     float*              m_pfFeaturesSensed;
     double              m_fBitflipProbabililty;

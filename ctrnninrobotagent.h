@@ -40,7 +40,7 @@ class CRobotAgent;
 class CTRNNinRobotAgent
 {
 public:
-    CTRNNinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmArguments);
+    CTRNNinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_ctrnnArguments);
 
     virtual ~CTRNNinRobotAgent();
 
