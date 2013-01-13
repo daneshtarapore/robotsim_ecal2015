@@ -38,8 +38,8 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_fVelocityThreshold            = 0.05  * (m_pcAgent->GetMaximumSpeed());
     m_fAccelerationThreshold        = 0.05  * (m_pcAgent->GetMaximumSpeed());
 
-    m_tAngularVelocityThreshold     = 0.03  * (m_pcAgent->GetMaximumAngularVelocity());
-    m_tAngularAccelerationThreshold = 0.03  * (m_pcAgent->GetMaximumAngularVelocity());
+    m_tAngularVelocityThreshold     = 0.032  * (m_pcAgent->GetMaximumAngularVelocity());
+    m_tAngularAccelerationThreshold = 0.032  * (m_pcAgent->GetMaximumAngularVelocity());
 
     m_fRelativeVelocityMagThreshold = 0.05 * (m_pcAgent->GetMaximumSpeed());
     m_fRelativeVelocityDirThreshold = 0.05  * (m_pcAgent->GetMaximumAngularVelocity());
@@ -263,14 +263,14 @@ void CFeatureVector::ComputeFeatureValues()
        (angle_acceleration > m_tAngularAccelerationThreshold ||
         angle_acceleration < -m_tAngularAccelerationThreshold))
     {
-        m_piLastOccuranceEvent[0] = CurrentStepNumber;
+        m_piLastOccuranceEvent[2] = CurrentStepNumber;
     }
 
     if(dist_nbrsagents == 6.0 &&
        (angle_acceleration > m_tAngularAccelerationThreshold ||
         angle_acceleration < -m_tAngularAccelerationThreshold))
     {
-        m_piLastOccuranceEvent[1] = CurrentStepNumber;
+        m_piLastOccuranceEvent[3] = CurrentStepNumber;
     }
 
     for(unsigned int featureindex = 2; featureindex <=3; featureindex++)
@@ -359,8 +359,8 @@ void CFeatureVector::ComputeFeatureValues()
     }
 
 
-
-    PrintFeatureDetails();
+    if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
+        PrintFeatureDetails();
 }
 
 /******************************************************************************/

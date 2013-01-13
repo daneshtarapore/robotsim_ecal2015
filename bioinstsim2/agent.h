@@ -4,10 +4,11 @@
 /******************************************************************************/
 /******************************************************************************/
 // FAULT DETECTION MODEL TYPE
-enum faultdetectionmodeltype {CRM, CTRNN};
+enum faultdetectionmodeltype {CRM, CRM_TCELLSINEXCESS, CTRNN, LINEQ};
 
-//#define FDMODELTYPE CRM
-#define FDMODELTYPE CTRNN
+#define FDMODELTYPE CRM_TCELLSINEXCESS
+
+
 /******************************************************************************/
 /******************************************************************************/
 #define MODELSTARTTIME 450
@@ -15,7 +16,7 @@ enum faultdetectionmodeltype {CRM, CTRNN};
 /******************************************************************************/
 /******************************************************************************/
 
-#define DISABLEMODEL_RETAINRNDCALLS
+//#define DISABLEMODEL_RETAINRNDCALLS
 
 /******************************************************************************/
 /******************************************************************************/

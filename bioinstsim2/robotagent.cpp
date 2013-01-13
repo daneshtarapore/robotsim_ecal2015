@@ -12,11 +12,13 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
         (*i)->SetAgent(this);
     }
 
-    crminAgent = NULL; ctrnninAgent = NULL;
-    if(FDMODELTYPE == CRM)
+    crminAgent = NULL; ctrnninAgent = NULL; lineqinAgent = NULL;
+    if(FDMODELTYPE == CRM || FDMODELTYPE == CRM_TCELLSINEXCESS)
         crminAgent          = new CRMinRobotAgent(this, pc_model_arguments);
     else if(FDMODELTYPE == CTRNN)
         ctrnninAgent        = new CTRNNinRobotAgent(this, pc_model_arguments);
+    else if(FDMODELTYPE == LINEQ)
+        lineqinAgent        = new LINEQinRobotAgent(this, pc_model_arguments);
     else {
         printf("\nUnknown model type"); exit(-1);}
 
@@ -93,31 +95,29 @@ void CRobotAgent::SimulationStepUpdatePosition()
         }          
     }
 
-    // Update the T-cells of the CRM instance for this robot
+    // Update the model (T-cells of the CRM instance for this robot), CTRNN neuron activations, lineq on fvs
     m_pcFeatureVector->SimulationStep();
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
 
-
-    //if (m_unIdentification == 1)// && CurrentStepNumber > MODELSTARTTIME)
-    if (m_iBehavIdentification == 1)
+    if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
     {
-        printf("\nStep: %d, FV for normal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
-    }
+        if (m_iBehavIdentification == 1)
+            printf("\nStep: %d, FV for normal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
 
-    //if (m_unIdentification == 15)// && CurrentStepNumber > MODELSTARTTIME)
-    if (m_iBehavIdentification == -1)
-    {
-        printf("\nStep: %d, FV for abnormal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
+        if (m_iBehavIdentification == -1)
+            printf("\nStep: %d, FV for abnormal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
     }
 
     Sense(GetSelectedNumNearestNbrs());
 
     if(CurrentStepNumber > MODELSTARTTIME)
     {
-        if(FDMODELTYPE == CRM)
+        if(FDMODELTYPE == CRM || FDMODELTYPE == CRM_TCELLSINEXCESS)
             crminAgent->SimulationStepUpdatePosition();
-        else
+        else if (FDMODELTYPE == CTRNN)
             ctrnninAgent->SimulationStepUpdatePosition();
+        else
+            lineqinAgent->SimulationStepUpdatePosition();
     }
     CAgent::SimulationStepUpdatePosition();
 }
@@ -312,6 +312,14 @@ CTRNNinRobotAgent* CRobotAgent::GetCTRNNinRobotAgent()
 /******************************************************************************/
 /******************************************************************************/
 
+LINEQinRobotAgent* CRobotAgent::GetLINEQinRobotAgent()
+{
+    return lineqinAgent;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CRobotAgent::SetWeight(double f_weight)
 {
     m_fWeight = f_weight;
@@ -489,6 +497,8 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
         CRobotAgent* pcRobot     = (CRobotAgent*) tSortedAgents[nbrs];
         CRMinRobotAgent*   tmp_crm   = pcRobot->GetCRMinRobotAgent();
         CTRNNinRobotAgent* tmp_ctrnn = pcRobot->GetCTRNNinRobotAgent();
+        LINEQinRobotAgent* tmp_lineq = pcRobot->GetLINEQinRobotAgent();
+
         unsigned int fv_status   = pcRobot->Attack(m_pcFeatureVector);
         if (fv_status == 1)
         {
@@ -500,7 +510,8 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                 float* FeatureVectorsSensed;
                 FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
 
-                PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, FeatureVectorsSensed);
+                PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, tmp_lineq,
+                                          FeatureVectorsSensed);
                 m_battackeragentlog = false;
             }
         }
@@ -513,7 +524,8 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
                 printf("\nA tolerator agent.");
                 float* FeatureVectorsSensed;
                 FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
-                PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, FeatureVectorsSensed);
+                PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, tmp_lineq,
+                                          FeatureVectorsSensed);
                 m_btolerateragentlog = false;
             }
         }
@@ -529,7 +541,8 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
             printf("\nAn agent.");
             float* FeatureVectorsSensed;
             FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
-            PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, FeatureVectorsSensed);
+            PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm, tmp_ctrnn, tmp_lineq,
+                                      FeatureVectorsSensed);
         }
     }
 }
@@ -537,9 +550,9 @@ void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_tolera
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAgent* model_crminagent, CTRNNinRobotAgent* model_ctrnninagent, float* FeatureVectorsSensed)
+void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAgent* model_crminagent, CTRNNinRobotAgent* model_ctrnninagent, LINEQinRobotAgent* model_lineqinagent, float* FeatureVectorsSensed)
 {
-    if(FDMODELTYPE == CRM)
+    if(FDMODELTYPE == CRM || FDMODELTYPE == CRM_TCELLSINEXCESS)
     {
         printf("  Convg. error %f (%fperc)    ",model_crminagent->GetConvergenceError(), model_crminagent->GetConvergenceError_Perc());
         for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
@@ -572,7 +585,7 @@ void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAg
                    model_crminagent->m_pfSumRegulatorsWeightedbyAffinity[m_pcFV->GetValue()]);
         }
     }
-    else //model_ctrnninagent
+    else if(FDMODELTYPE == CTRNN) //model_ctrnninagent
     {
         printf("  HN-Convg.error %f (%f%%)      ON-Convg. error %f (%f%%)    ",model_ctrnninagent->GetConvergenceError(HiddenLayer), model_ctrnninagent->GetConvergenceError_Perc(HiddenLayer),model_ctrnninagent->GetConvergenceError(OutputLayer), model_ctrnninagent->GetConvergenceError_Perc(OutputLayer));
         for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
@@ -605,6 +618,30 @@ void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAg
                    model_ctrnninagent->GetInputsToON(m_pcFV->GetValue()));
         }
     }
+    else
+    {
+        for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
+        {
+            if(FeatureVectorsSensed[fv] > 0.0)
+            {
+                printf("FV:%d, [APC]:%f, [LineqFV%d]:%f   ",
+                       fv,
+                       model_lineqinagent->GetAPC(fv),
+                       fv,
+                       model_lineqinagent->GetLineqFV(fv));
+            }
+        }
+
+        // if the evaluating neighbour doesnot have your fv
+        if(FeatureVectorsSensed[m_pcFV->GetValue()] == 0.0)
+        {
+            printf(",for the evaluated agent's FV that is not in the deciding agent's repertoire: FV:%d, [APC]:%f, [LineqFV%d]:%f   ",
+                   m_pcFV->GetValue(),
+                   model_lineqinagent->GetAPC(m_pcFV->GetValue()),
+                   m_pcFV->GetValue(),
+                   model_lineqinagent->GetLineqFV(m_pcFV->GetValue()));
+        }
+    }
 }
 
 /******************************************************************************/
@@ -613,7 +650,7 @@ void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAg
 unsigned int CRobotAgent::Attack(CFeatureVector* pc_feature_vector)
 {
 
-#if defined(WILDCARDINFV) && (FDMODELTYPE==CRM)
+#if defined(WILDCARDINFV) && (FDMODELTYPE==CRM || FDMODELTYPE==CRM_TCELLSINEXCESS)
 
     if(CFeatureVector::NUMBER_OF_FEATURES == 6 &&
        pc_feature_vector->m_iWildCardBit != -1)
