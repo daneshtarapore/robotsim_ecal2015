@@ -436,7 +436,16 @@ unsigned int CRobotAgent::GetColor()
     else  if (m_unIdentification == 5) // a supposedly normal agent that seems to take long to join the aggregate
         return YELLOW;
     else*/
+
+    #ifdef TCELLCLONEEXCHANGEANALYSIS
+            if(GetIdentification() <= 9) {
+                return GREEN;
+            }
+            else
+                return RED;
+    #else
         return BLUE;
+    #endif
 }
 
 /******************************************************************************/

@@ -119,7 +119,10 @@ void CExperiment::CreateAndAddAgents(CSimulator* pc_simulator)
     {
        
         CAgent* pcAgent = CreateAgent();
-        PlaceAgentRandomly(pcAgent);
+
+        #ifndef TCELLCLONEEXCHANGEANALYSIS
+            PlaceAgentRandomly(pcAgent);
+        #endif
         pc_simulator->AddAgent(pcAgent);
     }
 }
