@@ -206,8 +206,17 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
 
     for (unsigned int i = 0; i < m_unNumberOfReceptors; i++)
     {
+#ifdef TCELLCLONEEXCHANGEANALYSIS
+        if(this->robotAgent->GetIdentification() <= 9) {
+        m_pfEffectors[i]       = currE;
+        m_pfRegulators[i]      = currR;}
+        else {
+            m_pfEffectors[i]       = currE*10.0;
+            m_pfRegulators[i]      = 0.0;}
+#else
         m_pfEffectors[i]       = currE;
         m_pfRegulators[i]      = currR;
+#endif
 
         m_pfAPCs[i]            = 0.0;
         m_pfEffectorConjugatesPerAPC[i]  = 0.0;
@@ -494,7 +503,6 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
     CRobotAgent* pcRemoteRobotAgent = robotAgent->GetRandomRobotWithWeights((unsigned int)((double)robotAgent->GetSelectedNumNearestNbrs()*1.0));
 
 
-
     if (pcRemoteRobotAgent != NULL)
     {
         CRMinRobotAgent* crminRemoteRobotAgent = pcRemoteRobotAgent->GetCRMinRobotAgent();
@@ -520,7 +528,27 @@ void CRMinRobotAgent::SimulationStepUpdatePosition()
 
             }
         }
+
+        printf("\nCommTime: %d, RobotId1: %d, RobotId2: %d\n",
+               CSimulator::GetInstance()->GetSimulationStepNumber(),
+               this->robotAgent->GetIdentification(), pcRemoteRobotAgent->GetIdentification());
     }
+    else
+        printf("\nCommTime: %d, RobotId1: %d, RobotId2: %d\n",
+               CSimulator::GetInstance()->GetSimulationStepNumber(),
+               this->robotAgent->GetIdentification(), -1);
+
+
+    if(this->robotAgent->GetIdentification()==1 || this->robotAgent->GetIdentification()==15) {
+    printf("\nAllTcellClonesTime: %d, RobotId: %d, ",
+           CSimulator::GetInstance()->GetSimulationStepNumber(),
+           this->robotAgent->GetIdentification());
+    for(unsigned thtype=0; thtype < m_unNumberOfReceptors; thtype++)
+    {
+        //if(!(m_pfEffectors[thtype] + m_pfRegulators[thtype] <= CELLLOWERBOUND))
+            printf("Clone: %d, A: %f, E: %f, R: %f ", thtype, m_pfAPCs[thtype], m_pfEffectors[thtype], m_pfRegulators[thtype]);
+    }
+    printf("\n");}
 
     UpdateState();
 }

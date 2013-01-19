@@ -65,9 +65,19 @@ CAgent::CAgent(const char* pch_name, unsigned un_identification, CArguments* pc_
 
     g_unGlobalNumberOfAgentsCreated++;
 
+#ifdef TCELLCLONEEXCHANGEANALYSIS
+    if(un_identification <= 9) {
+        m_tPosition.x = -10.0;
+        m_tPosition.y = -10.0;}
+    else {
+        m_tPosition.x = 10.0;
+        m_tPosition.y = 10.0;}
+#else
     m_tPosition.x = 0.0;
     m_tPosition.y = 0.0;
-    
+#endif
+
+
     m_unIdentification = un_identification;
     m_bInteractable    = false;
     m_unColor          = 0;
