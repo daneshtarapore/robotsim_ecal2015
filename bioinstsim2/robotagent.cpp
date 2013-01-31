@@ -59,7 +59,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     for (unsigned int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
     {
         m_pbMostWantedList[i] = 0;
-    }       
+    }
 }
 
 /******************************************************************************/
@@ -488,7 +488,7 @@ unsigned int* CRobotAgent::GetMostWantedList()
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgent::CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_neighborsinsensoryrange, bool b_logs)
+void CRobotAgent::CheckNeighborsResponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_neighborsinsensoryrange, bool b_logs)
 {
     (*pun_number_of_toleraters)  = 0;
     (*pun_number_of_attackers)   = 0;
@@ -658,7 +658,6 @@ void CRobotAgent::PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAg
 
 unsigned int CRobotAgent::Attack(CFeatureVector* pc_feature_vector)
 {
-
 #if defined(WILDCARDINFV) && (FDMODELTYPE==CRM || FDMODELTYPE==CRM_TCELLSINEXCESS)
 
     if(CFeatureVector::NUMBER_OF_FEATURES == 6 &&

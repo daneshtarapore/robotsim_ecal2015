@@ -73,7 +73,7 @@ public:
     virtual void SetMostWantedList(unsigned unFeatureVector, unsigned int state);
     virtual unsigned int*  GetMostWantedList();
     
-    virtual void CheckNeighborsReponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged, bool b_logs);
+    virtual void CheckNeighborsResponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged, bool b_logs);
 
     virtual void PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRMinRobotAgent* model_crminagent, CTRNNinRobotAgent* model_ctrnninagent, LINEQinRobotAgent* model_lineqinagent, float* FeatureVectorsSensed);
 
@@ -90,9 +90,11 @@ protected:
     LINEQinRobotAgent*  lineqinAgent;
 
     double              m_fWeight;
-    float*              m_pfFeaturesSensed;
     double              m_fBitflipProbabililty;
-    unsigned int*       m_pbMostWantedList;
+
+    float*              m_pfFeaturesSensed; //2^n
+    unsigned int*       m_pbMostWantedList; //2^n
+
     double              m_fResponseRange;
     unsigned int        m_uSelectedNumNearestNbrs;
 
