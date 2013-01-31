@@ -5,7 +5,14 @@
 /******************************************************************************/
 
 #include "experiment.h"
+
 #include "robotagent.h"
+#include "robotagent_optimised.h"
+
+/******************************************************************************/
+/******************************************************************************/
+
+#define OPTIMISEDCRM
 
 /******************************************************************************/
 /******************************************************************************/
@@ -67,8 +74,13 @@ protected:
     unsigned int    m_unNumAbnormalAgents;
     int             m_iSwitchNormalBehavior;
 
+#ifdef OPTIMISEDCRM
+    CRobotAgentOptimised*    m_pcMisbehaveAgent[20];
+    CRobotAgentOptimised*    m_pcNormalAgentToTrack;
+#else
     CRobotAgent*    m_pcMisbehaveAgent[20];
     CRobotAgent*    m_pcNormalAgentToTrack;
+#endif
 
     CAgent**        m_ppcListAgentsCreated;
 

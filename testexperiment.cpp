@@ -1,8 +1,10 @@
 //bioinstsim2 -a sizex=100,sizey=100,resx=50,resy=50,help -e name=TEST,swarmbehav=AGGREGATION,help -T maxspeed=0.1,count=50,fvsenserange=10,featuresenserange=6,bitflipprob=0.0,help -M,numberoffeatures=8,exchangeprob=0.0,cross-affinity=0.4,help -s 111,help -n 10000,help
 
+//!TODO replace the many preprocessor OPTIMISE switches used in typecasting with some smart typedef
+
 #include <vector>
 #include "testexperiment.h"
-#include "robotagent.h"
+
 #include "aggregatebehavior.h"
 #include "dispersebehavior.h"
 #include "flockbehavior.h"
@@ -192,7 +194,24 @@ CAgent* CTestExperiment::CreateAgent()
     vector<CBehavior*> vecBehaviors;
     vecBehaviors = GetAgentBehavior(m_eswarmbehavType, pcPreviousAgent);
 
+#ifdef OPTIMISEDCRM
+    CAgent* pcAgent = new CRobotAgentOptimised("robot", id++, m_pcAgentArguments, m_pcModelArguments, vecBehaviors);
 
+    for(int i = 0; i < m_unNumAbnormalAgents; i++)
+    {
+        if ((id - 1 + i) == m_unAbnormalAgentToTrack)
+        {
+            m_pcMisbehaveAgent[i] = (CRobotAgentOptimised*) pcAgent;
+            pcAgent->SetBehavIdentification(-1); //abnormal agent
+        }
+    }
+
+    if ((id - 1) == m_unNormalAgentToTrack)
+    {
+        m_pcNormalAgentToTrack = (CRobotAgentOptimised*) pcAgent;
+        pcAgent->SetBehavIdentification(1); // normal agent
+    }
+#else
     CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcModelArguments, vecBehaviors);
 
     for(int i = 0; i < m_unNumAbnormalAgents; i++)
@@ -209,6 +228,9 @@ CAgent* CTestExperiment::CreateAgent()
         m_pcNormalAgentToTrack = (CRobotAgent*) pcAgent;
         pcAgent->SetBehavIdentification(1); // normal agent
     }
+#endif
+
+
 
     if(m_eswarmbehavType == HOMING1)
     {
@@ -313,7 +335,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     //    if(un_step_number > MODELSTARTTIME)
     //        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
     //        {
-    //            printf("\nStepforfv: %d, Agent_id: %d, Agent_fv: %d",un_step_number,m_ppcListAgentsCreated[agentindex]->GetIdentification(),((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetFeatureVector()->GetValue());
+    //            printf("\nStepforfv: %d, Agent_id: %d, Agent_fv: %d",un_step_number,m_ppcListAgentsCreated[agentindex]->GetIdentification(),((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetFeatureVector()->GetValue());
     //        }
 
     if(un_step_number == 2500U && m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
@@ -325,7 +347,11 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             //if(m_ppcListAgentsCreated[agentindex]->GetBehavIdentification() != -1) // normal behavior, +1 is assigned ONLY to the logged normal behaving agent. Since only one agent behaves faulty and is assigned -1, a check on NOT -1 can be used to change normal behaving agents
             {
 
+#ifdef OPTIMISEDCRM
+                TBehaviorVector vec_behaviors = ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+#else
                 TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+#endif
                 for (TBehaviorVectorIterator i = vec_behaviors.begin(); i != vec_behaviors.end(); i++)
                 {
                     (*i)->SetAgent(NULL);
@@ -335,10 +361,15 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
 
                 TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+
+#ifdef OPTIMISEDCRM
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+#else
                 ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+#endif
 
                 //TBehaviorVector vec_newbehaviors = GetAgentBehavior(FLOCKING, pcHomeToAgent);
-                //((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+                //((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
             }
         }
     }
@@ -364,7 +395,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unAttackers   = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
-        m_pcMisbehaveAgent[0]->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);//true
+        m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);//true
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
 
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
@@ -381,7 +412,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             unsigned int unAttackers  = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
-            m_pcNormalAgentToTrack->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);
+            m_pcNormalAgentToTrack->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);
             printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
             printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
             printf("\nNormalAgentStats: ");
@@ -393,7 +424,11 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         printf("\nStep: %d, AgentsFeatureVectors: ", un_step_number);
         while (i != allagents->end())
         {
-            CRobotAgent* tmp_robotagent  = (CRobotAgent*) (*i);
+#ifdef OPTIMISEDCRM
+            CRobotAgentOptimised* tmp_robotagent  = (CRobotAgentOptimised*) (*i);
+#else
+            CRobotAgent*          tmp_robotagent  = (CRobotAgent*) (*i);
+#endif
             const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
 
             printf("%d %d   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
@@ -412,14 +447,18 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         TAgentVectorIterator i = allagents->begin();
         while (i != allagents->end())
         {
-            CRobotAgent* tmp_robotagent  = (CRobotAgent*) (*i);
+#ifdef OPTIMISEDCRM
+            CRobotAgentOptimised* tmp_robotagent  = (CRobotAgentOptimised*) (*i);
+#else
+            CRobotAgent*          tmp_robotagent  = (CRobotAgent*) (*i);
+#endif
             const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
 
             unsigned int unToleraters  = 0;
             unsigned int unAttackers   = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
-            tmp_robotagent->CheckNeighborsReponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);
+            tmp_robotagent->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);
             printf("\nResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unNbrsInSensoryRange);
             i++;
         }

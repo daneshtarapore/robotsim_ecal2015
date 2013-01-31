@@ -2,6 +2,9 @@
 
 /******************************************************************************/
 /******************************************************************************/
+// rv. 708 - bioinstsim2 with unoptimized CRM
+/******************************************************************************/
+/******************************************************************************/
 
 #define TCELL_UPPERLIMIT_STEPSIZE 500000.0 //todo: could be set as a propotion of the INTEGRATION_TIME
 #define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
@@ -173,7 +176,7 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
 
 
 
-    m_pfDeltaConjugates_k0 = new double* [m_unNumberOfReceptors];
+    m_pfDeltaConjugates_k0    = new double* [m_unNumberOfReceptors];
     m_pfDeltaConjugates_k0[0] = new double [m_unNumberOfReceptors * m_unNumberOfReceptors];
     for (unsigned int i = 1; i < m_unNumberOfReceptors; ++i)
     {

@@ -167,6 +167,7 @@ protected:
     bool            m_bConvergenceFlag;
     double          m_dconvergence_error;
     double          m_dpercconvergence_error;
+
 };
 
 /******************************************************************************/
