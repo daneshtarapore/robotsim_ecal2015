@@ -268,7 +268,7 @@ CRMinRobotAgentOptimised::~CRMinRobotAgentOptimised()
 /******************************************************************************/
 
 void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
-{
+{    
     if(this->robotAgent->GetIdentification() == 19)
         robotAgent->PrintFeatureVectorDistribution(19);
     // Convert the feature vectors of robot agents in the vicinity to APCs for the CRM to work with
@@ -322,7 +322,11 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
         for(it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
         {
             //todo: GetAPC is a linear operation, making this print stmt O(n^2). We should store a ptr to the apc with hghest affinity
-            printf("Clone: %d, A: %f, E: %f, R: %f ",(*it_tcells).uFV, GetAPC((*it_tcells).uFV), (*it_tcells).fE, (*it_tcells).fR);
+//            printf("Clone: %d, A: %f, E: %f, R: %f ",(*it_tcells).uFV, GetAPC((*it_tcells).uFV), (*it_tcells).fE, (*it_tcells).fR);
+            printf("Clone: %d, A: %f, E: %f, R: %f ",(*it_tcells).uFV,
+                   ((*it_tcells).ptrAPCWithAffinity1)==NULL?
+                   GetAPC((*it_tcells).uFV):((*it_tcells).ptrAPCWithAffinity1)->fAPC,
+                   (*it_tcells).fE, (*it_tcells).fR);
         }
         printf("\n");}
 
@@ -387,7 +391,8 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
         {
             listTcells.insert(it_tcells, structTcell((*it_remotetcells).uFV,
                                                      (*it_remotetcells).fE * m_fTryExchangeProbability,
-                                                     (*it_remotetcells).fR * m_fTryExchangeProbability));
+                                                     (*it_remotetcells).fR * m_fTryExchangeProbability,
+                                                     NULL));
             (*it_remotetcells).fE -= (*it_remotetcells).fE * m_fTryExchangeProbability;
             (*it_remotetcells).fR -= (*it_remotetcells).fR * m_fTryExchangeProbability;
             ++it_remotetcells;
@@ -396,7 +401,8 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
         {
             listRemoteTcells->insert(it_remotetcells, structTcell((*it_tcells).uFV,
                                                       (*it_tcells).fE * m_fTryExchangeProbability,
-                                                      (*it_tcells).fR * m_fTryExchangeProbability));
+                                                      (*it_tcells).fR * m_fTryExchangeProbability,
+                                                      NULL));
             (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
             (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
             ++it_tcells;
@@ -408,7 +414,8 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
         while(it_tcells != listTcells.end()) {
             listRemoteTcells->push_back(structTcell((*it_tcells).uFV,
                                                    (*it_tcells).fE * m_fTryExchangeProbability,
-                                                   (*it_tcells).fR * m_fTryExchangeProbability));
+                                                   (*it_tcells).fR * m_fTryExchangeProbability,
+                                                   NULL));
             (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
             (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
             ++it_tcells; }
@@ -418,7 +425,8 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
     while(it_remotetcells != listRemoteTcells->end()) {
         listTcells.push_back(structTcell((*it_remotetcells).uFV,
                                          (*it_remotetcells).fE * m_fTryExchangeProbability,
-                                         (*it_remotetcells).fR * m_fTryExchangeProbability));
+                                         (*it_remotetcells).fR * m_fTryExchangeProbability,
+                                         NULL));
         (*it_remotetcells).fE -= (*it_remotetcells).fE * m_fTryExchangeProbability;
         (*it_remotetcells).fR -= (*it_remotetcells).fR * m_fTryExchangeProbability;
         ++it_remotetcells; }
@@ -686,7 +694,7 @@ void CRMinRobotAgentOptimised::UpdateConjugatesToTcellList()
     // called when APC sub-populations added or removed
     // and when Tcell clonal types added .not needed to be called when a clonaltype dies since then pointers to conjugates will also be destroyed. in that case only UpdateConjugatetoAPCList() needs to be called.
 
-    // the function is now actually recreating the list. if it only updated the list, we would save on memory reallocations
+    //!TODO the function is now actually recreating the list. if it only updated the list, we would save on memory reallocations
     list<structTcell>::iterator it_tcells; list<structAPC>::iterator it_apcs;
     list<structConj>::iterator it_conjs;
 
@@ -1637,8 +1645,15 @@ void CRMinRobotAgentOptimised::SourceTcells(unsigned hammingdistance)
 
         if(hammingdistance == CFeatureVector::NUMBER_OF_FEATURES)
         {
+            it_apcs = listAPCs.begin();
             for(unsigned int index_tcells = 0; index_tcells < m_unNumberOfReceptors; ++index_tcells)
-                listTcells.push_back(structTcell(index_tcells, currE, currR));
+            {
+                if((*it_apcs).uFV == index_tcells) {
+                    listTcells.push_back(structTcell(index_tcells, currE, currR, &(*it_apcs)));
+                    ++it_apcs;}
+                else
+                    listTcells.push_back(structTcell(index_tcells, currE, currR, NULL));
+            }
 
             return;
         }
@@ -1646,7 +1661,7 @@ void CRMinRobotAgentOptimised::SourceTcells(unsigned hammingdistance)
         if(hammingdistance == 0)
         {
             for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
-                listTcells.push_back(structTcell((*it_apcs).uFV, currE, currR));
+                listTcells.push_back(structTcell((*it_apcs).uFV, currE, currR, &(*it_apcs)));
 
             return;
         }
@@ -1659,21 +1674,25 @@ void CRMinRobotAgentOptimised::SourceTcells(unsigned hammingdistance)
         if((*it_apcs).uFV == (*it_tcells).uFV)
         {
             (*it_tcells).fE += currE; (*it_tcells).fR += currR;
+            if((*it_tcells).ptrAPCWithAffinity1 == NULL)
+                (*it_tcells).ptrAPCWithAffinity1 = &(*it_apcs);
             ++it_tcells; ++it_apcs;
             continue;
         }
 
         if((*it_tcells).uFV > (*it_apcs).uFV)
         {
-            listTcells.insert(it_tcells, structTcell((*it_apcs).uFV, currE, currR));
+            listTcells.insert(it_tcells, structTcell((*it_apcs).uFV, currE, currR, &(*it_apcs)));
             ++it_apcs;
             continue;
         }
+
+        (*it_tcells).ptrAPCWithAffinity1 = NULL; //tcell with no apc having the same fv
         ++it_tcells;
     }
 
     while(it_apcs != listAPCs.end()) {
-        listTcells.push_back(structTcell((*it_apcs).uFV, currE, currR));
+        listTcells.push_back(structTcell((*it_apcs).uFV, currE, currR, &(*it_apcs)));
         ++it_apcs; }
 }
 
