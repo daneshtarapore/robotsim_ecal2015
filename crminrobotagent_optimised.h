@@ -109,6 +109,7 @@ protected:
     virtual void SourceTcells(unsigned int hammingdistance); //unsigned hammingdistance
     virtual void UpdateConjugatesToAPCList();
     virtual void UpdateConjugatesToTcellList();
+    //virtual void RemoveDeadTcellConjugatesFromAPCList();
 
     virtual inline double GetWeight() {return m_fWeight;}
 

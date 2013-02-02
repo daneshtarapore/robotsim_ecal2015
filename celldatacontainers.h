@@ -62,10 +62,11 @@ struct structTcell
 
     // the slopes at time = t and time = t+step
     double  fDeltaE_k0, fDeltaR_k0, fDeltaE_k1, fDeltaR_k1;
+    structAPC*   ptrAPCWithAffinity1; // maintain a pointer to apc with highest affinity - for fast accesss when logging data
 
     list<structConj*> listPtrstoConjugatesofTcell;
 
-    structTcell(unsigned int fv, double seedE, double seedR);
+    structTcell(unsigned int fv, double seedE, double seedR, structAPC* ptrAPC);
 
     double GetE(TcellIntegrationPhase K);
     void   SetE(TcellIntegrationPhase K, double e);
