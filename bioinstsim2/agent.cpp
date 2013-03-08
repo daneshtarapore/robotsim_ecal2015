@@ -433,14 +433,6 @@ double   CAgent::GetSize()
 /******************************************************************************/
 /******************************************************************************/
 
-unsigned int CAgent::GetIdentification() 
-{
-    return m_unIdentification;
-}
-
-/******************************************************************************/
-/******************************************************************************/
-
 void CAgent::SetBehavIdentification(int i_behavidentification)
 {
     m_iBehavIdentification = i_behavidentification;
@@ -770,9 +762,7 @@ void CAgent::SortAllAgentsAccordingToDistance(TAgentVector* pt_result)
         if ((*i) == this)
             (*i)->m_fTempDistance = 0.0;
         else 
-        {
             (*i)->m_fTempDistance = GetDistanceBetweenPositions(&m_tPosition, &((*i)->m_tPosition)); 
-        }
     }
 
     sort(pt_result->begin(), pt_result->end(), CompareDistances);       

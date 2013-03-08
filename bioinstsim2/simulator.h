@@ -49,6 +49,7 @@ public:
     virtual void SimulationStep(unsigned int un_step_number);
 
     virtual unsigned int GetSimulationStepNumber() const;
+    virtual inline unsigned int GetNumberOfCycles() {return m_unNumberOfCycles;}
 
 
 protected:    

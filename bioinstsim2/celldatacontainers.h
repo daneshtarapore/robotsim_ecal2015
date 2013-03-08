@@ -26,6 +26,7 @@ enum TcellIntegrationPhase : unsigned;
 
 struct structConj
 {
+    bool deadconjugate;
     unsigned int utcellFV, uapcFV;
 
     double affinity;
@@ -67,6 +68,7 @@ struct structTcell
     list<structConj*> listPtrstoConjugatesofTcell;
 
     structTcell(unsigned int fv, double seedE, double seedR, structAPC* ptrAPC);
+    ~structTcell();
 
     double GetE(TcellIntegrationPhase K);
     void   SetE(TcellIntegrationPhase K, double e);
@@ -86,10 +88,13 @@ struct structAPC
     unsigned int uFV;
     double       fAPC;
     double       fAvailableSites, fTotalSites;
-    double       fTotalConjugates; // total number of conjugates on apc. used to speed up rescaling of conjugates (upon overflow)
+    double       fTotalConjugates; // total number of conjugates on apc. used to speed up rescaling of conjugates (upon overflow); and in its computation when assuming tcells in excess of apcs sites
 
     double       fEffectorConjugatesPerAPC, fRegulatorConjugatesPerAPC;
     double       fE_weightedbyaffinity, fR_weightedbyaffinity;
+
+    // used in the computation of conjugates when assuming excess of t-cells
+    double       f_tcellsweightedaffinity_tmp, f_ecellsweightedaffinity_tmp, f_rcellsweightedaffinity_tmp;
 
     list<structConj> listConjugatesonAPC;
 //    unsigned int uMostWantedListState;
@@ -98,7 +103,8 @@ struct structAPC
     ~structAPC();
 
     // updates the list of conjugates for a given apc
-    void UpdateConjugateList(list<structTcell>* tcells, double cross_affinity);
+    // returns the number of fp operations
+    unsigned UpdateConjugateList(list<structTcell>* tcells, double cross_affinity);
 };
 
 /******************************************************************************/

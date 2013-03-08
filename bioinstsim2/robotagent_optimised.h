@@ -84,11 +84,18 @@ public:
 
     virtual void CheckNeighborsResponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged, bool b_logs);
 
-    virtual void PrintDecidingAgentDetails(CFeatureVector* m_pcFV,
-                                           CRMinRobotAgentOptimised* model_crminagent);
+    virtual void PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRobotAgentOptimised* decidingrobot);
 
     virtual inline unsigned int Attack(CFeatureVector* pc_feature_vector)
     {return GetMostWantedState(pc_feature_vector->GetValue());}
+
+    virtual inline void IncNumberFloatingPtOperations() {++m_uNumberFloatingPtOperations;}
+    virtual inline void IncNumberFloatingPtOperations(unsigned int count)
+        {for(unsigned int i=0;i<count;++i)
+            IncNumberFloatingPtOperations();}
+
+    virtual inline unsigned long long GetNumberFloatingPtOperations()
+        { return m_uNumberFloatingPtOperations; }
 
 protected:
     virtual double CountWeightsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range);
@@ -112,6 +119,7 @@ protected:
     double              m_fResponseRange;
     unsigned int        m_uSelectedNumNearestNbrs;
 
+    unsigned long long m_uNumberFloatingPtOperations;
 };
 
 /******************************************************************************/

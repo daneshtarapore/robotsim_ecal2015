@@ -6,13 +6,18 @@
 // FAULT DETECTION MODEL TYPE
 enum faultdetectionmodeltype {CRM, CRM_TCELLSINEXCESS, CTRNN, LINEQ};
 
-#define FDMODELTYPE CRM
+#define FDMODELTYPE CRM_TCELLSINEXCESS //CRM
 
 /******************************************************************************/
 /******************************************************************************/
 
 #define MODELSTARTTIME 450
 
+/******************************************************************************/
+/******************************************************************************/
+
+//#define DEBUGFLAG // verbose - prints stmts on cell densities, fvs etc... (currently only implemented for crm optimised model)
+#define FLOATINGPOINTOPERATIONS
 /******************************************************************************/
 /******************************************************************************/
 
@@ -129,7 +134,7 @@ public:
     virtual EAgentType   GetType() = 0;
 //    virtual bool         AcceptConnections() = 0;
     
-    virtual unsigned int GetIdentification();
+    virtual inline unsigned int GetIdentification() {return m_unIdentification;}
 
     virtual void SetBehavIdentification(int i_behavidentification);
     virtual int  GetBehavIdentification();

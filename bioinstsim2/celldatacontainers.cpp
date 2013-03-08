@@ -10,6 +10,7 @@ structConj::structConj(structTcell* tc, structAPC* apc, double cross_affinity)
     affinity = CRMinRobotAgentOptimised::NegExpDistAffinity(utcellFV, uapcFV, cross_affinity);
 
     fConjugates    = 0.0;
+    deadconjugate  = false;
 };
 
 /******************************************************************************/
@@ -63,6 +64,14 @@ structTcell::structTcell(unsigned int fv, double seedE, double seedR, structAPC*
     fE  = seedE;
     fR  = seedR;
     ptrAPCWithAffinity1 = ptrAPC;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+structTcell::~structTcell()
+{
+    listPtrstoConjugatesofTcell.clear();
 }
 
 /******************************************************************************/
@@ -129,26 +138,36 @@ structAPC::structAPC(unsigned int fv, double apc, double sites)
 
 structAPC::~structAPC()
 {
-    if(!listConjugatesonAPC.empty())
-        listConjugatesonAPC.clear();
+    listConjugatesonAPC.clear();
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
 // updates the list of conjugates for a given apc
-void structAPC::UpdateConjugateList(list<structTcell>* tcells, double cross_affinity)
+unsigned structAPC::UpdateConjugateList(list<structTcell>* tcells, double cross_affinity)
 {
-    list<structTcell>::iterator  it_tcells; list<structConj>::iterator  it_conjs;
+    list<structTcell>::iterator it_tcells; list<structConj>::iterator  it_conjs;
     it_tcells = tcells->begin(); it_conjs = listConjugatesonAPC.begin();
+
+    unsigned u_NumFpOperations = 0;
     while(it_conjs != listConjugatesonAPC.end() && it_tcells != tcells->end())
     {
-        if((*it_conjs).utcellFV == (*it_tcells).uFV) {++it_conjs; ++it_tcells; continue;}
+        if((*it_conjs).utcellFV == (*it_tcells).uFV)
+        {   if((*it_conjs).deadconjugate)
+            {
+                (*it_conjs).deadconjugate = false; (*it_conjs).ptrTcell = &(*it_tcells);
+            }
+            ++it_conjs; ++it_tcells; continue;
+        }
 
         if((*it_conjs).utcellFV > (*it_tcells).uFV)
         {
             listConjugatesonAPC.insert(it_conjs, structConj(&(*it_tcells), this, cross_affinity));
             ++it_tcells;
+#ifdef FLOATINGPOINTOPERATIONS
+            u_NumFpOperations += 3;
+#endif
         }
         else
             it_conjs = listConjugatesonAPC.erase(it_conjs);
@@ -157,9 +176,15 @@ void structAPC::UpdateConjugateList(list<structTcell>* tcells, double cross_affi
     while(it_conjs != listConjugatesonAPC.end())
         it_conjs = listConjugatesonAPC.erase(it_conjs);
 
-    while(it_tcells != tcells->end()) {
+    while(it_tcells != tcells->end())
+    {
         listConjugatesonAPC.push_back(structConj(&(*it_tcells), this, cross_affinity));
-        ++it_tcells; }
+        ++it_tcells;
+#ifdef FLOATINGPOINTOPERATIONS
+        u_NumFpOperations += 3;
+#endif
+    }
+    return u_NumFpOperations;
 }
 
 /******************************************************************************/

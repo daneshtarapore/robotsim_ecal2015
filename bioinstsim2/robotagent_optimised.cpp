@@ -8,9 +8,7 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
         CAgent(pch_name, un_identification, pc_arguments), m_vecBehaviors(vec_behaviors)
 {
     for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
-    {
         (*i)->SetAgent(this);
-    }
 
     crminAgent = NULL;
     if(FDMODELTYPE == CRM || FDMODELTYPE == CRM_TCELLSINEXCESS)
@@ -34,8 +32,7 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
     m_uSelectedNumNearestNbrs     = pc_arguments->GetArgumentAsIntOr("selectnumnearestnbrs", 10);
 
 
-    if (pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
-    {
+    if(pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
         printf("fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
                "featuresenserange=#.#         Range based on which features are computed  [%f]\n"
                "responserange=#.#             Range at which a robot \"reponds\" to other features [%f]\n"
@@ -46,7 +43,7 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
                m_fResponseRange,
                m_uSelectedNumNearestNbrs
                );
-    }
+
 
 //    m_pfFeaturesSensed  = new float[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
 //    m_pbMostWantedList = new unsigned int[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
@@ -54,6 +51,8 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
 //    {
 //        m_pbMostWantedList[i] = 0;
 //    }
+
+    m_uNumberFloatingPtOperations = 0;
 }
 
 /******************************************************************************/
@@ -62,9 +61,8 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
 CRobotAgentOptimised::~CRobotAgentOptimised()
 {
     for (TBehaviorVectorIterator i = m_vecBehaviors.begin(); i != m_vecBehaviors.end(); i++)
-    {
         delete (*i);
-    }
+
     delete m_pcFeatureVector;
     listFVsSensed.clear();
 //    delete m_pfFeaturesSensed;
@@ -85,20 +83,21 @@ void CRobotAgentOptimised::SimulationStepUpdatePosition()
             bControlTaken = (*i)->TakeControl();
             if (bControlTaken)
                 (*i)->Action();
-        } else {
-            (*i)->Suppress();
-        }          
+        } else
+            (*i)->Suppress();        
     }
 
     // Update the model (T-cells of the CRM instance for this robot), CTRNN neuron activations, lineq on fvs
     m_pcFeatureVector->SimulationStep();
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
 
+#ifdef DEBUGFLAG
     if (m_iBehavIdentification == 1)
         printf("\nStep: %d, FV for normal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
 
     if (m_iBehavIdentification == -1)
         printf("\nStep: %d, FV for abnormal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
+#endif
 
     Sense(GetSelectedNumNearestNbrs());
 
@@ -125,12 +124,10 @@ CRobotAgentOptimised* CRobotAgentOptimised::GetRandomRobotWithWeights(double f_r
 
     double fWeightSum = CountWeightsInAgentListList(&tAgentListList, f_range);
     if (fWeightSum < 1e-10)
-    {
         return NULL;
-    } 
+
     double fSelectedWeight  = Random::nextDouble() * fWeightSum;
 
-    TAgentList* ptAgentList  = NULL;
     TAgentListListIterator i = tAgentListList.begin();
     CAgent* pcAgentSelected  = NULL;
 
@@ -178,9 +175,7 @@ CRobotAgentOptimised* CRobotAgentOptimised::GetRandomRobotWithWeights(double f_r
     } while (pcAgentSelected == NULL && i != tAgentListList.end());
     
     if (i == tAgentListList.end())
-    {
         ERROR("The random generator seems to be wrong");
-    } 
 
     return (CRobotAgentOptimised*) pcAgentSelected;
 } 
@@ -208,7 +203,6 @@ double CRobotAgentOptimised::CountWeightsInAgentListList(TAgentListList* ptlist_
             } else {
                 (*j)->m_bTempWithInRange = false;
             }
-
         }
     }
 
@@ -233,9 +227,7 @@ CRobotAgentOptimised* CRobotAgentOptimised::GetRandomRobotWithWeights(unsigned i
     }
 
     if (fWeightSum < 1e-10)
-    {        
         return NULL;
-    }
 
     double fSelectedWeight  = Random::nextDouble() * fWeightSum;
 
@@ -284,26 +276,15 @@ double CRobotAgentOptimised::GetFVSenseRange() const
 
 void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
 {
-//    for (int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-//    {
-//        m_pfFeaturesSensed[i] = 0.0;
-//    }
-
     listFVsSensed.clear();
-
     TAgentVector tSortedAgents;
-
     SortAllAgentsAccordingToDistance(&tSortedAgents);
 
     // 1-11 because agent at index 0 is ourselves:
     for (int i = 1; i < u_nearestnbrs+1; i++)
     {
         CRobotAgentOptimised* pcRobot = (CRobotAgentOptimised*) tSortedAgents[i];
-
-        //unsigned int unFeatureVector = pcRobot->GetFeatureVector()->GetValue();
-        //m_pfFeaturesSensed[unFeatureVector] += 1.0;
         UpdateFeatureVectorDistribution(pcRobot->GetFeatureVector()->GetValue(), 1.0);
-
     }
 }
 
@@ -317,12 +298,10 @@ void CRobotAgentOptimised::UpdateFeatureVectorDistribution(unsigned int fv, doub
     // check if fv is in listFVsSensed
     // if so, update the value it holds by increment
     // if not insert it (while keeping list sorted based on fv) and initialize its value by increment
-    //bool bFVisAbsent = true;
     for (it = listFVsSensed.begin(); it != listFVsSensed.end(); ++it)
     {
         if((*it).uFV == fv)
         {
-            //bFVisAbsent = false;
             // if fv is already present
             (*it).fRobots += increment;
             return;
@@ -336,7 +315,6 @@ void CRobotAgentOptimised::UpdateFeatureVectorDistribution(unsigned int fv, doub
         }
     }
 
-    //if(bFVisAbsent)
     // when the list is empty
     listFVsSensed.push_back(structFVsSensed(fv, increment));
 }
@@ -453,7 +431,6 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
     for (unsigned int nbrs = 1; nbrs < m_uSelectedNumNearestNbrs+1; nbrs++)
     {
         CRobotAgentOptimised* pcRobot         = (CRobotAgentOptimised*) tSortedAgents[nbrs];
-        CRMinRobotAgentOptimised* tmp_crm     = pcRobot->GetCRMinRobotAgent();
 
         unsigned int fv_status   = pcRobot->Attack(m_pcFeatureVector);
         if (fv_status == 1)
@@ -466,7 +443,7 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
                 //float* FeatureVectorsSensed;
                 //FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
 
-                PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm);
+                PrintDecidingAgentDetails(m_pcFeatureVector, pcRobot);
                 m_battackeragentlog = false;
             }
         }
@@ -479,7 +456,7 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
                 printf("\nA tolerator agent.");
                 //float* FeatureVectorsSensed;
                 //FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
-                PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm);
+                PrintDecidingAgentDetails(m_pcFeatureVector, pcRobot);
                 m_btolerateragentlog = false;
             }
         }
@@ -487,7 +464,7 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
         //float* FeatureVectorsSensed;
         //FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
 //        if(FeatureVectorsSensed[m_pcFeatureVector->GetValue()] > 0.0)
-        if(fv_status == 3)
+        if(fv_status != 3)
             (*pun_number_of_neighborsinsensoryrange)++;
         // change to if m_pcFeatureVector->GetValue() is a member of (pcRobot->crminAgent->vecAPCs), then increment (*pun_number_of_neighborsinsensoryrange) by 1
 
@@ -498,7 +475,7 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
             printf("\nAn agent.");
             //float* FeatureVectorsSensed;
             //FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
-            PrintDecidingAgentDetails(m_pcFeatureVector, tmp_crm);
+            PrintDecidingAgentDetails(m_pcFeatureVector, pcRobot);
         }
     }
 }
@@ -507,10 +484,15 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
 /******************************************************************************/
 
 void CRobotAgentOptimised::PrintDecidingAgentDetails(CFeatureVector* m_pcFV,
-                                                     CRMinRobotAgentOptimised* model_crminagent)
+                                                     CRobotAgentOptimised* decidingrobot)
 {
-    printf("  Convg. error %f (%fperc)    ",model_crminagent->GetConvergenceError(), model_crminagent->GetConvergenceError_Perc());
+    CRMinRobotAgentOptimised* model_crminagent     = decidingrobot->GetCRMinRobotAgent();
 
+    printf("  Convg. error %f (%fperc)    ",model_crminagent->GetConvergenceError(), model_crminagent->GetConvergenceError_Perc());
+    decidingrobot->PrintFeatureVectorDistribution(decidingrobot->GetIdentification());
+    model_crminagent->PrintAPCList(decidingrobot->GetIdentification());
+    model_crminagent->PrintTcellList(decidingrobot->GetIdentification());
+    model_crminagent->PrintTcellResponseToAPCList(decidingrobot->GetIdentification());
 
 //    for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
 //    {

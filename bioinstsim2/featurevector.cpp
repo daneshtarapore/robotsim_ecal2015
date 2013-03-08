@@ -74,8 +74,6 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
                               (0.05 * (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow));
 
     m_pvecCoordAtTimeStep = new TVector2d[m_iDistTravelledTimeWindow];
-
-
 }
 
 /******************************************************************************/
@@ -119,9 +117,7 @@ unsigned int CFeatureVector::SimulationStep()
     m_unValue = 0;
     
     for (unsigned int i = 0; i < m_unLength; i++)
-    {
-        m_unValue += (unsigned int)m_pfFeatureValues[i] * (1 << i);
-    }
+       m_unValue += (unsigned int)m_pfFeatureValues[i] * (1 << i);
 }
 
 /******************************************************************************/
@@ -141,14 +137,12 @@ void CFeatureVector::ComputeFeatureValues()
 
     m_pcAgent->GetRelativeVelocity(&mag_relvelocity, &dir_relvelocity, FEATURE_RANGE);
 
-
     int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
 
     // Feature (from LS to MS bits in FV)
     // Sensors
     //1st: set if bot has atleast one neighbor in range 0-3 in the majority of of past X time-steps
     //2nd: set if bot has atleast one neighbor in range 3-6 in the majority of of past X time-steps
-
     if(CurrentStepNumber >= m_iEventSelectionTimeWindow)
     {
         // decision based on the last X time-steps
@@ -358,9 +352,10 @@ void CFeatureVector::ComputeFeatureValues()
                                 ? 1.0:0.0;
     }
 
-
+#ifdef DEBUGFLAG
     if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
         PrintFeatureDetails();
+#endif
 }
 
 /******************************************************************************/
