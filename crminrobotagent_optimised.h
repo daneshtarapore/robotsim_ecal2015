@@ -69,7 +69,7 @@ public:
     virtual void ConjugatesQSS(bool bResetConjugates, TcellIntegrationPhase TK); //double* E, double* R, double** C);
     virtual void Derivative(TcellIntegrationPhase TK); //double* E, double* R, double** C, double* deltaE, double* deltaR);
 
-    virtual void ConjugatesQSS_ExcessTcells(TcellIntegrationPhase TK); //double* E, double* R, double** C);
+    virtual void ConjugatesQSS_ExcessTcells(bool bClearDeadConjugates, TcellIntegrationPhase TK); //double* E, double* R, double** C);
     virtual void Derivative_ExcessTcells(TcellIntegrationPhase TK); //double* E, double* R, double** C, double* deltaE, double* deltaR);
     virtual void ComputeNewDerivative(TcellIntegrationPhase TK);
 
@@ -80,9 +80,10 @@ public:
 
     virtual void PrintCRMDetails(unsigned int id);
     virtual void PrintAPCList(unsigned int id);
+    virtual void PrintTcellResponseToAPCList(unsigned int id);
     virtual void PrintTcellList(unsigned int id);
-    virtual void PrintConjugatestoAPCList(unsigned int id);
-    virtual void PrintConjugatestoTcellList(unsigned int id);
+    virtual void PrintConjugatestoAPCList(unsigned int id, ConjugationIntegrationPhase CONJK);
+    virtual void PrintConjugatestoTcellList(unsigned int id, ConjugationIntegrationPhase CONJK);
 
     virtual void TcellNumericalIntegration_RK2();
     virtual void SimulationStepUpdatePosition();
@@ -106,10 +107,10 @@ protected:
     virtual void UpdateState();
 
     virtual void UpdateAPCList(); //Sense()
-    virtual void SourceTcells(unsigned int hammingdistance); //unsigned hammingdistance
+    virtual void UpdateTcellList(unsigned int hammingdistance); //unsigned hammingdistance
     virtual void UpdateConjugatesToAPCList();
     virtual void UpdateConjugatesToTcellList();
-    //virtual void RemoveDeadTcellConjugatesFromAPCList();
+    virtual void MarkConjugatesOfDeadTcell(list<structTcell>::iterator* ptrit_tcells);
 
     virtual inline double GetWeight() {return m_fWeight;}
 

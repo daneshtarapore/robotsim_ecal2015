@@ -331,7 +331,6 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
 
 void CTestExperiment::SimulationStep(unsigned int un_step_number)
 {
-
     //    if(un_step_number > MODELSTARTTIME)
     //        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
     //        {
@@ -343,34 +342,26 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
         {
             // All agents switch behaviors since this was meant to see tolerance to normal behav and its transitions. No abnormal behavs
-
-            //if(m_ppcListAgentsCreated[agentindex]->GetBehavIdentification() != -1) // normal behavior, +1 is assigned ONLY to the logged normal behaving agent. Since only one agent behaves faulty and is assigned -1, a check on NOT -1 can be used to change normal behaving agents
+#ifdef OPTIMISEDCRM
+            TBehaviorVector vec_behaviors = ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+#else
+            TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+#endif
+            for (TBehaviorVectorIterator i = vec_behaviors.begin(); i != vec_behaviors.end(); i++)
             {
-
-#ifdef OPTIMISEDCRM
-                TBehaviorVector vec_behaviors = ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
-#else
-                TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
-#endif
-                for (TBehaviorVectorIterator i = vec_behaviors.begin(); i != vec_behaviors.end(); i++)
-                {
-                    (*i)->SetAgent(NULL);
-                    //vec_behaviors.pop_back(); //Doesnot seem to work, the pop back function. loop hangs
-                }
-                vec_behaviors.clear();
-
-
-                TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
-
-#ifdef OPTIMISEDCRM
-                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
-#else
-                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
-#endif
-
-                //TBehaviorVector vec_newbehaviors = GetAgentBehavior(FLOCKING, pcHomeToAgent);
-                //((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+                (*i)->SetAgent(NULL);
+                //vec_behaviors.pop_back(); //Doesnot seem to work, the pop back function. loop hangs
             }
+            vec_behaviors.clear();
+
+            //TBehaviorVector vec_newbehaviors = GetAgentBehavior(FLOCKING, pcHomeToAgent);
+            TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+
+#ifdef OPTIMISEDCRM
+            ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+#else
+            ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+#endif
         }
     }
 
@@ -395,12 +386,19 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unAttackers   = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
-        m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);//true
+        bool dbgflag;
+#if defined(DEBUGGLAG)
+        dbgflag = true;
+#else
+        dbgflag = false;
+#endif
+
+        m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);//true
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
 
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
-        printf("\nMisbehavingAgentStats: ");
-        PrintStatsForAgent(m_pcMisbehaveAgent[0]);
+        //printf("\nMisbehavingAgentStats: ");
+        //PrintStatsForAgent(m_pcMisbehaveAgent[0]);
     }
 
     if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
@@ -412,11 +410,18 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             unsigned int unAttackers  = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
-            m_pcNormalAgentToTrack->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, true);
+            bool dbgflag;
+#if defined(DEBUGGLAG)
+            dbgflag = true;
+#else
+            dbgflag = false;
+#endif
+
+            m_pcNormalAgentToTrack->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
             printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
             printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
-            printf("\nNormalAgentStats: ");
-            PrintStatsForAgent(m_pcNormalAgentToTrack);
+            //printf("\nNormalAgentStats: ");
+            //PrintStatsForAgent(m_pcNormalAgentToTrack);
         }
 
         TAgentVector* allagents = this->m_pcSimulator->GetAllAgents();
@@ -430,13 +435,10 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             CRobotAgent*          tmp_robotagent  = (CRobotAgent*) (*i);
 #endif
             const CFeatureVector* tmp_fv = tmp_robotagent->GetFeatureVector();
-
             printf("%d %d   ",tmp_robotagent->GetIdentification(), tmp_fv->GetValue());
-
             i++;
         }
     }
-
     printf("\n");
 
 
@@ -464,8 +466,27 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         }
         printf("\n");
     }
-
 #endif //DISABLEMODEL_RETAINRNDCALLS
+
+#ifdef FLOATINGPOINTOPERATIONS
+    if(un_step_number + 1 == CSimulator::GetInstance()->GetNumberOfCycles())
+    {
+        TAgentVector* allagents = m_pcSimulator->GetAllAgents();
+        TAgentVectorIterator i = allagents->begin();
+        printf("\n\nTimeLogFpOp: %u\t", un_step_number);
+        while (i != allagents->end())
+        {
+    #ifdef OPTIMISEDCRM
+            CRobotAgentOptimised* tmp_robotagent  = (CRobotAgentOptimised*) (*i);
+    #else
+            CRobotAgent*          tmp_robotagent  = (CRobotAgent*) (*i);
+    #endif
+            printf("%llu  ",tmp_robotagent->GetNumberFloatingPtOperations());
+            i++;
+        }
+        printf("\n");
+    }
+#endif
 }
 
 /******************************************************************************/
