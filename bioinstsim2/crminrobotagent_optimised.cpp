@@ -379,24 +379,37 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
         {
             (*it_tcells).fE_Hu = (*it_tcells).fE + 0.5 * step_h * ((*it_tcells).fDeltaE_k0 +
                                                                    (*it_tcells).fDeltaE_k1);
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(4);
+#endif
+
             if((*it_tcells).fE_Hu < 0.0)
                 (*it_tcells).fE_Hu = 0.0;
-            else
-                if(fabs((*it_tcells).fE_Hu - (*it_tcells).fE_Eu) > absDiffHuenEuler)
-                    absDiffHuenEuler = fabs((*it_tcells).fE_Hu - (*it_tcells).fE_Eu);
+            else {
+                double tmp_absdiff = fabs((*it_tcells).fE_Hu - (*it_tcells).fE_Eu);
+#ifdef FLOATINGPOINTOPERATIONS
+                robotAgent->IncNumberFloatingPtOperations(2);
+#endif
+                if(tmp_absdiff > absDiffHuenEuler)
+                    absDiffHuenEuler = tmp_absdiff;
+            }
 
             (*it_tcells).fR_Hu = (*it_tcells).fR + 0.5 * step_h * ((*it_tcells).fDeltaR_k0 +
                                                                    (*it_tcells).fDeltaR_k1);
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(4);
+#endif
 
             if((*it_tcells).fR_Hu < 0.0)
                 (*it_tcells).fR_Hu = 0.0;
-            else
-                if(fabs((*it_tcells).fR_Hu - (*it_tcells).fR_Eu) > absDiffHuenEuler)
-                    absDiffHuenEuler = fabs((*it_tcells).fR_Hu - (*it_tcells).fR_Eu);
-
+            else {
+                double tmp_absdiff = fabs((*it_tcells).fR_Hu - (*it_tcells).fR_Eu);
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(12);
+                robotAgent->IncNumberFloatingPtOperations(2);
 #endif
+                if(tmp_absdiff > absDiffHuenEuler)
+                    absDiffHuenEuler = tmp_absdiff;
+            }
         }
 
         if(absDiffHuenEuler == 0.0)
@@ -439,26 +452,49 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
         {
             (*it_tcells).fE_prev = (*it_tcells).fE; (*it_tcells).fR_prev = (*it_tcells).fR;
 
-            (*it_tcells).fE += step_h * (*it_tcells).fDeltaE_k0;
+            double tmp_incr = step_h * (*it_tcells).fDeltaE_k0;
+            (*it_tcells).fE += tmp_incr;
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(2);
+#endif
+
             if((*it_tcells).fE < 0.0)
                 (*it_tcells).fE = 0.0;
-            else
-                if(fabs(step_h * (*it_tcells).fDeltaE_k0) > convergence_errormax)
-                {
-                    convergence_errormax      = fabs(step_h * (*it_tcells).fDeltaE_k0);
+            else  {
+                double tmp_absincr = fabs(tmp_incr);
+#ifdef FLOATINGPOINTOPERATIONS
+                robotAgent->IncNumberFloatingPtOperations(1);
+#endif
+                if(tmp_absincr > convergence_errormax) {
+                    convergence_errormax      = tmp_absincr;
                     perc_convergence_errormax = (convergence_errormax / (*it_tcells).fE_prev) * 100.0;
+#ifdef FLOATINGPOINTOPERATIONS
+                    robotAgent->IncNumberFloatingPtOperations(2);
+#endif
                 }
+            }
 
-            (*it_tcells).fR += step_h * (*it_tcells).fDeltaR_k0;
+            tmp_incr = step_h * (*it_tcells).fDeltaR_k0;
+            (*it_tcells).fR += tmp_incr;
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(2);
+#endif
+
             if((*it_tcells).fR < 0.0)
                 (*it_tcells).fR = 0.0;
-            else            
-                if(fabs(step_h * (*it_tcells).fDeltaR_k0) > convergence_errormax)
-                {
-                    convergence_errormax      = fabs(step_h * (*it_tcells).fDeltaR_k0);
+            else {
+                double tmp_absincr = fabs(tmp_incr);
+#ifdef FLOATINGPOINTOPERATIONS
+                robotAgent->IncNumberFloatingPtOperations(1);
+#endif
+                if(tmp_absincr > convergence_errormax) {
+                    convergence_errormax      = tmp_absincr;
                     perc_convergence_errormax = (convergence_errormax / (*it_tcells).fR_prev) * 100.0;
+#ifdef FLOATINGPOINTOPERATIONS
+                    robotAgent->IncNumberFloatingPtOperations(2);
+#endif
                 }
-
+            }
 
             if(((*it_tcells).fE + (*it_tcells).fR) <= CELLLOWERBOUND)
             {
@@ -468,7 +504,7 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
                 it_tcells = listTcells.erase(it_tcells);
             }
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(13);
+            robotAgent->IncNumberFloatingPtOperations(1);
 #endif
         }
 
@@ -644,7 +680,7 @@ void CRMinRobotAgentOptimised::ConjugatesQSS(bool bResetConjugates, TcellIntegra
                     absDiffHuenEuler = tmp_absDiffHuenEuler;
 
 #ifdef FLOATINGPOINTOPERATIONS
-                robotAgent->IncNumberFloatingPtOperations(1);
+                robotAgent->IncNumberFloatingPtOperations(2);
 #endif
             }
 
@@ -681,8 +717,7 @@ void CRMinRobotAgentOptimised::ConjugatesQSS(bool bResetConjugates, TcellIntegra
         assert(absDiffHuenEuler >= 0.0);
 
         if(conjintegration_t > REDUCESTEPSIZE_CONJ_INTEGRATION_TIME &&
-           ERRORALLOWED_CONJ_STEPSIZE >= 1.0e-3)
-        {
+           ERRORALLOWED_CONJ_STEPSIZE >= 1.0e-3) {
             /*The system is most likely stiff and oscillating around the "true" value, as the slope approaches 0*/
             /*we reduce the step size to reduce the difference between the oscillating values*/
 
@@ -697,8 +732,7 @@ void CRMinRobotAgentOptimised::ConjugatesQSS(bool bResetConjugates, TcellIntegra
             robotAgent->IncNumberFloatingPtOperations(1);
 #endif
         }
-        else
-        {
+        else {
             conjstep_h *= sqrt(ERRORALLOWED_CONJ_STEPSIZE/absDiffHuenEuler);
             if(conjstep_h > CONJ_UPPERLIMIT_STEPSIZE)
                 conjstep_h = CONJ_UPPERLIMIT_STEPSIZE;
@@ -717,18 +751,26 @@ void CRMinRobotAgentOptimised::ConjugatesQSS(bool bResetConjugates, TcellIntegra
             for(it_conjs =  (*it_apcs).listConjugatesonAPC.begin();
                 it_conjs != (*it_apcs).listConjugatesonAPC.end(); ++it_conjs)
             {
-                (*it_conjs).fConjugates = (*it_conjs).fConjugates +
-                                           conjstep_h * (*it_conjs).fDelta_k0;
+                double tmp_incr = conjstep_h * (*it_conjs).fDelta_k0;
+                (*it_conjs).fConjugates += tmp_incr ;
+#ifdef FLOATINGPOINTOPERATIONS
+                robotAgent->IncNumberFloatingPtOperations(2);
+#endif
 
                 if((*it_conjs).fConjugates < 0.0)
                     (*it_conjs).fConjugates = 0.0;
-                else
-                    if(fabs(conjstep_h * (*it_conjs).fDelta_k0) > error_max)
-                        error_max = fabs(conjstep_h * (*it_conjs).fDelta_k0);
+                else {
+                    double tmp_absincr = fabs(tmp_incr);
+#ifdef FLOATINGPOINTOPERATIONS
+                    robotAgent->IncNumberFloatingPtOperations(1);
+#endif
+                    if(tmp_absincr > error_max)
+                        error_max = tmp_absincr;
+                }
 
                 (*it_apcs).fTotalConjugates += (*it_conjs).fConjugates;
 #ifdef FLOATINGPOINTOPERATIONS
-                robotAgent->IncNumberFloatingPtOperations(5);
+                robotAgent->IncNumberFloatingPtOperations(1);
 #endif
             }
         }
@@ -765,8 +807,7 @@ void CRMinRobotAgentOptimised::ConjugatesQSS_ExcessTcells(bool bClearDeadConjuga
        for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
        {
             (*it_apcs).f_tcellsweightedaffinity_tmp = 0.0;
-            (*it_apcs).f_ecellsweightedaffinity_tmp = 0.0;
-            (*it_apcs).f_rcellsweightedaffinity_tmp = 0.0;
+            (*it_apcs).f_ecellsweightedaffinity_tmp = 0.0; (*it_apcs).f_rcellsweightedaffinity_tmp = 0.0;
             it_conj = (*it_apcs).listConjugatesonAPC.begin();
             while(it_conj != (*it_apcs).listConjugatesonAPC.end())
             {
@@ -855,14 +896,11 @@ void CRMinRobotAgentOptimised::Derivative_ExcessTcells(TcellIntegrationPhase TK)
     list<structAPC>::iterator  it_apcs; list<structConj>::iterator it_conj;
     for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
     {
-        (*it_apcs).fEffectorConjugatesPerAPC = (*it_apcs).fTotalConjugates *
-                                               (*it_apcs).f_ecellsweightedaffinity_tmp/
-                                               (*it_apcs).f_tcellsweightedaffinity_tmp;
-        (*it_apcs).fRegulatorConjugatesPerAPC = (*it_apcs).fTotalConjugates *
-                                                (*it_apcs).f_rcellsweightedaffinity_tmp/
-                                                (*it_apcs).f_tcellsweightedaffinity_tmp;
+        double tmp_ratio = (*it_apcs).fTotalConjugates / (*it_apcs).f_tcellsweightedaffinity_tmp;
+        (*it_apcs).fEffectorConjugatesPerAPC  = tmp_ratio * (*it_apcs).f_ecellsweightedaffinity_tmp;
+        (*it_apcs).fRegulatorConjugatesPerAPC = tmp_ratio * (*it_apcs).f_rcellsweightedaffinity_tmp;
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(4);
+        robotAgent->IncNumberFloatingPtOperations(3);
 #endif
 
         assert((*it_apcs).fEffectorConjugatesPerAPC +
@@ -877,22 +915,21 @@ void CRMinRobotAgentOptimised::Derivative_ExcessTcells(TcellIntegrationPhase TK)
             robotAgent->IncNumberFloatingPtOperations(1);
 #endif
 
-            if(totaltcellcount <= CELLLOWERBOUND)
-            {
+            if(totaltcellcount <= CELLLOWERBOUND) {
                 (*it_conj).fEffectorConjugates  = 0.0; (*it_conj).fRegulatorConjugates = 0.0;
                 (*it_conj).fConjugates          = 0.0;
             }
-            else
-            {
-                (*it_conj).fConjugates = (*it_apcs).fTotalConjugates * (*it_conj).affinity *
-                                         totaltcellcount/(*it_apcs).f_tcellsweightedaffinity_tmp;
+            else {
+                //(*it_conj).fConjugates = (*it_apcs).fTotalConjugates * (*it_conj).affinity *
+                //                          totaltcellcount/(*it_apcs).f_tcellsweightedaffinity_tmp;
+                (*it_conj).fConjugates = tmp_ratio * (*it_conj).affinity * totaltcellcount;
 
                 (*it_conj).fEffectorConjugates  = ((*it_conj).ptrTcell->GetE(TK)/totaltcellcount) *
                                                   (*it_conj).fConjugates;
                 (*it_conj).fRegulatorConjugates = ((*it_conj).ptrTcell->GetR(TK)/totaltcellcount) *
                                                   (*it_conj).fConjugates;
 #ifdef FLOATINGPOINTOPERATIONS
-                robotAgent->IncNumberFloatingPtOperations(7);
+                robotAgent->IncNumberFloatingPtOperations(6);
 #endif
             }
             ++it_conj;
@@ -961,8 +998,7 @@ void CRMinRobotAgentOptimised::FreeTcellsAndAvailableAPCSites(TcellIntegrationPh
         it_conj = (*it_apcs).listConjugatesonAPC.begin();
         while(it_conj != (*it_apcs).listConjugatesonAPC.end())
         {
-            if((*it_conj).deadconjugate)
-            {
+            if((*it_conj).deadconjugate) {
                 it_conj = (*it_apcs).listConjugatesonAPC.erase(it_conj); continue;
             }
 
