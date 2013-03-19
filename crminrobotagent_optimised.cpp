@@ -251,7 +251,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
             // the serial (instead of simultaneous) execution of the numerical integration and diffusion causes dead clones to be passed to and fro between robots after the numerical intgration has completed.
             // this causes an unnecessary computation burden. we prevent this by checking for dead clonaltypes before receiving them (no needed on actual robot implementation)
             if((*it_remotetcells).fE +(*it_remotetcells).fR <= CELLLOWERBOUND)
-                {++it_remotetcells; continue;}
+                {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
 
             listTcells.insert(it_tcells, structTcell((*it_remotetcells).uFV,
                                                      (*it_remotetcells).fE * m_fTryExchangeProbability,
@@ -293,8 +293,8 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
     }
 
     while(it_remotetcells != listRemoteTcells->end()) {
-        if((*it_remotetcells).fE +(*it_remotetcells).fR <= CELLLOWERBOUND)
-            {++it_remotetcells; continue;}
+        if((*it_remotetcells).fE + (*it_remotetcells).fR <= CELLLOWERBOUND)
+            {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
 
         listTcells.push_back(structTcell((*it_remotetcells).uFV,
                                          (*it_remotetcells).fE * m_fTryExchangeProbability,
@@ -1175,9 +1175,13 @@ void CRMinRobotAgentOptimised::UpdateState()
         (*it_apcs).fE_weightedbyaffinity = tmp_E;
         (*it_apcs).fR_weightedbyaffinity = tmp_R;
 
-        if ((tmp_E + tmp_R) <= CELLLOWERBOUND || fabs(tmp_E - tmp_R) <= CELLLOWERBOUND)
+        if ((tmp_E + tmp_R) <= CELLLOWERBOUND || fabs(tmp_E - tmp_R) <= CELLLOWERBOUND) {
             //Dont know - no T-cells to make decision or E approx. equal to R
             robotAgent->SetMostWantedList(&it_fvsensed, 0);
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(3);
+#endif
+        }
 
         else if (tmp_E > tmp_R)
             // Attack
@@ -1188,9 +1192,6 @@ void CRMinRobotAgentOptimised::UpdateState()
             robotAgent->SetMostWantedList(&it_fvsensed, 2);
 
          ++it_apcs; ++it_fvsensed;
-#ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(2);
-#endif
     }
 }
 
@@ -1229,7 +1230,7 @@ void CRMinRobotAgentOptimised::UpdateAPCList()
             ++it_fvsensed;
 
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(2); // also multp of apcs*sites in structAPC
+            robotAgent->IncNumberFloatingPtOperations(2); // also a multiplication of apcs*sites in constructor of structAPC
 #endif
             continue;
         }
@@ -1245,7 +1246,7 @@ void CRMinRobotAgentOptimised::UpdateAPCList()
         listAPCs.push_back(structAPC((*it_fvsensed).uFV,
                                      (*it_fvsensed).fRobots * m_fFVtoApcscaling, (double)sites));
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(2); // also multp of apcs*sites in structAPC
+            robotAgent->IncNumberFloatingPtOperations(2);  // also a multiplication of apcs*sites in constructor of structAPC
 #endif
         ++it_fvsensed; }
 }
@@ -1312,13 +1313,13 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
         }
 
         //check if tcell clonaltype is dead - an infusion of an already low number of t cells after calling the Diffusion function
-        if(((*it_tcells).fE + (*it_tcells).fR) <= CELLLOWERBOUND)
-        {
+        double tmp_totalcellcount = (*it_tcells).fE + (*it_tcells).fR;
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(1);
+#endif
+        if(tmp_totalcellcount <= CELLLOWERBOUND) {
             (*it_tcells).listPtrstoConjugatesofTcell.clear();
             it_tcells = listTcells.erase(it_tcells);
-#ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(1);
-#endif
             continue;
         }
 
@@ -1328,12 +1329,12 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
 
     while(it_tcells != listTcells.end())
     {
-        if(((*it_tcells).fE + (*it_tcells).fR) <= CELLLOWERBOUND)
-        {
-            (*it_tcells).listPtrstoConjugatesofTcell.clear(); it_tcells = listTcells.erase(it_tcells);
+        double tmp_totalcellcount = (*it_tcells).fE + (*it_tcells).fR;
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(1);
+        robotAgent->IncNumberFloatingPtOperations(1);
 #endif
+        if(tmp_totalcellcount <= CELLLOWERBOUND) {
+            (*it_tcells).listPtrstoConjugatesofTcell.clear(); it_tcells = listTcells.erase(it_tcells);
             continue;
         }
         ++it_tcells;
