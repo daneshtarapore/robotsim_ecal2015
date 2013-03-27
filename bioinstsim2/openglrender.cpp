@@ -201,6 +201,10 @@ void COpenGLRender::StartGraphics()
         
     int frame = 1;        
     gc = XCreateGC(display, win, 0,0);
+
+#ifdef WITHSBOTTRACE
+    m_pcSbotTrace = new CSbotTrace();
+#endif
 }
 
 /******************************************************************************/
@@ -214,6 +218,11 @@ void COpenGLRender::StopGraphics()
     display = 0;
     win = 0;
     glx_context = 0;
+
+#ifdef WITHSBOTTRACE
+    m_pcSbotTrace->Save("sbottrace.xml");
+#endif // WITHSBOTTRACE
+
 }
 
 
@@ -228,12 +237,14 @@ void COpenGLRender::SimulationStep(unsigned int un_step_number)
         XNextEvent (display,&event);
         HandleEvent (event);
     }
-    
 
     m_fCurrentFrame -= 1;
 
     while (m_fCurrentFrame <= 0)
     {    
+#ifdef WITHSBOTTRACE
+        m_pcSbotTrace->StartNewFrame(un_step_number);
+#endif // WITHSBOTTRACE
         DrawFrame();
 
         if (m_bOutputStatistics)
@@ -340,6 +351,9 @@ void COpenGLRender::HandleEvent (XEvent &event)
                 break;
             case 'x': case 'X':
                 CSimulator::GetInstance()->EndSimulation();
+#ifdef WITHSBOTTRACE
+                m_pcSbotTrace->Save("sbottrace.xml");
+#endif // WITHSBOTTRACE
                 break;
             case 'p': case 'P':
 //                pause ^= 1;
@@ -550,7 +564,6 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent, unsigned int un_agent_number)
         double fCenterX = 2.0 * ptPosition->x / fArenaSizeX;
         double fCenterY = 2.0 * ptPosition->y / fArenaSizeY;
 
-
         glColor3f(0.005, 0.005, 0.005);
         DrawSolidCircle(fCenterX + 0.005, fCenterY - 0.005, CAgent::RADIUS/10.0 * .6); //0.02
 
@@ -561,14 +574,23 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent, unsigned int un_agent_number)
             unsigned int unStep = CSimulator::GetInstance()->GetSimulationStepNumber();
             if (m_ppunColors[unStep][un_agent_number] == NEUTRAL)
             {
+                tColor.fRed   = 1.0;
+                tColor.fGreen = 1.0;
+                tColor.fBlue  = 1.0;
                 glColor3f(1.0, 1.0, 1.0);
             } 
             else if (m_ppunColors[unStep][un_agent_number] == ATTACKED)
             {
+                tColor.fRed   = 1.0;
+                tColor.fGreen = 0.0;
+                tColor.fBlue  = 0.0;
                 glColor3f(1.0, 0.0, 0.0);
             }
             else if (m_ppunColors[unStep][un_agent_number] == TOLERATED)
             {
+                tColor.fRed   = 0.0;
+                tColor.fGreen = 1.0;
+                tColor.fBlue  = 0.0;
                 glColor3f(0.0, 1.0, 0.0);
             }
         } else {
@@ -582,6 +604,37 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent, unsigned int un_agent_number)
         DrawSolidCircle(fCenterX + vDot.x, fCenterY + vDot.y, 0.0131 * .6); //0.007
 
         glEnd();
+
+#ifdef WITHSBOTTRACE
+        char pchTemp[128];
+        sprintf(pchTemp, "%x", pc_agent);
+
+        TSbotStateDescription* ptState = m_pcSbotTrace->GetNewEmptySbotStateDescription(pchTemp);
+        
+        ptState->fPositionX = ptPosition->x;
+        ptState->fPositionY = ptPosition->y;
+        ptState->fPositionZ = 0;
+        
+        ptState->fRotationX      = 0;
+        ptState->fRotationY      = 0;
+        ptState->fRotationZ      = Vec2dOwnAngle((*pc_agent->GetVelocity()));
+        ptState->fTurretRotation = Vec2dOwnAngle((*pc_agent->GetVelocity()));
+        
+        for (int i = 0; i < 8; i++)
+        {
+            ptState->pchLedsRGB[i][0] = (tColor.fRed * 255.0);
+            ptState->pchLedsRGB[i][1] = (tColor.fGreen * 255.0);
+            ptState->pchLedsRGB[i][2] = (tColor.fBlue * 255.0);
+
+        }
+
+        ptState->unGripperAperture = 0;
+        double fLeft, fRight;
+        
+        m_pcSbotTrace->AddSbotStateDescription(ptState);  
+#endif //WITHSBOTTRACE
+
+
     }
 
     else if (pc_agent->GetType() == LIGHT) {

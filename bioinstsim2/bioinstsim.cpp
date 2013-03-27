@@ -106,6 +106,8 @@ void CBioInstSim::Run()
     }
 
     m_pcSimulator->Run();
+
+    delete m_pcSimulator;
 }
 
 /******************************************************************************/

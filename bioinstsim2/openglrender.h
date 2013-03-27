@@ -17,6 +17,9 @@
 #include <X11/keysym.h>
 #include <GL/glx.h>
 
+#ifdef WITHSBOTTRACE
+#include "sbottrace.h" 
+#endif
 
 /******************************************************************************/
 /******************************************************************************/
@@ -74,6 +77,10 @@ protected:
 
     bool            m_bSetAgentColorsFromFile;
     unsigned int**  m_ppunColors;
+
+#ifdef WITHSBOTTRACE
+    CSbotTrace*     m_pcSbotTrace;
+#endif
 };
 
 /******************************************************************************/
