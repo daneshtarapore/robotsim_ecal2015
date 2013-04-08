@@ -13,7 +13,7 @@
 #define ERRORALLOWED_CONJ_STEPSIZE  1.0e-3 //todo: set as percentage instead of absolute value; else will introduce problems when m_fFVtoApcscaling is reduced, and dealing with density of conjugates in order of 1e-6
 
 
-#define INTEGRATION_TIME  5.0e+7 // was 1.5e+7 on elephant01a  earlier 1.0e+7
+//#define INTEGRATION_TIME  5.0e+7 // was 1.5e+7 on elephant01a  earlier 1.0e+7
 #define FAILSAFE_CONJ_INTEGRATION_TIME  5.0e+5 // a failsafe to prevent endless integrations of a stiff system.
 //TODO: Could instead use the differences in the error values (between time-steps), being same over a period of time as a requirement to reduce time-step
 #define REDUCESTEPSIZE_CONJ_INTEGRATION_TIME 1.0e+5 // lowers the step size when the conjugation integration has passed this limit, and the error allowed is high (>1e-3).
@@ -36,8 +36,8 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
     static bool bHelpDisplayed = false;
 
     CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 4);
-    currE = m_crmArguments->GetArgumentAsDoubleOr("currE", 10.0);  // : Density of effector cells
-    currR = m_crmArguments->GetArgumentAsDoubleOr("currR", 10.0);  // : Density of regulatory cells
+    seedE = m_crmArguments->GetArgumentAsDoubleOr("seedE", 10.0);  // : Density of effector cells
+    seedR = m_crmArguments->GetArgumentAsDoubleOr("seedR", 10.0);  // : Density of regulatory cells
     kon   = m_crmArguments->GetArgumentAsDoubleOr("kon", .1);   // : Conjugation rate
     koff  = m_crmArguments->GetArgumentAsDoubleOr("koff", .1);  // : Dissociation rate
     kpe   = m_crmArguments->GetArgumentAsDoubleOr("kpe", 1e-3);   // : Proliferation rate for effector cells
@@ -49,12 +49,15 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
     // is now set based on characteristics of robot
     //m_fExchangeRange          = m_crmArguments->GetArgumentAsDoubleOr("exchangerange", 2.0);
 
-    se                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateE", 0.0); //1.1e-3  // Source rate of E cell generation
-    sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourcerateR", 0.0); //0.6e-3 // Source rate of R cell generation
+    se                        = m_crmArguments->GetArgumentAsDoubleOr("sourceE", seedE); //1.75  // Source density of E cell generation
+    sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourceR", seedR); //1.75  // Source density of R cell generation
 
     m_fcross_affinity         = m_crmArguments->GetArgumentAsDoubleOr("cross-affinity", 0.4);
 
     m_fFVtoApcscaling         = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling", 1.0e-3);
+    m_fIntegrationTime        = m_crmArguments->GetArgumentAsDoubleOr("integrationtime", 5.0e+7);
+    m_uSeedfvHdRange          = m_crmArguments->GetArgumentAsIntOr("seedfv-hd-range",
+                                                                   CFeatureVector::NUMBER_OF_FEATURES);
 
 
     if(FDMODELTYPE == CRM_TCELLSINEXCESS)
@@ -62,9 +65,9 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
 
     if (m_crmArguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
-        printf("numberoffeatures=#             Number of features in a single FV [%d]\n"
-               "currE=#.#                     Density of effector cells [%f]\n"
-               "currR=#.#                     Density of regulatory cells [%f]\n"
+        printf("numberoffeatures=#            Number of features in a single FV [%d]\n"
+               "seedE=#.#                     Seed density of effector cells [%f]\n"
+               "seedR=#.#                     Seed density of regulatory cells [%f]\n"
                "kon=#.#                       Conjugation rate [%f]\n"
                "koff=#.#                      Dissociation rate [%f]\n"
                "kpe=#.#                       Proliferation rate for effector cells [%f]\n"
@@ -72,13 +75,15 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                "kpr=#.#                       Proliferation rate for regulatory cells [%f]\n"
                "kdr=#.#                       Death rate for regulatory cells [%f]\n"
                "exchangeprob=#.#              Probability of trying to exchange cells with other robots [%f]\n"
-               "Source_E=#.#                  Source rate of E cell generation [%f]\n"
-               "Source_R=#.#                  Source rate of R cell generation [%f]\n"
+               "Source_E=#.#                  Source density of E cell generation [%f]\n"
+               "Source_R=#.#                  Source density of R cell generation [%f]\n"
                "cross-affinity=#.#            Level of cross-affinity (>0)     [%2.5f]\n"
-               "fvapcscaling=#.#              Scaling parameter of [FV] to [APC] [%e]\n",
+               "fvapcscaling=#.#              Scaling parameter of [FV] to [APC] [%e]\n"
+               "integrationtime=#.#           CRM integration time [%e]\n"
+               "seedfv-hd-range=#             Diversity of seed t-cell population\n",
                CFeatureVector::NUMBER_OF_FEATURES,
-               currE,
-               currR,
+               seedE,
+               seedR,
                kon,
                koff,
                kpe,
@@ -89,7 +94,9 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                se,
                sr,
                m_fcross_affinity,
-               m_fFVtoApcscaling);
+               m_fFVtoApcscaling,
+               m_fIntegrationTime,
+               m_uSeedfvHdRange);
         bHelpDisplayed = true;
     }
 
@@ -142,7 +149,7 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 #ifdef DEBUGFLAG
     PrintTcellList(PrntRobotId);
 #endif
-    UpdateTcellList(CFeatureVector::NUMBER_OF_FEATURES); //O(m-apc + n-tcell)
+    UpdateTcellList(m_uSeedfvHdRange); //O(m-apc + n-tcell)
 #ifdef DEBUGFLAG
     PrintTcellList(PrntRobotId);
 #endif
@@ -329,7 +336,7 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
     bool b_tcelldeath = false;
     list<structTcell>::iterator it_tcells;
 
-    while(integration_t < INTEGRATION_TIME)
+    while(integration_t < m_fIntegrationTime)
     {
         // Compute number of conjugates for T cells listTcells members fE and fR. Stores conjugates in listApcs member listConjugatesonAPC having member conjugate fConjugates
         if(FDMODELTYPE == CRM) //!TODO to avoid this check all the time, we could preprocess the code and define out the unused conjugate functions.
@@ -972,8 +979,8 @@ void CRMinRobotAgentOptimised::ComputeNewDerivative(TcellIntegrationPhase TK)
 #endif
         }
 
-        effector_incr  += se - kde * (*it_tcells).GetE(TK);
-        regulator_incr += sr - kdr * (*it_tcells).GetR(TK);
+        effector_incr  += - kde * (*it_tcells).GetE(TK);
+        regulator_incr += - kdr * (*it_tcells).GetR(TK);
 
         (*it_tcells).SetDelta(TK, effector_incr, regulator_incr);
 #ifdef FLOATINGPOINTOPERATIONS
@@ -1256,6 +1263,7 @@ void CRMinRobotAgentOptimised::UpdateAPCList()
 
 void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
 {
+    //hammingdistance = 0;
     //argument hammingdistance: At the start of the simulation, injects new t-cells of receptors within hammingdistance of present apcs
     // during each of the following simulation time-steps hammingdistance is passed as 0
 
@@ -1272,10 +1280,10 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
             for(unsigned int index_tcells = 0; index_tcells < m_unNumberOfReceptors; ++index_tcells)
             {
                 if((*it_apcs).uFV == index_tcells) {
-                    listTcells.push_back(structTcell(index_tcells, currE, currR, &(*it_apcs)));
+                    listTcells.push_back(structTcell(index_tcells, seedE, seedR, &(*it_apcs)));
                     ++it_apcs;}
                 else
-                    listTcells.push_back(structTcell(index_tcells, currE, currR, NULL));
+                    listTcells.push_back(structTcell(index_tcells, seedE, seedR, NULL));
             }
             return;
         }
@@ -1283,7 +1291,7 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
         if(hammingdistance == 0)
         {
             for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
-                listTcells.push_back(structTcell((*it_apcs).uFV, currE, currR, &(*it_apcs)));
+                listTcells.push_back(structTcell((*it_apcs).uFV, seedE, seedR, &(*it_apcs)));
 
             return;
         }
@@ -1295,7 +1303,7 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
     {
         if((*it_apcs).uFV == (*it_tcells).uFV)
         {
-            (*it_tcells).fE += currE; (*it_tcells).fR += currR;
+            (*it_tcells).fE += se; (*it_tcells).fR += sr;
             if((*it_tcells).ptrAPCWithAffinity1 == NULL)
                 (*it_tcells).ptrAPCWithAffinity1 = &(*it_apcs);
             ++it_tcells; ++it_apcs;
@@ -1307,7 +1315,7 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
 
         if((*it_tcells).uFV > (*it_apcs).uFV)
         {
-            listTcells.insert(it_tcells, structTcell((*it_apcs).uFV, currE, currR, &(*it_apcs)));
+            listTcells.insert(it_tcells, structTcell((*it_apcs).uFV, se, sr, &(*it_apcs)));
             ++it_apcs;
             continue;
         }
@@ -1341,7 +1349,7 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
     }
 
     while(it_apcs != listAPCs.end()) {
-        listTcells.push_back(structTcell((*it_apcs).uFV, currE, currR, &(*it_apcs)));
+        listTcells.push_back(structTcell((*it_apcs).uFV, se, sr, &(*it_apcs)));
         ++it_apcs; }
 }
 
