@@ -116,21 +116,24 @@ protected:
 
 
     double step_h; double conjstep_h; // internal step count of the CRM instance
-    double currE; // : Density of effector cells at the start
-    double currR; // : Density of regulatory cells at the start
+    double seedE; // : Density of effector cells at the start
+    double seedR; // : Density of regulatory cells at the start
     double kon;   // : Conjugation rate
     double koff;  // : Dissociation rate
     double kpe;   // : Proliferation rate for effector cells
     double kde;   // : Death rate for effector cells
     double kpr;   // : Proliferation rate for regulatory cells
     double kdr;   //  Death rate for regulatory cells
-    double se;    // Rate of generation of new effector cells
-    double sr;    // Rate of generation of new regulatory cells
+    double se;    // Density of new effector cells added at each simulation step
+    double sr;    // Density of new regulatory cells added at each simulation step
     unsigned int sites; // Number of binding sites on each APC
+    double m_fIntegrationTime;
 
     // For communication of cells between robots
     double m_fTryExchangeProbability; // Probability of trying to exchange cells with other robots
     //double m_fExchangeRange;
+
+    unsigned m_uSeedfvHdRange; // diversity of seed t-cell population
 
 
 //    double*        m_pfEffectors;
