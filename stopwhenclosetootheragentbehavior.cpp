@@ -12,12 +12,7 @@ CStopWhenCloseToOtherAgentBehavior::CStopWhenCloseToOtherAgentBehavior(double f_
 
 bool CStopWhenCloseToOtherAgentBehavior::TakeControl()
 {
-//    if (m_pcAgent->CountAgents(m_fDistance, ROBOT) == 0 && m_pcAgent->GetClosestAgent(m_fDistance, ANY) != NULL) {
-//        printf("Something is very wrong\n");
-//    }
-
-//    return m_pcAgent->CountAgents(m_fDistance, ROBOT) > 0;
-    return false;
+    return m_pcAgent->CountAgents(m_fDistance, ROBOT) > 0;
 }
 
 /******************************************************************************/
