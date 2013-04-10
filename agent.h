@@ -16,7 +16,8 @@ enum faultdetectionmodeltype {CRM, CRM_TCELLSINEXCESS, CTRNN, LINEQ};
 /******************************************************************************/
 /******************************************************************************/
 
-//#define DEBUGFLAG // verbose - prints stmts on cell densities, fvs etc... (currently only implemented for crm optimised model)
+#define DEBUGFLAG // verbose - prints stmts on cell densities, fvs etc... (currently only implemented for crm optimised model)
+//#define DEBUGCROSSREGULATIONMODELFLAG
 #define FLOATINGPOINTOPERATIONS
 /******************************************************************************/
 /******************************************************************************/
