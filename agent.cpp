@@ -277,9 +277,11 @@ void CAgent::SimulationStepUpdatePosition()
         
         CSimulator::GetInstance()->GetArena()->MoveAgent(this, &vecTemp);
 
-        //m_tVelocity.x = 0;
-        //m_tVelocity.y = 0;
+        m_tVelocity.x = 0;
+        m_tVelocity.y = 0;
+
     }
+
 }
 
 /******************************************************************************/
@@ -509,9 +511,9 @@ void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
     if (tNewPosition.x <= -fArenaHeight / 2.0)
         tNewPosition.x += fArenaHeight;
 
-    if (!CSimulator::GetInstance()->GetArena()->IsObstacle(&tNewPosition))
-        CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);
-    
+    if (!CSimulator::GetInstance()->GetArena()->IsObstacle(&tNewPosition)) {
+        CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);        
+    }
 }
 
 /******************************************************************************/
