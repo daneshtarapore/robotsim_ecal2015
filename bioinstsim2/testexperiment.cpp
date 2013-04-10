@@ -12,6 +12,7 @@
 #include "randomwalkbehavior.h"
 #include "circlebehavior.h"
 #include "stopbehavior.h"
+#include "stopwhenclosetootheragentbehavior.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -365,6 +366,33 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         }
     }
 
+    unsigned int unToleraters  = 0;
+    unsigned int unAttackers   = 0;
+    unsigned int unNbrsInSensoryRange = 0;
+    
+    m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);//true
+    
+    printf("Attackers: %d, %d, %d", unAttackers, unToleraters, unNbrsInSensoryRange);
+//    if (unAttackers > 5)
+    if (un_step_number == 1000)
+    {
+        TAgentVector tSortedAgents;
+        m_pcMisbehaveAgent[0]->SortAllAgentsAccordingToDistance(&tSortedAgents);
+        for (int i = 1; i < 11; i++) {
+	        TBehaviorVector vec_behaviors;
+            vec_behaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3.0));
+	        vec_behaviors.push_back(new CHomingBehavior(10, m_pcMisbehaveAgent[0]));
+            
+#ifdef OPTIMISEDCRM
+            ((CRobotAgentOptimised*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
+#else
+            ((CRobotAgent*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
+#endif
+            
+        }
+    }
+    
+
 
     if (un_step_number == m_unMisbehaveStep)
     {
@@ -495,6 +523,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 vector<CBehavior*> CTestExperiment::GetAgentBehavior(ESwarmBehavType swarmbehavType, CAgent*  previousAgent)
 {
     vector<CBehavior*> vecBehaviors;
+
+    vecBehaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3));
 
     //behav. pushed is decreasing order of priority to take control of the agent
 
