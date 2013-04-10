@@ -135,22 +135,22 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 {    
     unsigned PrntRobotId = robotAgent->GetIdentification();
 
-#ifdef DEBUGFLAG
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
     robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
 #endif
 
     // Convert the feature vectors of robot agents in the vicinity to APCs for the CRM to work with
     UpdateAPCList(); //O(m-fv + n-apc)
-#ifdef DEBUGFLAG
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
     PrintAPCList(PrntRobotId);
 #endif
 
 #ifndef DISABLEMODEL_RETAINRNDCALLS // DISABLEMODEL_RETAINRNDCALLS is defined so as to regenerate the same sequence of random numbers generated with the normal working of the CRM, so that the same agent behaviors may be obtained when CRM is disabled.
-#ifdef DEBUGFLAG
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
     PrintTcellList(PrntRobotId);
 #endif
     UpdateTcellList(m_uSeedfvHdRange); //O(m-apc + n-tcell)
-#ifdef DEBUGFLAG
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
     PrintTcellList(PrntRobotId);
 #endif
 
@@ -171,7 +171,7 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
     if(m_fTryExchangeProbability > 0.0)
         DiffuseTcells();
 
-#ifdef DEBUGFLAG
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
     if(this->robotAgent->GetIdentification()==1 || this->robotAgent->GetIdentification()==15)
     {
         printf("\nAllTcellClonesTime: %d, RobotId: %d, ", CSimulator::GetInstance()->GetSimulationStepNumber(), this->robotAgent->GetIdentification());
@@ -217,9 +217,11 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
             robotAgent->GetRandomRobotWithWeights(robotAgent->GetSelectedNumNearestNbrs());
 
     if(pcRemoteRobotAgent == NULL) {
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
         printf("\nCommTime: %d, RobotId1: %d, RobotId2: %d\n",
                CSimulator::GetInstance()->GetSimulationStepNumber(),
                robotAgent->GetIdentification(), -1);
+#endif
         return; }
 
 
@@ -315,7 +317,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
 #endif
     }
 
-#ifdef DEBUGFLAG
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
     printf("\nCommTime: %d, RobotId1: %d, RobotId2: %d\n",
                CSimulator::GetInstance()->GetSimulationStepNumber(),
                robotAgent->GetIdentification(), pcRemoteRobotAgent->GetIdentification());
