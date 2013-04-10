@@ -366,29 +366,31 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         }
     }
 
-    unsigned int unToleraters  = 0;
-    unsigned int unAttackers   = 0;
-    unsigned int unNbrsInSensoryRange = 0;
-    
-    m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);//true
-    
-    printf("Attackers: %d, %d, %d", unAttackers, unToleraters, unNbrsInSensoryRange);
-//    if (unAttackers > 5)
-    if (un_step_number == 1000)
+    // NUKE IT FROM ORBIT 
+    //
+    // The code below is for agents attacking the misbehaving agent. 
+    // The code should be made more general so that any agent detected as
+    // behaving abnormally is attacked. The code below is a starting point.
+
+    // unsigned int unToleraters  = 0;
+    // unsigned int unAttackers   = 0;
+    // unsigned int unNbrsInSensoryRange = 0;    
+    // m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);//true
+    // if (unAttackers > 5)
+    if (un_step_number == 1000) //TODO: This line is for debugging only!
     {
         TAgentVector tSortedAgents;
         m_pcMisbehaveAgent[0]->SortAllAgentsAccordingToDistance(&tSortedAgents);
         for (int i = 1; i < 11; i++) {
 	        TBehaviorVector vec_behaviors;
-            vec_behaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3.0));
+//            vec_behaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3.0));
 	        vec_behaviors.push_back(new CHomingBehavior(10, m_pcMisbehaveAgent[0]));
             
 #ifdef OPTIMISEDCRM
             ((CRobotAgentOptimised*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
 #else
             ((CRobotAgent*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
-#endif
-            
+#endif            
         }
     }
     
@@ -524,7 +526,7 @@ vector<CBehavior*> CTestExperiment::GetAgentBehavior(ESwarmBehavType swarmbehavT
 {
     vector<CBehavior*> vecBehaviors;
 
-    vecBehaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3));
+//    vecBehaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3));
 
     //behav. pushed is decreasing order of priority to take control of the agent
 

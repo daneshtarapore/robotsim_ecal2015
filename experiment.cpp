@@ -164,6 +164,9 @@ void CExperiment::PlaceAgentRandomly(CAgent* pc_agent)
     } while (!bFreeSpotFound);
     
     pc_agent->SetPosition(&tPosition);
+    if (pc_agent->GetClosestAgent(CAgent::RADIUS * 2.0, ANY) > 0)
+        PlaceAgentRandomly(pc_agent);
+
 }
 
 /******************************************************************************/

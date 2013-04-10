@@ -64,7 +64,13 @@ void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
                                        double f_radius)
 {
     pt_output_list->clear();
-
+    
+    for (int i = 0; i < m_unResX * m_unResY; i++)
+    { 
+        pt_output_list->push_back(&m_plistAgents[i]);
+    }
+    
+    
     if (f_radius > m_fSizeX / 2.0 || f_radius > m_fSizeY / 2.0)
     {
         for (int i = 0; i < m_unResX * m_unResY; i++)
@@ -91,8 +97,8 @@ void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
         double fStartX = (fStartCellX + (double) 0.49) * (double) fCellSizeX;
         double fStartY = (fStartCellY + (double) 0.49) * (double) fCellSizeY;
 
-        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2.0 + 1.0;
-        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2.0 + 1.0;
+        double fEndX   = (tTranslatedPosition.x + f_radius) + fCellSizeX / 2.0 + fCellSizeX;
+        double fEndY   = (tTranslatedPosition.y + f_radius) + fCellSizeY / 2.0 + fCellSizeY;
 
         double fCellY = fStartCellY;
         for (double fY = fStartY; fY < fEndY; fY += fCellSizeY, fCellY += 1.0)
@@ -125,7 +131,6 @@ void CBoundlessArena::GetAgentsCloseTo(TAgentListList* pt_output_list,
             }
         }
     }
-
 }
 
 /******************************************************************************/
