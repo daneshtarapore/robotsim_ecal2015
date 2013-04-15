@@ -14,6 +14,13 @@
 #include "stopbehavior.h"
 #include "stopwhenclosetootheragentbehavior.h"
 
+#ifdef OPTIMISEDCRM
+#  define CROBOTAGENT CRobotAgentOptimised
+#else
+#  define CROBOTAGENT CRobotAgent
+#endif                            
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -109,9 +116,12 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
     m_unMisbehaveStep = pc_experiment_arguments->GetArgumentAsIntOr("misbehavestep", 0);
 
     m_unNormalAgentToTrack   = pc_experiment_arguments->GetArgumentAsIntOr("tracknormalagent", 0);
-    m_unAbnormalAgentToTrack = pc_experiment_arguments->GetArgumentAsIntOr("trackabnormalagent",15);
-    m_unNumAbnormalAgents    = pc_experiment_arguments->GetArgumentAsIntOr("numabnormalagents",1);
-    m_iSwitchNormalBehavior  = pc_experiment_arguments->GetArgumentAsIntOr("switchnormalbehav",0);
+    m_unAbnormalAgentToTrack = pc_experiment_arguments->GetArgumentAsIntOr("trackabnormalagent", 15);
+    m_unNumAbnormalAgents    = pc_experiment_arguments->GetArgumentAsIntOr("numabnormalagents", 1);
+    m_iSwitchNormalBehavior  = pc_experiment_arguments->GetArgumentAsIntOr("switchnormalbehav", 0);
+    m_unChaseAbnormalAgents       = pc_experiment_arguments->GetArgumentAsIntOr("chaseabnormalagents", 0);
+    m_fSpreadProbability     = pc_experiment_arguments->GetArgumentAsDoubleOr("spreadprobability", 0.1);
+    m_unSpreadPeriod         = pc_experiment_arguments->GetArgumentAsIntOr("spreadperiod", 0);
 
 
     if (pc_experiment_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
@@ -153,12 +163,15 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
 
         printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2,STRLN,RNDWK,CIRCLE,STOP] -- behavior selected: %s\n", pchSwarmBehavior);
         printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP,AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2]                        -- behavior selected: %s\n", pchErrorBehavior);
-        printf("misbehavestep=#     Step when agent starts misbehaving [%d]\n",m_unMisbehaveStep);
+        printf("misbehavestep=#       Step when agent starts misbehaving [%d]\n",m_unMisbehaveStep);
         printf("tracknormalagent=#    Id of normal agent to track [%d]\n",  m_unNormalAgentToTrack);
         printf("trackabnormalagent=#  Id of abnormal agent to track [%d]\n",m_unAbnormalAgentToTrack);
-        printf("numabnormalagents=#  Number of abnormal agents [%d]\n",m_unNumAbnormalAgents);
-        printf("switchnormalbehav=#  Set to 1 if normal behavior is to be switched during simulation [%d]\n",m_iSwitchNormalBehavior);
-
+        printf("numabnormalagents=#   Number of abnormal agents [%d]\n",m_unNumAbnormalAgents);
+        printf("switchnormalbehav=#   Set to 1 if normal behavior is to be switched during simulation [%d]\n", m_iSwitchNormalBehavior);
+        printf("chaseabnormalagents=# Set to 1 misbehaving agents should be chased and boxed in [%d]\n", m_unChaseAbnormalAgents);
+        printf("spreadprobability=#   Probability of an errorbehav'ing agent spreads its behavior to the nearest swarmbehav'ing neighbor [%1.4f]\n", m_fSpreadProbability);
+        printf("spreadperiod=#        How often in simulation cycles that a potential spread of errorbehav should spread (0: never) [%d]\n", m_unSpreadPeriod);
+ 
         bHelpDisplayed = true;
     }
 
@@ -197,6 +210,7 @@ CAgent* CTestExperiment::CreateAgent()
 
 #ifdef OPTIMISEDCRM
     CAgent* pcAgent = new CRobotAgentOptimised("robot", id++, m_pcAgentArguments, m_pcModelArguments, vecBehaviors);
+    pcAgent->SetBehavior(m_eswarmbehavType);
 
     for(int i = 0; i < m_unNumAbnormalAgents; i++)
     {
@@ -214,6 +228,7 @@ CAgent* CTestExperiment::CreateAgent()
     }
 #else
     CAgent* pcAgent = new CRobotAgent("robot", id++, m_pcAgentArguments, m_pcModelArguments, vecBehaviors);
+    pcAgent->SetBehavior(m_eswarmbehavType);
 
     for(int i = 0; i < m_unNumAbnormalAgents; i++)
     {
@@ -366,34 +381,24 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         }
     }
 
-    // NUKE IT FROM ORBIT 
-    //
-    // The code below is for agents attacking the misbehaving agent. 
+    //TODO: DANESH
+    // The code below is an example of agents attacking the misbehaving agent. 
     // The code should be made more general so that any agent detected as
-    // behaving abnormally is attacked. The code below is a starting point.
-
-    // unsigned int unToleraters  = 0;
-    // unsigned int unAttackers   = 0;
-    // unsigned int unNbrsInSensoryRange = 0;    
-    // m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);//true
-    // if (unAttackers > 5)
-    if (un_step_number == 1000) //TODO: This line is for debugging only!
+    // behaving abnormally is attacked. 
+    if (un_step_number == 1000 && m_unChaseAbnormalAgents != 0) //TODO: This line is for debugging only!
     {
-        TAgentVector tSortedAgents;
-        m_pcMisbehaveAgent[0]->SortAllAgentsAccordingToDistance(&tSortedAgents);
-        for (int i = 1; i < 11; i++) {
-	        TBehaviorVector vec_behaviors;
-//            vec_behaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3.0));
-	        vec_behaviors.push_back(new CHomingBehavior(10, m_pcMisbehaveAgent[0]));
-            
-#ifdef OPTIMISEDCRM
-            ((CRobotAgentOptimised*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
-#else
-            ((CRobotAgent*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
-#endif            
+        ChaseAndCaptureAgent(m_pcMisbehaveAgent[0], 10); // 10 agents will attack the misbehaving agent
+    }
+
+    //TODO: DANESH
+    // The code below is spreading the errorbehavior  
+    if (m_unSpreadPeriod > 0) 
+    {
+        if ((un_step_number - 1) % m_unSpreadPeriod == 0)
+        {
+            SpreadBehavior(m_eerrorbehavType, m_fSpreadProbability);
         }
     }
-    
 
 
     if (un_step_number == m_unMisbehaveStep)
@@ -402,7 +407,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         {
             vector<CBehavior*> vecBehaviors;
             vecBehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
-
+            m_pcMisbehaveAgent[i]->SetBehavior(m_eerrorbehavType);
             m_pcMisbehaveAgent[i]->SetBehaviors(vecBehaviors);
         }
     }
@@ -517,6 +522,72 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         printf("\n");
     }
 #endif
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+
+void CTestExperiment::ChaseAndCaptureAgent(CAgent* pc_agent_to_chase, unsigned int un_agents_to_assign)
+{
+    TAgentVector tSortedAgents;
+    pc_agent_to_chase->SortAllAgentsAccordingToDistance(&tSortedAgents);
+    for (int i = 1; i <= un_agents_to_assign; i++) {
+        TBehaviorVector vec_behaviors;
+        double fArenaSizeX;
+        double fArenaSizeY;
+        CSimulator::GetInstance()->GetArena()->GetSize(&fArenaSizeX, &fArenaSizeY);
+        vec_behaviors.push_back(new CHomingBehavior(max(fArenaSizeX, fArenaSizeY), pc_agent_to_chase));
+        
+#ifdef OPTIMISEDCRM
+        ((CRobotAgentOptimised*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
+#else
+        ((CRobotAgent*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
+#endif            
+    }
+}
+/******************************************************************************/
+/******************************************************************************/
+
+void CTestExperiment::SpreadBehavior(ESwarmBehavType e_behavior, double f_probability)
+{
+    TAgentList listInfectedAgents;
+    
+    TAgentVector* vecAllAgents = CSimulator::GetInstance()->GetAllAgents();
+    for (TAgentVectorIterator i = vecAllAgents->begin(); i != vecAllAgents->end(); i++)
+    {
+        if ((*i)->GetType() == ROBOT) 
+        {
+            if (((CROBOTAGENT*) (*i))->GetBehavior() == e_behavior)
+            {
+                listInfectedAgents.push_back(*i);
+            } 
+        }
+    }
+
+    for (TAgentListIterator j = listInfectedAgents.begin(); j != listInfectedAgents.end(); j++) 
+    {
+        if (Random::nextDouble() < f_probability) 
+        {
+            
+            TAgentVector tSortedAgents;
+            (*j)->SortAllAgentsAccordingToDistance(&tSortedAgents);
+            
+            unsigned index = 1;
+            bool     found = false;
+            do {
+                if (((CROBOTAGENT*) tSortedAgents[index])->GetBehavior() != e_behavior)
+                {
+                    ((CROBOTAGENT*)tSortedAgents[index])->SetBehavior(e_behavior);
+
+                    ((CROBOTAGENT*)tSortedAgents[index])->SetBehaviors(GetAgentBehavior(e_behavior, NULL));                    
+                    found = true;
+                } else {
+                    index++;
+                }
+            } while (index < tSortedAgents.size() && !found);            
+        }
+    }
 }
 
 /******************************************************************************/
