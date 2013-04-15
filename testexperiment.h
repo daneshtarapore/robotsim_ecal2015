@@ -4,10 +4,9 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#include "experiment.h"
-
 #include "robotagent.h"
 #include "robotagent_optimised.h"
+#include "experiment.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -16,37 +15,6 @@
 
 /******************************************************************************/
 /******************************************************************************/
-
-enum ESwarmBehavType
-{
-    AGGREGATION,
-    DISPERSION,
-    FLOCKING,
-    HOMING1,
-    HOMING2,
-
-    STRAIGHTLINE,
-    RANDOMWK,
-    CIRCLE,
-    STOP,
-
-    NOERR
-};
-
-/*enum EErrorBehavType
-{
-    STRAIGHTLINE,
-    RANDOMWK,
-    CIRCLE,
-    STOP,
-
-    STRAIGHTLINE,
-    RANDOMWK,
-    CIRCLE,
-    STOP,
-
-    NOERR
-};*/
 
 class CTestExperiment : public CExperiment
 {
@@ -65,6 +33,9 @@ protected:
     virtual void PrintVelocityDifference(CAgent* pc_agent, double f_range);
     vector<CBehavior*> GetAgentBehavior(ESwarmBehavType swarmbehavType, CAgent*  previousAgent);
 
+    virtual void ChaseAndCaptureAgent(CAgent* pc_agent_to_chase, unsigned int un_agents_to_assign);
+    virtual void SpreadBehavior(ESwarmBehavType e_behavior, double f_probability);
+
     ESwarmBehavType m_eswarmbehavType, m_eerrorbehavType;
     //EErrorBehavType m_eerrorbehavType;
 
@@ -73,6 +44,10 @@ protected:
     unsigned int    m_unAbnormalAgentToTrack;
     unsigned int    m_unNumAbnormalAgents;
     int             m_iSwitchNormalBehavior;
+
+    unsigned int    m_unChaseAbnormalAgents;
+    double          m_fSpreadProbability;     
+    unsigned int    m_unSpreadPeriod;         
 
 #ifdef OPTIMISEDCRM
     CRobotAgentOptimised*    m_pcMisbehaveAgent[20];

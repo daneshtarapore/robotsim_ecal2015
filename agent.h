@@ -6,6 +6,27 @@
 // FAULT DETECTION MODEL TYPE
 enum faultdetectionmodeltype {CRM, CRM_TCELLSINEXCESS, CTRNN, LINEQ};
 
+
+enum ESwarmBehavType
+{
+    AGGREGATION,
+    DISPERSION,
+    FLOCKING,
+    HOMING1,
+    HOMING2,
+
+    STRAIGHTLINE,
+    RANDOMWK,
+    CIRCLE,
+    STOP,
+
+    NOERR
+};
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 #define FDMODELTYPE CRM_TCELLSINEXCESS //CRM
 
 /******************************************************************************/
@@ -34,22 +55,14 @@ enum faultdetectionmodeltype {CRM, CRM_TCELLSINEXCESS, CTRNN, LINEQ};
 
 class CAgent;
 
+/******************************************************************************/
+/******************************************************************************/
+
 #include "common.h"
 
 /******************************************************************************/
 /******************************************************************************/
 
-typedef list<CAgent*>               TAgentList;
-typedef list<CAgent*>::iterator     TAgentListIterator;
-typedef list<TAgentList*>           TAgentListList;
-typedef list<TAgentList*>::iterator TAgentListListIterator;
-
-typedef vector<CAgent*>             TAgentVector;
-typedef vector<CAgent*>::iterator   TAgentVectorIterator;
-
-
-/******************************************************************************/
-/******************************************************************************/
 
 typedef struct {
     float fRed;
@@ -73,6 +86,18 @@ enum EAgentType
     ROBOT,
     LIGHT
 };
+
+/******************************************************************************/
+/******************************************************************************/
+
+typedef list<CAgent*>               TAgentList;
+typedef list<CAgent*>::iterator     TAgentListIterator;
+typedef list<TAgentList*>           TAgentListList;
+typedef list<TAgentList*>::iterator TAgentListListIterator;
+
+typedef vector<CAgent*>             TAgentVector;
+typedef vector<CAgent*>::iterator   TAgentVectorIterator;
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -160,9 +185,13 @@ public:
     virtual void MoveTowards(TVector2d t_position, double f_max_speed);
 
     virtual void SortAllAgentsAccordingToDistance(TAgentVector* pt_result);
+    virtual void SetBehavior(ESwarmBehavType e_behavior);
+    virtual ESwarmBehavType GetBehavior();
 
-
+                             
 protected:
+    ESwarmBehavType m_eBehavior;
+
     TVector2d    m_tPosition;
     TVector2d    m_tVelocity;
     TVector2d    m_tAcceleration;
