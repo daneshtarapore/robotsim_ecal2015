@@ -381,13 +381,14 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         }
     }
 
-    //TODO: DANESH
+    //TODO: DANESH - {DONE}
     // The code below is an example of agents attacking the misbehaving agent. 
     // The code should be made more general so that any agent detected as
     // behaving abnormally is attacked. 
-    if (un_step_number == 1000 && m_unChaseAbnormalAgents != 0) //TODO: This line is for debugging only!
+    if (un_step_number > MODELSTARTTIME && m_unChaseAbnormalAgents != 0)
     {
-        ChaseAndCaptureAgent(m_pcMisbehaveAgent[0], 10); // 10 agents will attack the misbehaving agent
+        if(m_pcMisbehaveAgent[0]->GetRobotDeactivationState())
+            ChaseAndCaptureAgent(m_pcMisbehaveAgent[0], 5);
     }
 
     //TODO: DANESH

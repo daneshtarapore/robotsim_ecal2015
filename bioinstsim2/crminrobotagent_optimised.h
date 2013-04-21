@@ -129,6 +129,8 @@ protected:
     unsigned int sites; // Number of binding sites on each APC
     double m_fIntegrationTime;
 
+    double m_fTCELL_UPPERLIMIT_STEPSIZE, m_fTCELL_LOWERLIMIT_STEPSIZE;
+
     // For communication of cells between robots
     double m_fTryExchangeProbability; // Probability of trying to exchange cells with other robots
     //double m_fExchangeRange;
@@ -162,7 +164,7 @@ protected:
 //    double** m_pfConj_tmp_Eu;
 //    double** m_pfConj_tmp_Hu;
 
-    list<structTcell> listTcells;
+    list<structTcell> listTcells, listTcells_cpy; // list of non-zero t-cell clonaltypes and a copy in case integration has to be run again
     list<structAPC>   listAPCs;
     virtual inline void IncIt(list<structTcell>::iterator *it_tcell, list<structTcell>* list)
     { (*it_tcell) == list->end() ? (*it_tcell):++(*it_tcell); }
