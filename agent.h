@@ -37,18 +37,24 @@ enum ESwarmBehavType
 /******************************************************************************/
 /******************************************************************************/
 
-#define DEBUGFLAG // verbose - prints stmts on cell densities, fvs etc... (currently only implemented for crm optimised model)
+//#define DEBUGFLAG // verbose - prints stmts on cell densities, fvs etc... (currently only implemented for crm optimised model)
 //#define DEBUGCROSSREGULATIONMODELFLAG
 #define FLOATINGPOINTOPERATIONS
+
 /******************************************************************************/
 /******************************************************************************/
 
-#define DISABLEMODEL_RETAINRNDCALLS
+//#define DISABLEMODEL_RETAINRNDCALLS
 
 /******************************************************************************/
 /******************************************************************************/
 
 //#define TCELLCLONEEXCHANGEANALYSIS
+
+/******************************************************************************/
+/******************************************************************************/
+
+#define DEACTIVATIONTHRESHOLD 10 // the number of consequtive time-steps an agent is faulted, before it is surrounded
 
 /******************************************************************************/
 /******************************************************************************/

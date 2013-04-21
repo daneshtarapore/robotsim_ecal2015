@@ -57,9 +57,7 @@ CRobotAgent::CRobotAgent(const char* pch_name, unsigned int un_identification, C
     m_pbMostWantedList = new unsigned int[CFeatureVector::NUMBER_OF_FEATURE_VECTORS];
 
     for (unsigned int i = 0; i < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; i++)
-    {
         m_pbMostWantedList[i] = 0;
-    }
 }
 
 /******************************************************************************/

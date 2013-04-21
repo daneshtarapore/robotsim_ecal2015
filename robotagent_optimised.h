@@ -97,6 +97,15 @@ public:
     virtual inline unsigned long long GetNumberFloatingPtOperations()
         { return m_uNumberFloatingPtOperations; }
 
+    virtual inline unsigned int GetConsequentFaultCount()
+        { return m_unConseqDetectedFaulty;}
+
+    virtual inline void SetConsequentFaultCount(unsigned int faultcount)
+        { m_unConseqDetectedFaulty = faultcount;}
+
+    virtual inline bool GetRobotDeactivationState()
+        { return m_bRobotDeactivated;}
+
 protected:
     virtual double CountWeightsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range);
 
@@ -117,7 +126,11 @@ protected:
     { (*it_fvsensed) == list->end() ? (*it_fvsensed):++(*it_fvsensed); }
 
     double              m_fResponseRange;
-    unsigned int        m_uSelectedNumNearestNbrs;
+    unsigned int        m_uSelectedNumNearestNbrs, m_uNumVotingNbrs;
+
+    unsigned int m_unConseqDetectedFaulty;
+    bool m_bRobotDeactivated;
+    int  m_iDEactivationTime;
 
     unsigned long long m_uNumberFloatingPtOperations;
 };

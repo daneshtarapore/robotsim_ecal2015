@@ -71,7 +71,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
 
     m_fSquaredDistTravelled = 0.0;
     m_fSquaredDistThreshold = (0.05 * (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow)) *
-                              (0.05 * (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow));
+            (0.05 * (m_pcAgent->GetMaximumSpeed()*(double)m_iDistTravelledTimeWindow));
 
     m_pvecCoordAtTimeStep = new TVector2d[m_iDistTravelledTimeWindow];
 }
@@ -117,7 +117,7 @@ unsigned int CFeatureVector::SimulationStep()
     m_unValue = 0;
     
     for (unsigned int i = 0; i < m_unLength; i++)
-       m_unValue += (unsigned int)m_pfFeatureValues[i] * (1 << i);
+        m_unValue += (unsigned int)m_pfFeatureValues[i] * (1 << i);
 }
 
 /******************************************************************************/
@@ -196,7 +196,7 @@ void CFeatureVector::ComputeFeatureValues()
     if(dist_nbrsagents < 6.0)
     {
         if(angle_acceleration > m_tAngularAccelerationThreshold ||
-           angle_acceleration < -m_tAngularAccelerationThreshold)
+                angle_acceleration < -m_tAngularAccelerationThreshold)
             m_piLastOccuranceEvent[2]    = CurrentStepNumber;
         else
             m_piLastOccuranceNegEvent[2] = CurrentStepNumber;
@@ -209,7 +209,7 @@ void CFeatureVector::ComputeFeatureValues()
     if(dist_nbrsagents == 6.0)
     {
         if(angle_acceleration > m_tAngularAccelerationThreshold ||
-           angle_acceleration   < -m_tAngularAccelerationThreshold)
+                angle_acceleration   < -m_tAngularAccelerationThreshold)
             m_piLastOccuranceEvent[3]    = CurrentStepNumber;
         else
             m_piLastOccuranceNegEvent[3] = CurrentStepNumber;
@@ -254,15 +254,15 @@ void CFeatureVector::ComputeFeatureValues()
     // 4th: no neighbors detected  && change in angular acceleration
 
     if(dist_nbrsagents < 6.0 &&
-       (angle_acceleration > m_tAngularAccelerationThreshold ||
-        angle_acceleration < -m_tAngularAccelerationThreshold))
+            (angle_acceleration > m_tAngularAccelerationThreshold ||
+             angle_acceleration < -m_tAngularAccelerationThreshold))
     {
         m_piLastOccuranceEvent[2] = CurrentStepNumber;
     }
 
     if(dist_nbrsagents == 6.0 &&
-       (angle_acceleration > m_tAngularAccelerationThreshold ||
-        angle_acceleration < -m_tAngularAccelerationThreshold))
+            (angle_acceleration > m_tAngularAccelerationThreshold ||
+             angle_acceleration < -m_tAngularAccelerationThreshold))
     {
         m_piLastOccuranceEvent[3] = CurrentStepNumber;
     }
@@ -312,49 +312,56 @@ void CFeatureVector::ComputeFeatureValues()
     //        m_pfFeatureValues[5] = 0.0;
 
 
-    if(NUMBER_OF_FEATURES == 15U)
+    if(NUMBER_OF_FEATURES > 6U)
     {
         m_pfFeatureValues[6] = (unCloseRangeNbrCount > 0) ? 1.0:0.0;
         m_pfFeatureValues[7] = (unFarRangeNbrCount   > 0) ? 1.0:0.0;
 
         if(dist_nbrsagents < 6.0  && (angle_velocity > m_tAngularVelocityThreshold))
-            m_piLastOccuranceEvent[8] = CurrentStepNumber;
+            m_piLastOccuranceEvent[0] = CurrentStepNumber;
 
         if(dist_nbrsagents == 6.0 && (angle_velocity > m_tAngularVelocityThreshold))
-            m_piLastOccuranceEvent[9] = CurrentStepNumber;
+            m_piLastOccuranceEvent[1] = CurrentStepNumber;
 
-        for(unsigned int featureindex = 8; featureindex <=9; featureindex++)
+        if ((CurrentStepNumber - m_piLastOccuranceEvent[0]) <= m_iEventSelectionTimeWindow)
+            m_pfFeatureValues[8] = 1.0;
+        else
+            m_pfFeatureValues[8] = 0.0;
+
+        if(NUMBER_OF_FEATURES > 9U)
         {
-            if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
-                m_pfFeatureValues[featureindex] = 1.0;
+            if ((CurrentStepNumber - m_piLastOccuranceEvent[1]) <= m_iEventSelectionTimeWindow)
+                m_pfFeatureValues[9] = 1.0;
             else
-                m_pfFeatureValues[featureindex] = 0.0;
-        }
+                m_pfFeatureValues[9] = 0.0;
 
+            m_pfFeatureValues[10] = (mag_acceleration   >= m_fAccelerationThreshold) ||
+                    (mag_acceleration   <= -m_fAccelerationThreshold)
+                    ? 1.0:0.0;
 
+            m_pfFeatureValues[11] = (angle_velocity     >= m_tAngularVelocityThreshold)    ? 1.0:0.0;
 
-        m_pfFeatureValues[10] = (mag_acceleration   >= m_fAccelerationThreshold) ||
-                                (mag_acceleration   <= -m_fAccelerationThreshold)
-                                ? 1.0:0.0;
+            if(NUMBER_OF_FEATURES > 12U)
+            {
+                m_pfFeatureValues[12] = (angle_acceleration   >= m_tAngularAccelerationThreshold) ||
+                        (angle_acceleration   <= -m_tAngularAccelerationThreshold)
+                        ? 1.0:0.0;
 
-        m_pfFeatureValues[11] = (angle_velocity     >= m_tAngularVelocityThreshold)    ? 1.0:0.0;
+                m_pfFeatureValues[13] = (mag_relvelocity   >= m_fRelativeVelocityMagThreshold) ||
+                        (mag_relvelocity   <= -m_fRelativeVelocityMagThreshold)
+                        ? 1.0:0.0;
 
-        m_pfFeatureValues[12] = (angle_acceleration   >= m_tAngularAccelerationThreshold) ||
-                                (angle_acceleration   <= -m_tAngularAccelerationThreshold)
-                                ? 1.0:0.0;
+                m_pfFeatureValues[14] = (dir_relvelocity   >= m_fRelativeVelocityDirThreshold) ||
+                        (dir_relvelocity   <= -m_fRelativeVelocityDirThreshold)
+                        ? 1.0:0.0;
+            } // 15 bit FV
+        } // 12 bit FV
+    }     // 9 bit FV
 
-        m_pfFeatureValues[13] = (mag_relvelocity   >= m_fRelativeVelocityMagThreshold) ||
-                                (mag_relvelocity   <= -m_fRelativeVelocityMagThreshold)
-                                ? 1.0:0.0;
-
-        m_pfFeatureValues[14] = (dir_relvelocity   >= m_fRelativeVelocityDirThreshold) ||
-                                (dir_relvelocity   <= -m_fRelativeVelocityDirThreshold)
-                                ? 1.0:0.0;
-    }
 
 #ifdef DEBUGFLAG
-    if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
-        PrintFeatureDetails();
+if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
+PrintFeatureDetails();
 #endif
 }
 
@@ -367,31 +374,31 @@ void CFeatureVector::PrintFeatureDetails()
 
     double dist_nbrsagents, angle_acceleration, angle_velocity;
     double mag_relativeagentvelocity, dir_relativeagentvelocity,
-    mag_relativeagentacceleration, dir_relativeagentacceleration;
+            mag_relativeagentacceleration, dir_relativeagentacceleration;
 
     // Velocity magnitude and direction wrt. surrounding agents:
     m_pcAgent->GetRelativeVelocity(&mag_relativeagentvelocity, &dir_relativeagentvelocity, FEATURE_RANGE);
-//    TVector2d tTemp    = m_pcAgent->GetAverageVelocityOfSurroundingAgents(FEATURE_RANGE, ROBOT);
+    //    TVector2d tTemp    = m_pcAgent->GetAverageVelocityOfSurroundingAgents(FEATURE_RANGE, ROBOT);
 
-//    float tmp_agentvelocity = Vec2dLength((*m_pcAgent->GetVelocity()));
-//    mag_relativeagentvelocity = tmp_agentvelocity - Vec2dLength((tTemp));
+    //    float tmp_agentvelocity = Vec2dLength((*m_pcAgent->GetVelocity()));
+    //    mag_relativeagentvelocity = tmp_agentvelocity - Vec2dLength((tTemp));
 
-//    if (Vec2dLength((*m_pcAgent->GetVelocity())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
-//        dir_relativeagentvelocity = Vec2dAngle((*m_pcAgent->GetVelocity()), tTemp);
-//    else
-//        dir_relativeagentvelocity = 0.0;
+    //    if (Vec2dLength((*m_pcAgent->GetVelocity())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
+    //        dir_relativeagentvelocity = Vec2dAngle((*m_pcAgent->GetVelocity()), tTemp);
+    //    else
+    //        dir_relativeagentvelocity = 0.0;
 
 
     // Acceleration magnitude and direction wrt. surrounding agents:
     m_pcAgent->GetRelativeAcceleration(&mag_relativeagentacceleration, &dir_relativeagentacceleration, FEATURE_RANGE);
-//    tTemp                = m_pcAgent->GetAverageAccelerationOfSurroundingAgents(FEATURE_RANGE, ROBOT);
+    //    tTemp                = m_pcAgent->GetAverageAccelerationOfSurroundingAgents(FEATURE_RANGE, ROBOT);
 
-//    float tmp_agentacceleration = Vec2dLength((*m_pcAgent->GetAcceleration()));
-//    mag_relativeagentacceleration = tmp_agentacceleration - Vec2dLength((tTemp));
-//    if (Vec2dLength((*m_pcAgent->GetAcceleration())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
-//        dir_relativeagentacceleration = Vec2dAngle((*m_pcAgent->GetAcceleration()), tTemp);
-//    else
-//        dir_relativeagentacceleration = 0.0;
+    //    float tmp_agentacceleration = Vec2dLength((*m_pcAgent->GetAcceleration()));
+    //    mag_relativeagentacceleration = tmp_agentacceleration - Vec2dLength((tTemp));
+    //    if (Vec2dLength((*m_pcAgent->GetAcceleration())) > EPSILON && Vec2dLength(tTemp) > EPSILON)
+    //        dir_relativeagentacceleration = Vec2dAngle((*m_pcAgent->GetAcceleration()), tTemp);
+    //    else
+    //        dir_relativeagentacceleration = 0.0;
 
 
     if (m_pcAgent->GetBehavIdentification() == 1)
@@ -452,62 +459,121 @@ std::string CFeatureVector::ToString()
     char pchTemp[4096];
 
 
-if(NUMBER_OF_FEATURES == 6U)
-    sprintf(pchTemp, "Values - "
-            "TS_nbrs:0to3: %f - "
-            "TS_nbrs:3to6: %f - "
-            "TW450_dist0to6_angacc: %1.1f - "
-            "TW450_dist6_angacc: %1.1f - "
-            "DistTW100: %1.1f - "
-            "speed: %1.1f - fv: %u",
+    if(NUMBER_OF_FEATURES == 6U)
+        sprintf(pchTemp, "Values - "
+                "TS_nbrs:0to3: %f - "
+                "TS_nbrs:3to6: %f - "
+                "TW450_dist0to6_angacc: %1.1f - "
+                "TW450_dist6_angacc: %1.1f - "
+                "DistTW100: %1.1f - "
+                "speed: %1.1f - fv: %u",
 
-            m_pfFeatureValues[0],
-            m_pfFeatureValues[1],
-            m_pfFeatureValues[2],
-            m_pfFeatureValues[3],
-            m_pfFeatureValues[4],
-            m_pfFeatureValues[5],
-            m_unValue);
+                m_pfFeatureValues[0],
+                m_pfFeatureValues[1],
+                m_pfFeatureValues[2],
+                m_pfFeatureValues[3],
+                m_pfFeatureValues[4],
+                m_pfFeatureValues[5],
+                m_unValue);
+
+    if(NUMBER_OF_FEATURES == 9U)
+        sprintf(pchTemp, "Values - "
+                "TS_nbrs:0to3: %f - "
+                "TS_nbrs:3to6: %f - "
+                "TW450_dist0to6_angacc: %1.1f - "
+                "TW450_dist6_angacc: %1.1f - "
+                "DistTW100: %1.1f - "
+                "speed: %1.1f - "
+
+                "nbrs:0to3: %1.1f - "
+                "nbrs:3to6: %1.1f - "
+                "TW450_dist0to6_angvel: %1.1f - fv: %u",
+
+                m_pfFeatureValues[0],
+                m_pfFeatureValues[1],
+                m_pfFeatureValues[2],
+                m_pfFeatureValues[3],
+                m_pfFeatureValues[4],
+                m_pfFeatureValues[5],
+
+                m_pfFeatureValues[6],
+                m_pfFeatureValues[7],
+                m_pfFeatureValues[8],
+                m_unValue);
 
 
-if(NUMBER_OF_FEATURES == 15U)
-    sprintf(pchTemp, "Values - "
-            "TS_nbrs:0to3: %f - "
-            "TS_nbrs:3to6: %f - "
-            "TW450_dist0to6_angacc: %1.1f - "
-            "TW450_dist6_angacc: %1.1f - "
-            "DistTW100: %1.1f - "
-            "speed: %1.1f - "
+    if(NUMBER_OF_FEATURES == 12U)
+        sprintf(pchTemp, "Values - "
+                "TS_nbrs:0to3: %f - "
+                "TS_nbrs:3to6: %f - "
+                "TW450_dist0to6_angacc: %1.1f - "
+                "TW450_dist6_angacc: %1.1f - "
+                "DistTW100: %1.1f - "
+                "speed: %1.1f - "
 
-            "nbrs:0to3: %1.1f - "
-            "nbrs:3to6: %1.1f - "
-            "TW450_dist0to6_angvel: %1.1f - "
-            "TW450_dist6_angvel: %1.1f - "
+                "nbrs:0to3: %1.1f - "
+                "nbrs:3to6: %1.1f - "
+                "TW450_dist0to6_angvel: %1.1f - "
+                "TW450_dist6_angvel: %1.1f - "
 
-            "acceleration: %1.1f - "
-            "angvelocity: %1.1f - "
-            "angacceleration: %1.1f - "
-            "relvelocity_mag: %1.1f - "
-            "relvelocity_dir: %1.1f - fv: %u",
+                "acceleration: %1.1f - "
+                "angvelocity: %1.1f - fv: %u",
 
-            m_pfFeatureValues[0],
-            m_pfFeatureValues[1],
-            m_pfFeatureValues[2],
-            m_pfFeatureValues[3],
-            m_pfFeatureValues[4],
-            m_pfFeatureValues[5],
+                m_pfFeatureValues[0],
+                m_pfFeatureValues[1],
+                m_pfFeatureValues[2],
+                m_pfFeatureValues[3],
+                m_pfFeatureValues[4],
+                m_pfFeatureValues[5],
 
-            m_pfFeatureValues[6],
-            m_pfFeatureValues[7],
-            m_pfFeatureValues[8],
-            m_pfFeatureValues[9],
-            m_pfFeatureValues[10],
-            m_pfFeatureValues[11],
+                m_pfFeatureValues[6],
+                m_pfFeatureValues[7],
+                m_pfFeatureValues[8],
+                m_pfFeatureValues[9],
+                m_pfFeatureValues[10],
+                m_pfFeatureValues[11],
+                m_unValue);
 
-            m_pfFeatureValues[12],
-            m_pfFeatureValues[13],
-            m_pfFeatureValues[14],
-            m_unValue);
+
+
+    if(NUMBER_OF_FEATURES == 15U)
+        sprintf(pchTemp, "Values - "
+                "TS_nbrs:0to3: %f - "
+                "TS_nbrs:3to6: %f - "
+                "TW450_dist0to6_angacc: %1.1f - "
+                "TW450_dist6_angacc: %1.1f - "
+                "DistTW100: %1.1f - "
+                "speed: %1.1f - "
+
+                "nbrs:0to3: %1.1f - "
+                "nbrs:3to6: %1.1f - "
+                "TW450_dist0to6_angvel: %1.1f - "
+                "TW450_dist6_angvel: %1.1f - "
+
+                "acceleration: %1.1f - "
+                "angvelocity: %1.1f - "
+                "angacceleration: %1.1f - "
+                "relvelocity_mag: %1.1f - "
+                "relvelocity_dir: %1.1f - fv: %u",
+
+                m_pfFeatureValues[0],
+                m_pfFeatureValues[1],
+                m_pfFeatureValues[2],
+                m_pfFeatureValues[3],
+                m_pfFeatureValues[4],
+                m_pfFeatureValues[5],
+
+                m_pfFeatureValues[6],
+                m_pfFeatureValues[7],
+                m_pfFeatureValues[8],
+                m_pfFeatureValues[9],
+                m_pfFeatureValues[10],
+                m_pfFeatureValues[11],
+
+                m_pfFeatureValues[12],
+                m_pfFeatureValues[13],
+                m_pfFeatureValues[14],
+                m_unValue);
 
     return string(pchTemp);
 }

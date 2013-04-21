@@ -30,6 +30,7 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
 
     m_fResponseRange              = pc_arguments->GetArgumentAsDoubleOr("responserange", m_fFVSenseRange);
     m_uSelectedNumNearestNbrs     = pc_arguments->GetArgumentAsIntOr("selectnumnearestnbrs", 10);
+    m_uNumVotingNbrs              = pc_arguments->GetArgumentAsIntOr("numvotingnbrs", 10);
 
 
     if(pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
@@ -37,11 +38,13 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
                "featuresenserange=#.#         Range based on which features are computed  [%f]\n"
                "responserange=#.#             Range at which a robot \"reponds\" to other features [%f]\n"
                "selectnumnearestnbrs=#        The number of nearest neighbours for FV sensing and T-cell diffusion (makes fvsenserange redundant) [%d]\n"
+               "numvotingnbrs=#               The number of nearest neighbours for voting an agent abnormal) [%d]\n"
                ,
                m_fFVSenseRange,
                CFeatureVector::FEATURE_RANGE,
                m_fResponseRange,
-               m_uSelectedNumNearestNbrs
+               m_uSelectedNumNearestNbrs,
+               m_uNumVotingNbrs
                );
 
 
@@ -51,6 +54,10 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
 //    {
 //        m_pbMostWantedList[i] = 0;
 //    }
+
+    m_bRobotDeactivated = false;
+    m_iDEactivationTime = -1;
+    m_unConseqDetectedFaulty = 0;
 
     m_uNumberFloatingPtOperations = 0;
 }
@@ -428,7 +435,7 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
 
     // 1-11 because agent at index 0 is ourselves:
     bool m_battackeragentlog=true, m_btolerateragentlog=true;
-    for (unsigned int nbrs = 1; nbrs < m_uSelectedNumNearestNbrs+1; nbrs++)
+    for (unsigned int nbrs = 1; nbrs < m_uNumVotingNbrs+1; nbrs++)
     {
         CRobotAgentOptimised* pcRobot         = (CRobotAgentOptimised*) tSortedAgents[nbrs];
 
@@ -476,6 +483,20 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
             //float* FeatureVectorsSensed;
             //FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
             PrintDecidingAgentDetails(m_pcFeatureVector, pcRobot);
+        }
+    }
+
+    if(!m_bRobotDeactivated)
+    {
+        if((*pun_number_of_attackers) > (*pun_number_of_toleraters))
+            m_unConseqDetectedFaulty++; // incremented faulted counter
+        else if((*pun_number_of_attackers) <= (*pun_number_of_toleraters))
+            m_unConseqDetectedFaulty=0; // reset the counter
+
+        if(m_unConseqDetectedFaulty > DEACTIVATIONTHRESHOLD)
+        {
+            m_bRobotDeactivated = true;
+            m_iDEactivationTime = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
         }
     }
 }
