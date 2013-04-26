@@ -106,6 +106,9 @@ public:
     virtual inline bool GetRobotDeactivationState()
         { return m_bRobotDeactivated;}
 
+    virtual inline int GetRobotDeactivationTime()
+        { return m_iDEactivationTime;}
+
 protected:
     virtual double CountWeightsInAgentListList(TAgentListList* ptlist_agent_list_list, double f_range);
 

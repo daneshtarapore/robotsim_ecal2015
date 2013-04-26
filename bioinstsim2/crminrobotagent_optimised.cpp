@@ -3,14 +3,22 @@
 /******************************************************************************/
 /******************************************************************************/
 
+#define CELLLOWERBOUND 1e-3 //todo: set as percentage instead of absolute value
+// note: could result in euler-huen diff at 0, for high error thresholds. In that case, lower this value
+
+#define CONJUGATION_OVERFLOW_LIMIT 1.0e-10  //todo: set as percentage instead of absolute value
+
+/******************************************************************************/
+/******************************************************************************/
+
 #define TCELL_UPPERLIMIT_STEPSIZE 500000//todo: could be set as a propotion of the INTEGRATION_TIME
 #define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
 
-#define CONJ_UPPERLIMIT_STEPSIZE 10.0
-#define CONJ_LOWERLIMIT_STEPSIZE 1.0e-6
+#define CONJ_UPPERLIMIT_STEPSIZE 10.0 //10.0
+#define CONJ_LOWERLIMIT_STEPSIZE 1.0e-6 //1.0e-6
 
 #define ERRORALLOWED_TCELL_STEPSIZE 1.0e-2 //todo: set as percentage instead of absolute value
-#define ERRORALLOWED_CONJ_STEPSIZE  1.0e-3 //todo: set as percentage instead of absolute value; else will introduce problems when m_fFVtoApcscaling is reduced, and dealing with density of conjugates in order of 1e-6
+#define ERRORALLOWED_CONJ_STEPSIZE  1.0e-3 //-3//todo: set as percentage instead of absolute value; else will introduce problems when m_fFVtoApcscaling is reduced, and dealing with density of conjugates in order of 1e-6
 
 
 //#define INTEGRATION_TIME  5.0e+7 // was 1.5e+7 on elephant01a  earlier 1.0e+7
@@ -21,7 +29,7 @@
 
 
 #define TCELL_CONVERGENCE  1.0e-2 //todo: set as percentage instead of absolute value. Already using the percentage values to break out of integration loop
-#define CONJ_CONVERGENCE   1.0e-3 //todo: set as percentage instead of absolute value
+#define CONJ_CONVERGENCE   1.0e-3 //-3//todo: set as percentage instead of absolute value
 
 
 /******************************************************************************/
@@ -35,27 +43,34 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
     m_fWeight         = 1.0;
     static bool bHelpDisplayed = false;
 
-    CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 4);
+    CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 6);
     seedE = m_crmArguments->GetArgumentAsDoubleOr("seedE", 10.0);  // : Density of effector cells
     seedR = m_crmArguments->GetArgumentAsDoubleOr("seedR", 10.0);  // : Density of regulatory cells
     kon   = m_crmArguments->GetArgumentAsDoubleOr("kon", .1);   // : Conjugation rate
     koff  = m_crmArguments->GetArgumentAsDoubleOr("koff", .1);  // : Dissociation rate
     kpe   = m_crmArguments->GetArgumentAsDoubleOr("kpe", 1e-3);   // : Proliferation rate for effector cells
-    kde   = m_crmArguments->GetArgumentAsDoubleOr("kde", 1e-6);   // : Death rate for effector cells
-    kpr   = m_crmArguments->GetArgumentAsDoubleOr("kpr", 0.5e-3);//0.6e-2   // : Proliferation rate for regulatory cells
-    kdr   = m_crmArguments->GetArgumentAsDoubleOr("kdr", 1e-6);   // : Death rate for regulatory cells
+    kde   = m_crmArguments->GetArgumentAsDoubleOr("kde", 1e-6); //1e-6  // : Death rate for effector cells
+    kpr   = m_crmArguments->GetArgumentAsDoubleOr("kpr", 0.7e-3);//0.7e-3   // : Proliferation rate for regulatory cells
+    kdr   = m_crmArguments->GetArgumentAsDoubleOr("kdr", 1e-6); //1e-6  // : Death rate for regulatory cells
 
     m_fTryExchangeProbability = m_crmArguments->GetArgumentAsDoubleOr("exchangeprob", 0.0);
     // is now set based on characteristics of robot
     //m_fExchangeRange          = m_crmArguments->GetArgumentAsDoubleOr("exchangerange", 2.0);
 
-    se                        = m_crmArguments->GetArgumentAsDoubleOr("sourceE", seedE); //1.75  // Source density of E cell generation
-    sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourceR", seedR); //1.75  // Source density of R cell generation
+    se                        = m_crmArguments->GetArgumentAsDoubleOr("sourceE", seedE); // Source density of E cell generation
+    sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourceR", seedR); // Source density of R cell generation
 
-    m_fcross_affinity         = m_crmArguments->GetArgumentAsDoubleOr("cross-affinity", 0.4);
+    m_fcross_affinity         = m_crmArguments->GetArgumentAsDoubleOr("cross-affinity", 0.15);
 
-    m_fFVtoApcscaling         = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling", 1.0e-3);
-    m_fIntegrationTime        = m_crmArguments->GetArgumentAsDoubleOr("integrationtime", 5.0e+7);
+    m_fApcscalingtype         = m_crmArguments->GetArgumentAsIntOr("fvapcscaling_LinearOrExp", 0); //0: linear, 1: exp
+    // linear scaling
+    m_fFVtoApcscaling         = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling", 2.0e-3);
+    // exp scaling
+    m_fFVtoApcscaling_expbase = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling_expbase",0.001);
+    m_fFVtoApcscaling_exprate = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling_exprate", 0.95);
+
+    m_fIntegrationTime        = m_crmArguments->GetArgumentAsDoubleOr("integrationtime", 5.0e+7); // 5.0e+7
+    m_fStartExpIntegrationTime= m_crmArguments->GetArgumentAsDoubleOr("startexptintegrationtime", 5.0e+7); // 5.0e+7
     m_uSeedfvHdRange          = m_crmArguments->GetArgumentAsIntOr("seedfv-hd-range",
                                                                    CFeatureVector::NUMBER_OF_FEATURES);
 
@@ -78,9 +93,16 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                "Source_E=#.#                  Source density of E cell generation [%f]\n"
                "Source_R=#.#                  Source density of R cell generation [%f]\n"
                "cross-affinity=#.#            Level of cross-affinity (>0)     [%2.5f]\n"
-               "fvapcscaling=#.#              Scaling parameter of [FV] to [APC] [%e]\n"
+
+               "fvapcscalingtype=#            Scaling type (0: linear, and 1: exponential) [%d]\n"
+               "fvapcscaling=#.#              Linear scaling parameter of [FV] to [APC] [%e]\n"
+               "fvapcscaling_expbase=#.#      Exponential scaling parameter of [FV] to [APC] [%f]\n"
+               "fvapcscaling_exprate=#.#      Exponential scaling parameter of [FV] to [APC] [%f]\n"
+
                "integrationtime=#.#           CRM integration time [%e]\n"
-               "seedfv-hd-range=#             Diversity of seed t-cell population\n",
+               "startexptintegrationtime=#.#  CRM integration time at start of experiment [%e]\n"
+
+               "seedfv-hd-range=#             Diversity of seed t-cell population [%d]\n",
                CFeatureVector::NUMBER_OF_FEATURES,
                seedE,
                seedR,
@@ -94,8 +116,10 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                se,
                sr,
                m_fcross_affinity,
+               m_fApcscalingtype,
                m_fFVtoApcscaling,
-               m_fIntegrationTime,
+               m_fFVtoApcscaling_expbase, m_fFVtoApcscaling_exprate,
+               m_fIntegrationTime, m_fStartExpIntegrationTime,
                m_uSeedfvHdRange);
         bHelpDisplayed = true;
     }
@@ -169,6 +193,15 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
     m_fTCELL_UPPERLIMIT_STEPSIZE = TCELL_UPPERLIMIT_STEPSIZE;
     m_fTCELL_LOWERLIMIT_STEPSIZE = TCELL_LOWERLIMIT_STEPSIZE;
+
+
+    m_fERRORALLOWED_TCELL_STEPSIZE = ERRORALLOWED_TCELL_STEPSIZE;
+    m_fERRORALLOWED_CONJ_STEPSIZE  = ERRORALLOWED_CONJ_STEPSIZE; //-3//todo: set as percentage instead of absolute value; else will introduce problems when m_fFVtoApcscaling is reduced, and dealing with density of conjugates in order of 1e-6
+
+    m_fTCELL_CONVERGENCE = TCELL_CONVERGENCE; //todo: set as percentage instead of absolute value. Already using the percentage values to break out of integration loop
+    m_fCONJ_CONVERGENCE  = CONJ_CONVERGENCE; //-3//todo: set as percentage instead of absolute value
+
+
 
     TcellNumericalIntegration_RK2();
 
@@ -346,7 +379,15 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
     bool b_tcelldeath = false;
     list<structTcell>::iterator it_tcells;
 
-    while(integration_t < m_fIntegrationTime)
+    double integrationtimeofcrm;
+
+    if(CSimulator::GetInstance()->GetSimulationStepNumber() < MODELSTARTTIME + 10)
+        integrationtimeofcrm = m_fStartExpIntegrationTime;
+    else
+        integrationtimeofcrm = m_fIntegrationTime;
+
+
+    while(integration_t < integrationtimeofcrm)
     {
 //        if(this->robotAgent->GetIdentification() == 80 && CSimulator::GetInstance()->GetSimulationStepNumber() == 1910)
 //        {
@@ -444,7 +485,10 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
             if(b_prevdiff0occurance && step_h == m_fTCELL_LOWERLIMIT_STEPSIZE)
             {
                 printf("\n The T-cell population solution is stalled");
-                exit(-1);
+                m_fERRORALLOWED_TCELL_STEPSIZE = m_fERRORALLOWED_TCELL_STEPSIZE/10.0;
+                m_fTCELL_CONVERGENCE = m_fTCELL_CONVERGENCE / 10.0;
+                b_prevdiff0occurance = false;
+                continue;
             }
             step_h = step_h / 2.0;
 
@@ -525,7 +569,8 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 
             if(((*it_tcells).fE + (*it_tcells).fR) <= CELLLOWERBOUND)
             {
-                b_tcelldeath = true;
+                if(FDMODELTYPE == CRM_TCELLSINEXCESS)
+                    b_tcelldeath = true;
                 MarkConjugatesOfDeadTcell(&it_tcells); //deleted later on when computing free stites and cells
                 (*it_tcells).listPtrstoConjugatesofTcell.clear();
                 it_tcells = listTcells.erase(it_tcells);
@@ -629,7 +674,30 @@ void CRMinRobotAgentOptimised::ConjugatesQSS(bool bResetConjugates, TcellIntegra
 {
     list<structAPC>::iterator it_apcs; list<structConj>::iterator it_conjs;
 
-    if(bResetConjugates) // conjugates are reset to 0 only when APC sub-population has changed.
+    // check if t-cell pop is lower than conjuagtes
+    for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
+    {
+        double fConjugatesOnAPC = 0.0;
+        it_conjs = (*it_apcs).listConjugatesonAPC.begin();
+        while(it_conjs != (*it_apcs).listConjugatesonAPC.end())
+        {
+            if((*it_conjs).deadconjugate) {
+                it_conjs = (*it_apcs).listConjugatesonAPC.erase(it_conjs); continue;
+            }
+
+            fConjugatesOnAPC += (*it_conjs).GetConjugate(CONJ); ++it_conjs;
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(1);
+#endif
+        }
+
+        if(fConjugatesOnAPC - (*it_apcs).fTotalSites  > CONJUGATION_OVERFLOW_LIMIT) {
+            bResetConjugates = true; //printf("\nfConjugatesOnAPC %f - (*it_apcs).fTotalSites %f\n",fConjugatesOnAPC,(*it_apcs).fTotalSites);
+            break; }
+    }
+
+
+    if(bResetConjugates) // conjugates are reset to 0 only when APC sub-population has changed, or if t-cell pop is lower than conjuagtes, if so reset
         for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
             for(it_conjs =  (*it_apcs).listConjugatesonAPC.begin();
                 it_conjs != (*it_apcs).listConjugatesonAPC.end(); ++it_conjs)
@@ -932,17 +1000,27 @@ void CRMinRobotAgentOptimised::Derivative(TcellIntegrationPhase TK)
         robotAgent->IncNumberFloatingPtOperations(1);
 #endif
 
-        for(it_conjptr = (*it_tcells).listPtrstoConjugatesofTcell.begin();
-            it_conjptr != (*it_tcells).listPtrstoConjugatesofTcell.end(); ++it_conjptr)
+        if(tmp_totalcells == 0.0) //t-cells at 0 (euler or huen - not final rk2 value)
         {
-            (*it_conjptr)->fEffectorConjugates  = ((*it_tcells).GetE(TK) / tmp_totalcells) *
-                                                 (*it_conjptr)->fConjugates;
-
-            (*it_conjptr)->fRegulatorConjugates = ((*it_tcells).GetR(TK) / tmp_totalcells) *
-                                                 (*it_conjptr)->fConjugates;
+            for(it_conjptr = (*it_tcells).listPtrstoConjugatesofTcell.begin();
+                it_conjptr != (*it_tcells).listPtrstoConjugatesofTcell.end(); ++it_conjptr)
+            {
+                (*it_conjptr)->fEffectorConjugates  = 0.0; (*it_conjptr)->fRegulatorConjugates = 0.0;
+            }
+        }
+        else
+        {
+            for(it_conjptr = (*it_tcells).listPtrstoConjugatesofTcell.begin();
+                it_conjptr != (*it_tcells).listPtrstoConjugatesofTcell.end(); ++it_conjptr)
+            {
+                (*it_conjptr)->fEffectorConjugates  = ((*it_tcells).GetE(TK) / tmp_totalcells) *
+                                                     (*it_conjptr)->fConjugates;
+                (*it_conjptr)->fRegulatorConjugates = ((*it_tcells).GetR(TK) / tmp_totalcells) *
+                                                     (*it_conjptr)->fConjugates;
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(4);
+                robotAgent->IncNumberFloatingPtOperations(4);
 #endif
+            }
         }
     }
 
@@ -1108,9 +1186,27 @@ void CRMinRobotAgentOptimised::FreeTcellsAndAvailableAPCSites(TcellIntegrationPh
         }
         (*it_tcells).fFreeTcells = (*it_tcells).GetE(TK) + (*it_tcells).GetR(TK) -
                                    fConjugatesOfTcell;
-        assert(-((*it_tcells).fFreeTcells) <= CONJUGATION_OVERFLOW_LIMIT);
+
+        //we scale down the conjugates factored based on their initial values if the error is not too high. the conjugation error is ERRORALLOWED_CONJ_STEPSIZE which is orders of magniture less than the CONJUGATION_OVERFLOW_LIMIT
+        if(-((*it_tcells).fFreeTcells) > CONJUGATION_OVERFLOW_LIMIT)
+        {
+            for(it_conjptr = (*it_tcells).listPtrstoConjugatesofTcell.begin();
+                it_conjptr != (*it_tcells).listPtrstoConjugatesofTcell.end(); ++it_conjptr)
+            {
+                (*it_conjptr)->SetConjugate(CONJK,
+                                            (*it_conjptr)->GetConjugate(CONJK)/fConjugatesOfTcell *
+                                            ((*it_tcells).GetE(TK) + (*it_tcells).GetR(TK)));
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(2);
+                robotAgent->IncNumberFloatingPtOperations(3);
+#endif
+            }
+        }
+        else
+            assert(-((*it_tcells).fFreeTcells) <= ERRORALLOWED_CONJ_STEPSIZE);
+
+
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(2);
 #endif
     }
 }
@@ -1288,7 +1384,12 @@ void CRMinRobotAgentOptimised::UpdateAPCList()
     {
         if((*it_fvsensed).uFV == (*it_apcs).uFV)
         {
-            (*it_apcs).fAPC = (*it_fvsensed).fRobots * m_fFVtoApcscaling;
+            if(m_fApcscalingtype == 0)
+                (*it_apcs).fAPC = (*it_fvsensed).fRobots * m_fFVtoApcscaling;
+            else // (*it_fvsensed).fRobots >= 0
+                (*it_apcs).fAPC = m_fFVtoApcscaling_expbase * exp(((*it_fvsensed).fRobots - 1) *
+                                                                  m_fFVtoApcscaling_exprate);
+
             (*it_apcs).fTotalSites = (*it_apcs).fAPC * (double)sites;
 
             (*it_apcs).fEffectorConjugatesPerAPC = 0.0; (*it_apcs).fRegulatorConjugatesPerAPC = 0.0;
@@ -1296,20 +1397,26 @@ void CRMinRobotAgentOptimised::UpdateAPCList()
             ++it_apcs; ++it_fvsensed;
 
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(2);
+            robotAgent->IncNumberFloatingPtOperations(2 + m_fApcscalingtype*2);
 #endif
             continue;
         }
 
         if((*it_apcs).uFV > (*it_fvsensed).uFV)
         {
-            listAPCs.insert(it_apcs, structAPC((*it_fvsensed).uFV,
-                                               (*it_fvsensed).fRobots * m_fFVtoApcscaling,
-                                               (double)sites));
+            if(m_fApcscalingtype == 0)
+                listAPCs.insert(it_apcs, structAPC((*it_fvsensed).uFV,
+                                                   (*it_fvsensed).fRobots * m_fFVtoApcscaling,
+                                                   (double)sites));
+            else // (*it_fvsensed).fRobots >= 1
+                listAPCs.insert(it_apcs, structAPC((*it_fvsensed).uFV,
+                                                   m_fFVtoApcscaling_expbase * exp(((*it_fvsensed).fRobots - 1)*
+                                                                                    m_fFVtoApcscaling_exprate),
+                                                   (double)sites));
             ++it_fvsensed;
 
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(2); // also a multiplication of apcs*sites in constructor of structAPC
+            robotAgent->IncNumberFloatingPtOperations(2 + m_fApcscalingtype*2); // also a multiplication of apcs*sites in constructor of structAPC
 #endif
             continue;
         }
@@ -1322,10 +1429,16 @@ void CRMinRobotAgentOptimised::UpdateAPCList()
         it_apcs = listAPCs.erase(it_apcs);}
 
     while(it_fvsensed != fvsensed->end()) {
-        listAPCs.push_back(structAPC((*it_fvsensed).uFV,
-                                     (*it_fvsensed).fRobots * m_fFVtoApcscaling, (double)sites));
+        if(m_fApcscalingtype == 0)
+            listAPCs.push_back(structAPC((*it_fvsensed).uFV,
+                                         (*it_fvsensed).fRobots * m_fFVtoApcscaling, (double)sites));
+        else // (*it_fvsensed).fRobots >= 1
+            listAPCs.push_back(structAPC((*it_fvsensed).uFV,
+                                         m_fFVtoApcscaling_expbase * exp(((*it_fvsensed).fRobots - 1)*
+                                                                          m_fFVtoApcscaling_exprate),
+                                         (double)sites));
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(2);  // also a multiplication of apcs*sites in constructor of structAPC
+            robotAgent->IncNumberFloatingPtOperations(2 + m_fApcscalingtype*2);  // also a multiplication of apcs*sites in constructor of structAPC
 #endif
         ++it_fvsensed; }
 }

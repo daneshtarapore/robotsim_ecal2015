@@ -120,7 +120,7 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
     m_unNumAbnormalAgents    = pc_experiment_arguments->GetArgumentAsIntOr("numabnormalagents", 1);
     m_iSwitchNormalBehavior  = pc_experiment_arguments->GetArgumentAsIntOr("switchnormalbehav", 0);
     m_unChaseAbnormalAgents       = pc_experiment_arguments->GetArgumentAsIntOr("chaseabnormalagents", 0);
-    m_fSpreadProbability     = pc_experiment_arguments->GetArgumentAsDoubleOr("spreadprobability", 0.1);
+    m_fSpreadProbability     = pc_experiment_arguments->GetArgumentAsDoubleOr("spreadprobability", 0.0);
     m_unSpreadPeriod         = pc_experiment_arguments->GetArgumentAsIntOr("spreadperiod", 0);
 
 
@@ -382,24 +382,29 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     }
 
     //TODO: DANESH - {DONE}
-    // The code below is an example of agents attacking the misbehaving agent. 
+    // The code below is an example of agents attacking the misbehaving agent
     // The code should be made more general so that any agent detected as
     // behaving abnormally is attacked. 
     if (un_step_number > MODELSTARTTIME && m_unChaseAbnormalAgents != 0)
     {
-        if(m_pcMisbehaveAgent[0]->GetRobotDeactivationState())
-            ChaseAndCaptureAgent(m_pcMisbehaveAgent[0], 5);
+        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
+        {
+#ifdef OPTIMISEDCRM
+            if(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
+                ChaseAndCaptureAgent(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex]), 5);
+#else
+            if(((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
+                ChaseAndCaptureAgent(((CRobotAgent*)m_ppcListAgentsCreated[agentindex]), 5);
+#endif
+        }
     }
 
     //TODO: DANESH
     // The code below is spreading the errorbehavior  
-    if (m_unSpreadPeriod > 0) 
-    {
-        if ((un_step_number - 1) % m_unSpreadPeriod == 0)
-        {
-            SpreadBehavior(m_eerrorbehavType, m_fSpreadProbability);
-        }
-    }
+    if (un_step_number > MODELSTARTTIME && un_step_number >= m_unMisbehaveStep){
+        if (m_unSpreadPeriod > 0) {
+            if ((un_step_number - 1) % m_unSpreadPeriod == 0) {
+                SpreadBehavior(m_eerrorbehavType, m_fSpreadProbability); }}}
 
 
     if (un_step_number == m_unMisbehaveStep)
@@ -422,12 +427,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unAttackers   = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
-        bool dbgflag;
-#if defined(DEBUGGLAG)
-        dbgflag = true;
-#else
-        dbgflag = false;
-#endif
+        bool dbgflag = true;
 
         m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);//true
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
@@ -446,12 +446,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             unsigned int unAttackers  = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
-            bool dbgflag;
-#if defined(DEBUGGLAG)
-            dbgflag = true;
-#else
-            dbgflag = false;
-#endif
+            bool dbgflag = true;
 
             m_pcNormalAgentToTrack->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
             printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
@@ -523,6 +518,28 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         printf("\n");
     }
 #endif
+
+    if(m_unChaseAbnormalAgents != 0 && (un_step_number + 1 == CSimulator::GetInstance()->GetNumberOfCycles()))
+    {
+        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
+        {
+#ifdef OPTIMISEDCRM
+            if(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
+                printf("\nChaselogs. Agent: %d DeactivationState: 1 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
+            else
+                printf("\nChaselogs. Agent: %d DeactivationState: 0 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
+#else
+            if(((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
+                printf("\nChaselogs. Agent: %d DeactivationState: 1 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
+            else
+                printf("\nChaselogs. Agent: %d DeactivationState: 0 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
+#endif
+        }
+    }
 }
 
 /******************************************************************************/
