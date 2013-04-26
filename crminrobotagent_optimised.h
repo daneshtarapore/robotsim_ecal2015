@@ -16,14 +16,6 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#define CELLLOWERBOUND 1e-3 //todo: set as percentage instead of absolute value
-// note: could result in euler-huen diff at 0, for high error thresholds. In that case, lower this value
-
-#define CONJUGATION_OVERFLOW_LIMIT 1.0e-15  //todo: set as percentage instead of absolute value
-
-/******************************************************************************/
-/******************************************************************************/
-
 using namespace std;
 
 /******************************************************************************/
@@ -127,9 +119,11 @@ protected:
     double se;    // Density of new effector cells added at each simulation step
     double sr;    // Density of new regulatory cells added at each simulation step
     unsigned int sites; // Number of binding sites on each APC
-    double m_fIntegrationTime;
+    double m_fIntegrationTime, m_fStartExpIntegrationTime;
 
     double m_fTCELL_UPPERLIMIT_STEPSIZE, m_fTCELL_LOWERLIMIT_STEPSIZE;
+    double m_fERRORALLOWED_TCELL_STEPSIZE, m_fERRORALLOWED_CONJ_STEPSIZE;
+    double m_fTCELL_CONVERGENCE, m_fCONJ_CONVERGENCE; //-3//todo: set as percentage instead of absolute value
 
     // For communication of cells between robots
     double m_fTryExchangeProbability; // Probability of trying to exchange cells with other robots
@@ -188,7 +182,9 @@ protected:
 
 
     double          m_fWeight;
-    double          m_fFVtoApcscaling;
+    int             m_fApcscalingtype; //0: linear, 1: exp
+    double          m_fFVtoApcscaling; //linear scaling - multiplicative factor
+    double          m_fFVtoApcscaling_exprate, m_fFVtoApcscaling_expbase; //exp scaling - rate, and base value
 
     bool            m_bConvergenceFlag;
     double          m_dconvergence_error;

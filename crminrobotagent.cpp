@@ -6,6 +6,14 @@
 /******************************************************************************/
 /******************************************************************************/
 
+#define CELLLOWERBOUND 1e-3 //todo: set as percentage instead of absolute value
+// note: could result in euler-huen diff at 0, for high error thresholds. In that case, lower this value
+
+#define CONJUGATION_OVERFLOW_LIMIT 1.0e-15  //todo: set as percentage instead of absolute value
+
+/******************************************************************************/
+/******************************************************************************/
+
 #define TCELL_UPPERLIMIT_STEPSIZE 500000.0 //todo: could be set as a propotion of the INTEGRATION_TIME
 #define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
 
