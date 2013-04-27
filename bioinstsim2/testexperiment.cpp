@@ -390,8 +390,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
         {
 #ifdef OPTIMISEDCRM
-            if(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
-                ChaseAndCaptureAgent(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex]), 5);
+//            if(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
+//                ChaseAndCaptureAgent(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex]), 5);
 #else
             if(((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
                 ChaseAndCaptureAgent(((CRobotAgent*)m_ppcListAgentsCreated[agentindex]), 5);
