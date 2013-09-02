@@ -51,7 +51,7 @@ void ThresholdinRobotAgentOptimised::UpdateState()
 
     while(it_fvsensed != fvsensed->end())
     {
-        if((*it_fvsensed).uFV <= m_uThreshold)
+        if((*it_fvsensed).fRobots <= m_uThreshold)
             robotAgent->SetMostWantedList(&it_fvsensed, 1); //Attack
         else
             robotAgent->SetMostWantedList(&it_fvsensed, 2); //Tolerate
