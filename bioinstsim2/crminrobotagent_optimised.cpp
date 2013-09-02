@@ -11,10 +11,10 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#define TCELL_UPPERLIMIT_STEPSIZE 500000//todo: could be set as a propotion of the INTEGRATION_TIME
+#define TCELL_UPPERLIMIT_STEPSIZE 500000.0 //10.0 //to give you better control of integration step //500000//todo: could be set as a propotion of the INTEGRATION_TIME
 #define TCELL_LOWERLIMIT_STEPSIZE 1.0e-6
 
-#define CONJ_UPPERLIMIT_STEPSIZE 10.0 //10.0
+#define CONJ_UPPERLIMIT_STEPSIZE 10 //10.0
 #define CONJ_LOWERLIMIT_STEPSIZE 1.0e-6 //1.0e-6
 
 #define ERRORALLOWED_TCELL_STEPSIZE 1.0e-2 //todo: set as percentage instead of absolute value
@@ -60,6 +60,9 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
     se                        = m_crmArguments->GetArgumentAsDoubleOr("sourceE", seedE); // Source density of E cell generation
     sr                        = m_crmArguments->GetArgumentAsDoubleOr("sourceR", seedR); // Source density of R cell generation
 
+    se_rate                   = m_crmArguments->GetArgumentAsDoubleOr("sourcerateE", 0.0); // Source density of E cell generation
+    sr_rate                   = m_crmArguments->GetArgumentAsDoubleOr("sourcerateR", 0.0); // Source density of R cell generation
+
     m_fcross_affinity         = m_crmArguments->GetArgumentAsDoubleOr("cross-affinity", 0.15);
 
     m_fApcscalingtype         = m_crmArguments->GetArgumentAsIntOr("fvapcscaling_LinearOrExp", 0); //0: linear, 1: exp
@@ -69,8 +72,11 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
     m_fFVtoApcscaling_expbase = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling_expbase",0.001);
     m_fFVtoApcscaling_exprate = m_crmArguments->GetArgumentAsDoubleOr("fvapcscaling_exprate", 0.95);
 
-    m_fIntegrationTime        = m_crmArguments->GetArgumentAsDoubleOr("integrationtime", 5.0e+7); // 5.0e+7
+    m_uPersistenceThreshold   = m_crmArguments->GetArgumentAsIntOr("perst_th", 0);
+
     m_fStartExpIntegrationTime= m_crmArguments->GetArgumentAsDoubleOr("startexptintegrationtime", 5.0e+7); // 5.0e+7
+    m_fIntegrationTime        = m_crmArguments->GetArgumentAsDoubleOr("integrationtime", m_fStartExpIntegrationTime); // 5.0e+7
+    
     m_uSeedfvHdRange          = m_crmArguments->GetArgumentAsIntOr("seedfv-hd-range",
                                                                    CFeatureVector::NUMBER_OF_FEATURES);
 
@@ -90,8 +96,11 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                "kpr=#.#                       Proliferation rate for regulatory cells [%f]\n"
                "kdr=#.#                       Death rate for regulatory cells [%f]\n"
                "exchangeprob=#.#              Probability of trying to exchange cells with other robots [%f]\n"
-               "Source_E=#.#                  Source density of E cell generation [%f]\n"
-               "Source_R=#.#                  Source density of R cell generation [%f]\n"
+               "Source_E=#.#                  Source density of E cells per simulation time-step [%f]\n"
+               "Source_R=#.#                  Source density of R cells per simulation time-step [%f]\n"
+               "SourceRate_E=#.#              Influx rate of new E cells [%f]\n"
+               "SourceRate_R=#.#              Influx rate of new R cells [%f]\n"
+
                "cross-affinity=#.#            Level of cross-affinity (>0)     [%2.5f]\n"
 
                "fvapcscalingtype=#            Scaling type (0: linear, and 1: exponential) [%d]\n"
@@ -99,7 +108,8 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                "fvapcscaling_expbase=#.#      Exponential scaling parameter of [FV] to [APC] [%f]\n"
                "fvapcscaling_exprate=#.#      Exponential scaling parameter of [FV] to [APC] [%f]\n"
 
-               "integrationtime=#.#           CRM integration time [%e]\n"
+               "perst_th=#                    Persistence threshold [%d]\n" 
+	       "integrationtime=#.#           CRM integration time [%e]\n"
                "startexptintegrationtime=#.#  CRM integration time at start of experiment [%e]\n"
 
                "seedfv-hd-range=#             Diversity of seed t-cell population [%d]\n",
@@ -115,11 +125,13 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                m_fTryExchangeProbability,
                se,
                sr,
+               se_rate,
+               sr_rate,
                m_fcross_affinity,
                m_fApcscalingtype,
                m_fFVtoApcscaling,
                m_fFVtoApcscaling_expbase, m_fFVtoApcscaling_exprate,
-               m_fIntegrationTime, m_fStartExpIntegrationTime,
+               m_uPersistenceThreshold, m_fIntegrationTime, m_fStartExpIntegrationTime,
                m_uSeedfvHdRange);
         bHelpDisplayed = true;
     }
@@ -196,11 +208,8 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
 
     m_fERRORALLOWED_TCELL_STEPSIZE = ERRORALLOWED_TCELL_STEPSIZE;
-    m_fERRORALLOWED_CONJ_STEPSIZE  = ERRORALLOWED_CONJ_STEPSIZE; //-3//todo: set as percentage instead of absolute value; else will introduce problems when m_fFVtoApcscaling is reduced, and dealing with density of conjugates in order of 1e-6
 
     m_fTCELL_CONVERGENCE = TCELL_CONVERGENCE; //todo: set as percentage instead of absolute value. Already using the percentage values to break out of integration loop
-    m_fCONJ_CONVERGENCE  = CONJ_CONVERGENCE; //-3//todo: set as percentage instead of absolute value
-
 
 
     TcellNumericalIntegration_RK2();
@@ -209,8 +218,8 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
     //PrintCRMDetails(PrntRobotId);
 #endif
 
-    if(m_fTryExchangeProbability > 0.0)
-        DiffuseTcells();
+    //if(m_fTryExchangeProbability > 0.0)
+      DiffuseTcells(); /* We want the same sequence of random numbers generated, even when m_fTryExchangeProbability = 0.0 */
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
     if(this->robotAgent->GetIdentification()==1 || this->robotAgent->GetIdentification()==15)
@@ -256,6 +265,9 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
     // select the robot from one of the 10 nearest neighbours - but in these expts. comm does not seem to be needed (comment: we dont know this for sure)
     CRobotAgentOptimised* pcRemoteRobotAgent =
             robotAgent->GetRandomRobotWithWeights(robotAgent->GetSelectedNumNearestNbrs());
+
+    if(m_fTryExchangeProbability == 0.0) /* We want the same sequence of random numbers generated, even when m_fTryExchangeProbability = 0.0 */
+        return;	
 
     if(pcRemoteRobotAgent == NULL) {
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
@@ -306,6 +318,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
             listTcells.insert(it_tcells, structTcell((*it_remotetcells).uFV,
                                                      (*it_remotetcells).fE * m_fTryExchangeProbability,
                                                      (*it_remotetcells).fR * m_fTryExchangeProbability,
+                                                     (*it_remotetcells).uHistory,
                                                      NULL));
             (*it_remotetcells).fE -= (*it_remotetcells).fE * m_fTryExchangeProbability;
             (*it_remotetcells).fR -= (*it_remotetcells).fR * m_fTryExchangeProbability;
@@ -319,6 +332,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
             listRemoteTcells->insert(it_remotetcells, structTcell((*it_tcells).uFV,
                                                       (*it_tcells).fE * m_fTryExchangeProbability,
                                                       (*it_tcells).fR * m_fTryExchangeProbability,
+                                                      (*it_tcells).uHistory,
                                                       NULL));
             (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
             (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
@@ -333,6 +347,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
         listRemoteTcells->push_back(structTcell((*it_tcells).uFV,
                                                (*it_tcells).fE * m_fTryExchangeProbability,
                                                (*it_tcells).fR * m_fTryExchangeProbability,
+                                               (*it_tcells).uHistory,
                                                NULL));
         (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
         (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
@@ -349,6 +364,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
         listTcells.push_back(structTcell((*it_remotetcells).uFV,
                                          (*it_remotetcells).fE * m_fTryExchangeProbability,
                                          (*it_remotetcells).fR * m_fTryExchangeProbability,
+                                         (*it_remotetcells).uHistory,
                                          NULL));
         (*it_remotetcells).fE -= (*it_remotetcells).fE * m_fTryExchangeProbability;
         (*it_remotetcells).fR -= (*it_remotetcells).fR * m_fTryExchangeProbability;
@@ -369,6 +385,41 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
 /******************************************************************************/
 /******************************************************************************/
 
+double CRMinRobotAgentOptimised::GetIntegrationTime_StepFunction()
+{
+    unsigned long int persistencethreshold = (unsigned long int)m_uPersistenceThreshold;
+
+    if(persistencethreshold == 0U)
+    {
+	//printf("\n Returned integration time is %f",m_fIntegrationTime);
+	return m_fIntegrationTime;	
+    }
+
+    //unsigned long int minhistory = 0; unsigned int fv;
+    for(list<structTcell>::iterator it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
+    {
+        //if (((*it_tcells).uHistory <= persistencethreshold) && (GetAPC((*it_tcells).uFV) > 0.0))  
+        if (((*it_tcells).uHistory > 0 && (*it_tcells).uHistory <= persistencethreshold) && (GetAPC((*it_tcells).uFV) > 0.0))  
+	{
+  	    //double reducedintegration_t = 1.0e+1;	
+  	    double reducedintegration_t = 0.0;	
+	    m_fTCELL_UPPERLIMIT_STEPSIZE = 10.0;
+	    return reducedintegration_t;
+            //minhistory = (*it_tcells).uHistory;
+            //fv         = (*it_tcells).uFV;      
+	}
+    }
+
+    /*if(minhistory < persistencethreshold)
+        return 1.0e+1;
+    else*/
+
+    return m_fIntegrationTime;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 // Numerical integration to compute lisTcells  members fE and fR to reflect listApcs member fAPC
 void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 {
@@ -381,11 +432,18 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 
     double integrationtimeofcrm;
 
-    if(CSimulator::GetInstance()->GetSimulationStepNumber() < MODELSTARTTIME + 10)
-        integrationtimeofcrm = m_fStartExpIntegrationTime;
-    else
-        integrationtimeofcrm = m_fIntegrationTime;
+    m_fTCELL_UPPERLIMIT_STEPSIZE = TCELL_UPPERLIMIT_STEPSIZE;
+    //if(CSimulator::GetInstance()->GetSimulationStepNumber() < 0)//MODELSTARTTIME + 10)
 
+    #ifdef DISABLE_PERSISTENCE_HACK
+	integrationtimeofcrm = m_fIntegrationTime;
+    #else
+    if(CSimulator::GetInstance()->GetSimulationStepNumber() < MODELSTARTTIME + 10)
+         { integrationtimeofcrm = m_fStartExpIntegrationTime; }
+    else {
+        integrationtimeofcrm = GetIntegrationTime_StepFunction();}
+    #endif
+ 	
 
     while(integration_t < integrationtimeofcrm)
     {
@@ -485,10 +543,20 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
             if(b_prevdiff0occurance && step_h == m_fTCELL_LOWERLIMIT_STEPSIZE)
             {
                 printf("\n The T-cell population solution is stalled");
-                m_fERRORALLOWED_TCELL_STEPSIZE = m_fERRORALLOWED_TCELL_STEPSIZE/10.0;
-                m_fTCELL_CONVERGENCE = m_fTCELL_CONVERGENCE / 10.0;
-                b_prevdiff0occurance = false;
-                continue;
+
+                if(m_fERRORALLOWED_TCELL_STEPSIZE <= 1.0e-10)
+                    break;
+                else
+                {
+                    m_fERRORALLOWED_TCELL_STEPSIZE = m_fERRORALLOWED_TCELL_STEPSIZE/10.0;
+                    m_fTCELL_CONVERGENCE = m_fTCELL_CONVERGENCE / 10.0;
+                    b_prevdiff0occurance = false;
+
+#ifdef FLOATINGPOINTOPERATIONS
+                robotAgent->IncNumberFloatingPtOperations(2);
+#endif
+                    continue;
+                }
             }
             step_h = step_h / 2.0;
 
@@ -592,6 +660,10 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
             UpdateConjugatesToTcellList();
 
             m_fTCELL_UPPERLIMIT_STEPSIZE = m_fTCELL_UPPERLIMIT_STEPSIZE/10.0;
+
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(1);
+#endif
             continue;
         }
 
@@ -606,6 +678,7 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
         robotAgent->IncNumberFloatingPtOperations(1);
 #endif
     }
+    //printf("\n\n The integration time is NOW %f",integration_t);	
 }
 
 /******************************************************************************/
@@ -1127,15 +1200,36 @@ void CRMinRobotAgentOptimised::ComputeNewDerivative(TcellIntegrationPhase TK)
 #ifdef FLOATINGPOINTOPERATIONS
             robotAgent->IncNumberFloatingPtOperations(18);
 #endif
-        }
+        }        
 
-        effector_incr  += - kde * (*it_tcells).GetE(TK);
-        regulator_incr += - kdr * (*it_tcells).GetR(TK);
+#ifndef SELECTIVE_TCELL_INFLUX_RATE
+        effector_incr  += se_rate - kde * (*it_tcells).GetE(TK);
+        regulator_incr += sr_rate - kdr * (*it_tcells).GetR(TK);
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(6);
+#endif
+#else
+
+        if(GetAPC((*it_tcells).uFV) == 0) //no apcs
+        {
+            effector_incr  += -kde * (*it_tcells).GetE(TK);
+            regulator_incr += -kdr * (*it_tcells).GetR(TK);
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(4);
+#endif
+        }
+        else
+        {
+            effector_incr  += se_rate - kde * (*it_tcells).GetE(TK);
+            regulator_incr += sr_rate - kdr * (*it_tcells).GetR(TK);
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(6);
+#endif
+        }
+#endif
 
         (*it_tcells).SetDelta(TK, effector_incr, regulator_incr);
-#ifdef FLOATINGPOINTOPERATIONS
-           robotAgent->IncNumberFloatingPtOperations(6);
-#endif
+
     }
 }
 
@@ -1267,10 +1361,16 @@ void CRMinRobotAgentOptimised::PrintTcellList(unsigned int id)
     list<structTcell>::iterator it_tcells;
     printf("\n===========R%d T cell list==============\n", robotAgent->GetIdentification());
     for(it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
-        printf("E[%d]=%e,R[%d]=%e (A=%f)   ", (*it_tcells).uFV, (*it_tcells).fE,
-                (*it_tcells).uFV, (*it_tcells).fR,
-                ((*it_tcells).ptrAPCWithAffinity1) == NULL ?
-                GetAPC((*it_tcells).uFV) : ((*it_tcells).ptrAPCWithAffinity1)->fAPC);
+        printf("E[%d]=%e,R[%d]=%e (A=%f) [History=%lu]  ", (*it_tcells).uFV, (*it_tcells).fE,
+                (*it_tcells).uFV, (*it_tcells).fR, GetAPC((*it_tcells).uFV), (*it_tcells).uHistory);
+
+    //!TODO: Solve the bug causing the below stmt in the printf function to print nonsensical A densities
+    //!TODO:  ((*it_tcells).ptrAPCWithAffinity1) == NULL ?
+    //            GetAPC((*it_tcells).uFV) : ((*it_tcells).ptrAPCWithAffinity1)->fAPC)
+//    printf("E[%d]=%e,R[%d]=%e (A=%f)   ", (*it_tcells).uFV, (*it_tcells).fE,
+//            (*it_tcells).uFV, (*it_tcells).fR,
+//            ((*it_tcells).ptrAPCWithAffinity1) == NULL ?
+//            GetAPC((*it_tcells).uFV) : ((*it_tcells).ptrAPCWithAffinity1)->fAPC);
 }
 
 /******************************************************************************/
@@ -1358,7 +1458,8 @@ void CRMinRobotAgentOptimised::UpdateState()
 #endif
         }
 
-        else if (tmp_E > tmp_R)
+        else if (tmp_E > tmp_R) // (tmp_E/tmp_R > 1.0)
+        //else if (tmp_E/tmp_R > 0.9)// > 0.95 // (tmp_E/tmp_R > 1.0)
             // Attack
             robotAgent->SetMostWantedList(&it_fvsensed, 1);
 
@@ -1465,10 +1566,10 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
             for(unsigned int index_tcells = 0; index_tcells < m_unNumberOfReceptors; ++index_tcells)
             {
                 if((*it_apcs).uFV == index_tcells) {
-                    listTcells.push_back(structTcell(index_tcells, seedE, seedR, &(*it_apcs)));
+                    listTcells.push_back(structTcell(index_tcells, seedE, seedR, 0, &(*it_apcs)));
                     ++it_apcs;}
                 else
-                    listTcells.push_back(structTcell(index_tcells, seedE, seedR, NULL));
+                    listTcells.push_back(structTcell(index_tcells, seedE, seedR, 0, NULL));
             }
             return;
         }
@@ -1476,7 +1577,7 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
         if(hammingdistance == 0)
         {
             for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
-                listTcells.push_back(structTcell((*it_apcs).uFV, seedE, seedR, &(*it_apcs)));
+                listTcells.push_back(structTcell((*it_apcs).uFV, seedE, seedR, 0, &(*it_apcs)));
 
             return;
         }
@@ -1488,9 +1589,14 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
     {
         if((*it_apcs).uFV == (*it_tcells).uFV)
         {
+#ifndef SELECTIVE_TCELL_INFLUX_DENSITY
             (*it_tcells).fE += se; (*it_tcells).fR += sr;
+#endif
             if((*it_tcells).ptrAPCWithAffinity1 == NULL)
                 (*it_tcells).ptrAPCWithAffinity1 = &(*it_apcs);
+
+            (*it_tcells).uHistory++;
+
             ++it_tcells; ++it_apcs;
 #ifdef FLOATINGPOINTOPERATIONS
             robotAgent->IncNumberFloatingPtOperations(2);
@@ -1500,7 +1606,7 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
 
         if((*it_tcells).uFV > (*it_apcs).uFV)
         {
-            listTcells.insert(it_tcells, structTcell((*it_apcs).uFV, se, sr, &(*it_apcs)));
+            listTcells.insert(it_tcells, structTcell((*it_apcs).uFV, se, sr, 0, &(*it_apcs)));
             ++it_apcs;
             continue;
         }
@@ -1515,6 +1621,8 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
             it_tcells = listTcells.erase(it_tcells);
             continue;
         }
+
+        (*it_tcells).uHistory++;
 
         (*it_tcells).ptrAPCWithAffinity1 = NULL; //tcell with no apc having the same fv
         ++it_tcells;
@@ -1534,7 +1642,7 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
     }
 
     while(it_apcs != listAPCs.end()) {
-        listTcells.push_back(structTcell((*it_apcs).uFV, se, sr, &(*it_apcs)));
+        listTcells.push_back(structTcell((*it_apcs).uFV, se, sr, 0, &(*it_apcs)));
         ++it_apcs; }
 
     listTcells_cpy.clear();
@@ -1560,6 +1668,11 @@ double CRMinRobotAgentOptimised::NegExpDistAffinity(unsigned int v1, unsigned in
     //return 1.0 * exp(-(1.0/k) * (double)hammingdistance);
     // Should we normalize the hammingdistance when input to the exp function, or as above?
     return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
+    /*if(hammingdistance==0 || hammingdistance == 1)
+	return 1.0;
+    else
+	return 0.0;	*/
+
 }
 
 /******************************************************************************/

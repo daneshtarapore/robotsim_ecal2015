@@ -55,6 +55,7 @@ public:
     // links etc.
     virtual void SimulationStepUpdatePosition();    
     virtual void SetBehaviors(TBehaviorVector vec_behaviors);
+    virtual void ClearBehaviors();
     virtual TBehaviorVector GetBehaviors();
     
     virtual inline EAgentType   GetType() {return ROBOT;}

@@ -44,6 +44,7 @@ protected:
     unsigned int    m_unAbnormalAgentToTrack;
     unsigned int    m_unNumAbnormalAgents;
     int             m_iSwitchNormalBehavior;
+    unsigned int    m_unDurationofSwitch;
 
     unsigned int    m_unChaseAbnormalAgents;
     double          m_fSpreadProbability;     
