@@ -14,7 +14,7 @@
 #include "stopbehavior.h"
 #include "stopwhenclosetootheragentbehavior.h"
 
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
 #  define CROBOTAGENT CRobotAgentOptimised
 #else
 #  define CROBOTAGENT CRobotAgent
@@ -212,7 +212,7 @@ CAgent* CTestExperiment::CreateAgent()
     vector<CBehavior*> vecBehaviors;
     vecBehaviors = GetAgentBehavior(m_eswarmbehavType, pcPreviousAgent);
 
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
     CAgent* pcAgent = new CRobotAgentOptimised("robot", id++, m_pcAgentArguments, m_pcModelArguments, vecBehaviors);
     pcAgent->SetBehavior(m_eswarmbehavType);
 
@@ -249,8 +249,6 @@ CAgent* CTestExperiment::CreateAgent()
         pcAgent->SetBehavIdentification(1); // normal agent
     }
 #endif
-
-
 
     if(m_eswarmbehavType == HOMING1)
     {
@@ -363,7 +361,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
             {
                 // All agents switch behaviors since this was meant to see tolerance to normal behav and its transitions. No abnormal behavs
-                //    #ifdef OPTIMISEDCRM
+                //    #ifdef OPTIMISED
                 //                TBehaviorVector vec_behaviors = ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
                 //    #else
                 //                TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
@@ -379,14 +377,14 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
                 //                //TBehaviorVector vec_newbehaviors = GetAgentBehavior(FLOCKING, pcHomeToAgent);
                 //                //TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
 
-                //    #ifdef OPTIMISEDCRM
+                //    #ifdef OPTIMISED
                 //                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eerrorbehavType);
                 //                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
                 //    #else
                 //                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eerrorbehavType);
                 //                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
                 //    #endif
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
                 TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
 
@@ -405,7 +403,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
             {
                 // All agents switch back to aggregation behaviors
-                //    #ifdef OPTIMISEDCRM
+                //    #ifdef OPTIMISED
                 //                TBehaviorVector vec_behaviors = ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
                 //    #else
                 //                TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
@@ -419,7 +417,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
 
 
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
                 TBehaviorVector vec_newbehaviors = GetAgentBehavior(AGGREGATION, pcHomeToAgent);
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
 
@@ -443,7 +441,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     {
         for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
         {
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
             if(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
                 ChaseAndCaptureAgent(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex]), 5);
 #else
@@ -514,7 +512,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         printf("\nStep: %d, AgentsFeatureVectors: ", un_step_number);
         while (i != allagents->end())
         {
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
             CRobotAgentOptimised* tmp_robotagent  = (CRobotAgentOptimised*) (*i);
 #else
             CRobotAgent*          tmp_robotagent  = (CRobotAgent*) (*i);
@@ -534,7 +532,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         TAgentVectorIterator i = allagents->begin();
         while (i != allagents->end())
         {
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
             CRobotAgentOptimised* tmp_robotagent  = (CRobotAgentOptimised*) (*i);
 #else
             CRobotAgent*          tmp_robotagent  = (CRobotAgent*) (*i);
@@ -563,7 +561,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         printf("\n\nTimeLogFpOp: %u\t", un_step_number);
         while (i != allagents->end())
         {
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
             CRobotAgentOptimised* tmp_robotagent  = (CRobotAgentOptimised*) (*i);
 #else
             CRobotAgent*          tmp_robotagent  = (CRobotAgent*) (*i);
@@ -579,7 +577,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     {
         for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
         {
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
             if(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
                 printf("\nChaselogs. Agent: %d DeactivationState: 1 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
                        ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
@@ -617,7 +615,7 @@ void CTestExperiment::ChaseAndCaptureAgent(CAgent* pc_agent_to_chase, unsigned i
         CSimulator::GetInstance()->GetArena()->GetSize(&fArenaSizeX, &fArenaSizeY);
         vec_behaviors.push_back(new CHomingBehavior(max(fArenaSizeX, fArenaSizeY), pc_agent_to_chase));
         
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
         ((CRobotAgentOptimised*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
 #else
         ((CRobotAgent*)tSortedAgents[i])->SetBehaviors(vec_behaviors);

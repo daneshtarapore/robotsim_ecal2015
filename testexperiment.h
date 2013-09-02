@@ -11,7 +11,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#define OPTIMISEDCRM
+#define OPTIMISED
 
 /******************************************************************************/
 /******************************************************************************/
@@ -50,7 +50,7 @@ protected:
     double          m_fSpreadProbability;     
     unsigned int    m_unSpreadPeriod;         
 
-#ifdef OPTIMISEDCRM
+#ifdef OPTIMISED
     CRobotAgentOptimised*    m_pcMisbehaveAgent[20];
     CRobotAgentOptimised*    m_pcNormalAgentToTrack;
 #else
