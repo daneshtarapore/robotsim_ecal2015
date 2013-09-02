@@ -58,11 +58,12 @@ void structConj::SetConjugateDelta(ConjugationIntegrationPhase phase, double con
 /******************************************************************************/
 /******************************************************************************/
 
-structTcell::structTcell(unsigned int fv, double seedE, double seedR, structAPC* ptrAPC)
+structTcell::structTcell(unsigned int fv, double seedE, double seedR, unsigned long history, structAPC* ptrAPC)
 {
-    uFV = fv;
-    fE  = seedE;
-    fR  = seedR;
+    uFV      = fv;
+    uHistory = history;
+    fE       = seedE;
+    fR       = seedR;
     ptrAPCWithAffinity1 = ptrAPC;
 }
 

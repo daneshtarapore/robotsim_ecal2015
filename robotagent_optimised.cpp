@@ -98,7 +98,7 @@ void CRobotAgentOptimised::SimulationStepUpdatePosition()
     m_pcFeatureVector->SimulationStep();
     unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
 
-#ifdef DEBUGFLAG
+#ifdef DEBUGFEATUREVECTORFLAG
     if (m_iBehavIdentification == 1)
         printf("\nStep: %d, FV for normal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
 
@@ -370,6 +370,9 @@ unsigned int CRobotAgentOptimised::GetColor()
             else
                 return RED;
     #else
+    /*if(GetFeatureVector()->GetValue()==39U)
+        return RED;
+    else*/
         return BLUE;
     #endif
 }
@@ -385,6 +388,14 @@ void CRobotAgentOptimised::SetBehaviors(TBehaviorVector vec_behaviors)
     {
         (*i)->SetAgent(this);
     }
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CRobotAgentOptimised::ClearBehaviors()
+{
+    m_vecBehaviors.clear();
 }
 
 /******************************************************************************/
@@ -474,8 +485,6 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
         if(fv_status != 3)
             (*pun_number_of_neighborsinsensoryrange)++;
         // change to if m_pcFeatureVector->GetValue() is a member of (pcRobot->crminAgent->vecAPCs), then increment (*pun_number_of_neighborsinsensoryrange) by 1
-
-
 
         if(b_logs)
         {

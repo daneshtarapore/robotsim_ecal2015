@@ -53,6 +53,8 @@ struct structTcell
 {
     unsigned int uFV;
 
+    unsigned long int uHistory;
+
     double  fE, fR;
     double  fE_prev, fR_prev;
 
@@ -67,7 +69,7 @@ struct structTcell
 
     list<structConj*> listPtrstoConjugatesofTcell;
 
-    structTcell(unsigned int fv, double seedE, double seedR, structAPC* ptrAPC);
+    structTcell(unsigned int fv, double seedE, double seedR, unsigned long history, structAPC* ptrAPC);
     ~structTcell();
 
     double GetE(TcellIntegrationPhase K);

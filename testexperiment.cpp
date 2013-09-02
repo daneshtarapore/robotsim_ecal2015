@@ -28,7 +28,7 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
                                  CArguments* pc_arena_arguments,
                                  CArguments* pc_agent_arguments,
                                  CArguments* pc_model_arguments) :
-CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_model_arguments)
+    CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_model_arguments)
 {    
     static bool bHelpDisplayed = false;
 
@@ -119,7 +119,8 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
     m_unAbnormalAgentToTrack = pc_experiment_arguments->GetArgumentAsIntOr("trackabnormalagent", 15);
     m_unNumAbnormalAgents    = pc_experiment_arguments->GetArgumentAsIntOr("numabnormalagents", 1);
     m_iSwitchNormalBehavior  = pc_experiment_arguments->GetArgumentAsIntOr("switchnormalbehav", 0);
-    m_unChaseAbnormalAgents       = pc_experiment_arguments->GetArgumentAsIntOr("chaseabnormalagents", 0);
+    m_unDurationofSwitch     = pc_experiment_arguments->GetArgumentAsIntOr("durationofswitch", 0);
+    m_unChaseAbnormalAgents  = pc_experiment_arguments->GetArgumentAsIntOr("chaseabnormalagents", 0);
     m_fSpreadProbability     = pc_experiment_arguments->GetArgumentAsDoubleOr("spreadprobability", 0.0);
     m_unSpreadPeriod         = pc_experiment_arguments->GetArgumentAsIntOr("spreadperiod", 0);
 
@@ -140,7 +141,7 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
         case STOP          : pchSwarmBehavior = "STOP"; break;
 
         default:
-            pchSwarmBehavior = "UNKNOWN"; 
+            pchSwarmBehavior = "UNKNOWN";
         }
 
         char* pchErrorBehavior = "INVALID";
@@ -158,7 +159,7 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
         case HOMING2       : pchErrorBehavior = "HOMING2"; break;
 
         default:
-            pchErrorBehavior = "UNKNOWN"; 
+            pchErrorBehavior = "UNKNOWN";
         }
 
         printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2,STRLN,RNDWK,CIRCLE,STOP] -- behavior selected: %s\n", pchSwarmBehavior);
@@ -167,11 +168,14 @@ CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_
         printf("tracknormalagent=#    Id of normal agent to track [%d]\n",  m_unNormalAgentToTrack);
         printf("trackabnormalagent=#  Id of abnormal agent to track [%d]\n",m_unAbnormalAgentToTrack);
         printf("numabnormalagents=#   Number of abnormal agents [%d]\n",m_unNumAbnormalAgents);
+
         printf("switchnormalbehav=#   Set to 1 if normal behavior is to be switched during simulation [%d]\n", m_iSwitchNormalBehavior);
+        printf("durationofswitch=#   Set to number of steps the behavior is switched for during simulation [%d]\n", m_unDurationofSwitch);
+
         printf("chaseabnormalagents=# Set to 1 misbehaving agents should be chased and boxed in [%d]\n", m_unChaseAbnormalAgents);
         printf("spreadprobability=#   Probability of an errorbehav'ing agent spreads its behavior to the nearest swarmbehav'ing neighbor [%1.4f]\n", m_fSpreadProbability);
         printf("spreadperiod=#        How often in simulation cycles that a potential spread of errorbehav should spread (0: never) [%d]\n", m_unSpreadPeriod);
- 
+
         bHelpDisplayed = true;
     }
 
@@ -324,7 +328,7 @@ void CTestExperiment::PrintStatsForAgent(CAgent* pc_agent)
     printf("AverageDistanceToAgentsWithin - 2: %f, 4: %f, 6: %f, 8: %f, 10: %f, ", fAverageDistanceToAgentsWithin2, fAverageDistanceToAgentsWithin4,
            fAverageDistanceToAgentsWithin6, fAverageDistanceToAgentsWithin8, fAverageDistanceToAgentsWithin10);
 
-    printf("VelocityDifference: "); 
+    printf("VelocityDifference: ");
     PrintVelocityDifference(pc_agent, 2.0);
     printf(", ");
     PrintVelocityDifference(pc_agent, 4.0);
@@ -353,38 +357,88 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     //            printf("\nStepforfv: %d, Agent_id: %d, Agent_fv: %d",un_step_number,m_ppcListAgentsCreated[agentindex]->GetIdentification(),((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetFeatureVector()->GetValue());
     //        }
 
-    if(un_step_number == 2500U && m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
+    if(m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
     {
-        for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
-        {
-            // All agents switch behaviors since this was meant to see tolerance to normal behav and its transitions. No abnormal behavs
-#ifdef OPTIMISEDCRM
-            TBehaviorVector vec_behaviors = ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
-#else
-            TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
-#endif
-            for (TBehaviorVectorIterator i = vec_behaviors.begin(); i != vec_behaviors.end(); i++)
+        if(un_step_number == 5000U)
+            for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
             {
-                (*i)->SetAgent(NULL);
-                //vec_behaviors.pop_back(); //Doesnot seem to work, the pop back function. loop hangs
-            }
-            vec_behaviors.clear();
+                // All agents switch behaviors since this was meant to see tolerance to normal behav and its transitions. No abnormal behavs
+                //    #ifdef OPTIMISEDCRM
+                //                TBehaviorVector vec_behaviors = ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+                //    #else
+                //                TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+                //    #endif
+                //                for (TBehaviorVectorIterator i = vec_behaviors.begin(); i != vec_behaviors.end(); i++)
+                //                {
+                //                    (*i)->SetAgent(NULL);
+                //                    //vec_behaviors.pop_back(); //Doesnot seem to work, the pop back function. loop hangs
+                //                }
+                //                vec_behaviors.clear();
 
-            //TBehaviorVector vec_newbehaviors = GetAgentBehavior(FLOCKING, pcHomeToAgent);
-            TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+                //                TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
+                //                //TBehaviorVector vec_newbehaviors = GetAgentBehavior(FLOCKING, pcHomeToAgent);
+                //                //TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+
+                //    #ifdef OPTIMISEDCRM
+                //                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eerrorbehavType);
+                //                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+                //    #else
+                //                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eerrorbehavType);
+                //                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+                //    #endif
+#ifdef OPTIMISEDCRM
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
+
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eerrorbehavType);
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+#else
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
+
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eerrorbehavType);
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+#endif
+            }
+
+        if(un_step_number == 5000U + m_unDurationofSwitch)
+            for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
+            {
+                // All agents switch back to aggregation behaviors
+                //    #ifdef OPTIMISEDCRM
+                //                TBehaviorVector vec_behaviors = ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+                //    #else
+                //                TBehaviorVector vec_behaviors = ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetBehaviors();
+                //    #endif
+                //                for (TBehaviorVectorIterator i = vec_behaviors.begin(); i != vec_behaviors.end(); i++)
+                //                {
+                //                    (*i)->SetAgent(NULL);
+                //                }
+                //                vec_behaviors.clear();
+
+
+
 
 #ifdef OPTIMISEDCRM
-            ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(AGGREGATION, pcHomeToAgent);
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
+
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(AGGREGATION);
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 #else
-            ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(AGGREGATION, pcHomeToAgent);
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
+
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(AGGREGATION);
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 #endif
-        }
+            }
     }
 
     //TODO: DANESH - {DONE}
     // The code below is an example of agents attacking the misbehaving agent
     // The code should be made more general so that any agent detected as
-    // behaving abnormally is attacked. 
+    // behaving abnormally is attacked.
     if (un_step_number > MODELSTARTTIME && m_unChaseAbnormalAgents != 0)
     {
         for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
@@ -400,7 +454,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     }
 
     //TODO: DANESH
-    // The code below is spreading the errorbehavior  
+    // The code below is spreading the errorbehavior
     if (un_step_number > MODELSTARTTIME && un_step_number >= m_unMisbehaveStep){
         if (m_unSpreadPeriod > 0) {
             if ((un_step_number - 1) % m_unSpreadPeriod == 0) {
@@ -427,7 +481,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unAttackers   = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
-        bool dbgflag = true;
+        bool dbgflag = false;
 
         m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);//true
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
@@ -446,7 +500,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             unsigned int unAttackers  = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
-            bool dbgflag = true;
+            bool dbgflag = false;
 
             m_pcNormalAgentToTrack->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
             printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
@@ -491,7 +545,9 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             unsigned int unAttackers   = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
-            tmp_robotagent->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, false);
+            bool dbgflag = false;
+
+            tmp_robotagent->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
             printf("\nResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unNbrsInSensoryRange);
             i++;
         }
@@ -507,11 +563,11 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         printf("\n\nTimeLogFpOp: %u\t", un_step_number);
         while (i != allagents->end())
         {
-    #ifdef OPTIMISEDCRM
+#ifdef OPTIMISEDCRM
             CRobotAgentOptimised* tmp_robotagent  = (CRobotAgentOptimised*) (*i);
-    #else
+#else
             CRobotAgent*          tmp_robotagent  = (CRobotAgent*) (*i);
-    #endif
+#endif
             printf("%llu  ",tmp_robotagent->GetNumberFloatingPtOperations());
             i++;
         }
@@ -526,17 +582,17 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 #ifdef OPTIMISEDCRM
             if(((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
                 printf("\nChaselogs. Agent: %d DeactivationState: 1 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
-                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
+                       ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
             else
                 printf("\nChaselogs. Agent: %d DeactivationState: 0 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
-                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
+                       ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
 #else
             if(((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationState())
                 printf("\nChaselogs. Agent: %d DeactivationState: 1 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
-                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
+                       ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
             else
                 printf("\nChaselogs. Agent: %d DeactivationState: 0 Deactivationtime: %d DeactivationCount: %d",agentindex, ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetRobotDeactivationTime(),
-                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
+                       ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->GetConsequentFaultCount());
 #endif
         }
     }
@@ -548,6 +604,10 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
 void CTestExperiment::ChaseAndCaptureAgent(CAgent* pc_agent_to_chase, unsigned int un_agents_to_assign)
 {
+    /* At the moment we only mark agents that are to be chased*/
+    return;
+
+    /*
     TAgentVector tSortedAgents;
     pc_agent_to_chase->SortAllAgentsAccordingToDistance(&tSortedAgents);
     for (int i = 1; i <= un_agents_to_assign; i++) {
@@ -561,8 +621,8 @@ void CTestExperiment::ChaseAndCaptureAgent(CAgent* pc_agent_to_chase, unsigned i
         ((CRobotAgentOptimised*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
 #else
         ((CRobotAgent*)tSortedAgents[i])->SetBehaviors(vec_behaviors);
-#endif            
-    }
+#endif
+    }*/
 }
 /******************************************************************************/
 /******************************************************************************/
@@ -574,18 +634,18 @@ void CTestExperiment::SpreadBehavior(ESwarmBehavType e_behavior, double f_probab
     TAgentVector* vecAllAgents = CSimulator::GetInstance()->GetAllAgents();
     for (TAgentVectorIterator i = vecAllAgents->begin(); i != vecAllAgents->end(); i++)
     {
-        if ((*i)->GetType() == ROBOT) 
+        if ((*i)->GetType() == ROBOT)
         {
             if (((CROBOTAGENT*) (*i))->GetBehavior() == e_behavior)
             {
                 listInfectedAgents.push_back(*i);
-            } 
+            }
         }
     }
 
-    for (TAgentListIterator j = listInfectedAgents.begin(); j != listInfectedAgents.end(); j++) 
+    for (TAgentListIterator j = listInfectedAgents.begin(); j != listInfectedAgents.end(); j++)
     {
-        if (Random::nextDouble() < f_probability) 
+        if (Random::nextDouble() < f_probability)
         {
             
             TAgentVector tSortedAgents;
@@ -598,12 +658,12 @@ void CTestExperiment::SpreadBehavior(ESwarmBehavType e_behavior, double f_probab
                 {
                     ((CROBOTAGENT*)tSortedAgents[index])->SetBehavior(e_behavior);
 
-                    ((CROBOTAGENT*)tSortedAgents[index])->SetBehaviors(GetAgentBehavior(e_behavior, NULL));                    
+                    ((CROBOTAGENT*)tSortedAgents[index])->SetBehaviors(GetAgentBehavior(e_behavior, NULL));
                     found = true;
                 } else {
                     index++;
                 }
-            } while (index < tSortedAgents.size() && !found);            
+            } while (index < tSortedAgents.size() && !found);
         }
     }
 }
@@ -615,7 +675,7 @@ vector<CBehavior*> CTestExperiment::GetAgentBehavior(ESwarmBehavType swarmbehavT
 {
     vector<CBehavior*> vecBehaviors;
 
-//    vecBehaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3));
+    //    vecBehaviors.push_back(new CStopWhenCloseToOtherAgentBehavior(CAgent::RADIUS * 3));
 
     //behav. pushed is decreasing order of priority to take control of the agent
 
