@@ -4,7 +4,7 @@
 /******************************************************************************/
 /******************************************************************************/
 // FAULT DETECTION MODEL TYPE
-enum faultdetectionmodeltype {CRM, CRM_TCELLSINEXCESS, CTRNN, LINEQ};
+enum faultdetectionmodeltype {CRM, CRM_TCELLSINEXCESS, CTRNN, LINEQ, THRESHOLDONFVDIST};
 
 
 enum ESwarmBehavType
@@ -27,7 +27,7 @@ enum ESwarmBehavType
 /******************************************************************************/
 /******************************************************************************/
 
-#define FDMODELTYPE CRM_TCELLSINEXCESS //CRM
+#define FDMODELTYPE THRESHOLDONFVDIST //CRM_TCELLSINEXCESS //CRM //THRESHOLDONFVDIST
 
 /******************************************************************************/
 /******************************************************************************/

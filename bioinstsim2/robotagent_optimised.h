@@ -14,6 +14,11 @@ class CRMinRobotAgentOptimised;
 /******************************************************************************/
 /******************************************************************************/
 
+class ThresholdinRobotAgentOptimised;
+
+/******************************************************************************/
+/******************************************************************************/
+
 struct structFVsSensed
 {
     unsigned int uFV;
@@ -35,6 +40,7 @@ struct structFVsSensed
 #include "agent.h"
 #include "behavior.h"
 #include "crminrobotagent_optimised.h"
+#include "thresholdinrobotagent_optimised.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -64,6 +70,7 @@ public:
     virtual CRobotAgentOptimised* GetRandomRobotWithWeights(unsigned int u_nearestnbrs);
 
     virtual inline CRMinRobotAgentOptimised* GetCRMinRobotAgent() {return crminAgent;}
+    virtual inline ThresholdinRobotAgentOptimised* GetThresholdinRobotAgent() {return thresholdinAgent;}
 
     virtual void  SetWeight(double f_weight);
     virtual double GetWeight() const;
@@ -117,6 +124,7 @@ protected:
     CFeatureVector*             m_pcFeatureVector;
     TBehaviorVector             m_vecBehaviors;
     CRMinRobotAgentOptimised*   crminAgent;
+    ThresholdinRobotAgentOptimised* thresholdinAgent;
 
     double              m_fWeight;
     double              m_fBitflipProbabililty;

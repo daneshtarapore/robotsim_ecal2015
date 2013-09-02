@@ -13,6 +13,8 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
     crminAgent = NULL;
     if(FDMODELTYPE == CRM || FDMODELTYPE == CRM_TCELLSINEXCESS)
         crminAgent = new CRMinRobotAgentOptimised(this, pc_model_arguments);
+    else if(FDMODELTYPE == THRESHOLDONFVDIST)
+        thresholdinAgent = new ThresholdinRobotAgentOptimised(this, pc_model_arguments);
     else { printf("\nUnknown model type"); exit(-1);}
 
     m_pcFeatureVector   = new CFeatureVector(this);
@@ -109,7 +111,10 @@ void CRobotAgentOptimised::SimulationStepUpdatePosition()
     Sense(GetSelectedNumNearestNbrs());
 
     if(CurrentStepNumber > MODELSTARTTIME)
-        crminAgent->SimulationStepUpdatePosition();
+        if(FDMODELTYPE == CRM || FDMODELTYPE == CRM_TCELLSINEXCESS)
+            crminAgent->SimulationStepUpdatePosition();
+        else if(FDMODELTYPE == THRESHOLDONFVDIST)
+            thresholdinAgent->SimulationStepUpdatePosition();
 
     CAgent::SimulationStepUpdatePosition();
 }
@@ -516,6 +521,11 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
 void CRobotAgentOptimised::PrintDecidingAgentDetails(CFeatureVector* m_pcFV,
                                                      CRobotAgentOptimised* decidingrobot)
 {
+    if(FDMODELTYPE == THRESHOLDONFVDIST) {
+        decidingrobot->PrintFeatureVectorDistribution(decidingrobot->GetIdentification());
+        return; }
+
+
     CRMinRobotAgentOptimised* model_crminagent     = decidingrobot->GetCRMinRobotAgent();
 
     printf("  Convg. error %f (%fperc)    ",model_crminagent->GetConvergenceError(), model_crminagent->GetConvergenceError_Perc());
@@ -523,36 +533,6 @@ void CRobotAgentOptimised::PrintDecidingAgentDetails(CFeatureVector* m_pcFV,
     model_crminagent->PrintAPCList(decidingrobot->GetIdentification());
     model_crminagent->PrintTcellList(decidingrobot->GetIdentification());
     model_crminagent->PrintTcellResponseToAPCList(decidingrobot->GetIdentification());
-
-//    for (int fv = 0; fv < CFeatureVector::NUMBER_OF_FEATURE_VECTORS; fv++)
-//    {
-//        if(FeatureVectorsSensed[fv] > 0.0)
-//        {
-//            printf("FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-//                   fv,
-//                   model_crminagent->GetAPC(fv),
-//                   fv,
-//                   model_crminagent->GetCurrE(fv),
-//                   fv,
-//                   model_crminagent->GetCurrR(fv),
-//                   model_crminagent->m_pfSumEffectorsWeightedbyAffinity[fv],
-//                   model_crminagent->m_pfSumRegulatorsWeightedbyAffinity[fv]);
-//        }
-//    }
-
-//    // if the neighbour doesnot have your fv
-//    if(FeatureVectorsSensed[m_pcFV->GetValue()] == 0.0)
-//    {
-//        printf(",for the evaluated agent's FV that is not in the deciding agent's repertoire: FV:%d, [APC]:%f, [E%d]:%f, [R%d]:%f,   [wtsumE]:%f, [wtsumR]:%f   ",
-//               m_pcFV->GetValue(),
-//               model_crminagent->GetAPC(m_pcFV->GetValue()),
-//               m_pcFV->GetValue(),
-//               model_crminagent->GetCurrE(m_pcFV->GetValue()),
-//               m_pcFV->GetValue(),
-//               model_crminagent->GetCurrR(m_pcFV->GetValue()),
-//               model_crminagent->m_pfSumEffectorsWeightedbyAffinity[m_pcFV->GetValue()],
-//               model_crminagent->m_pfSumRegulatorsWeightedbyAffinity[m_pcFV->GetValue()]);
-//    }
 }
 
 /******************************************************************************/
