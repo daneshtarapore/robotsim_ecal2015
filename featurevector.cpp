@@ -169,6 +169,92 @@ void CFeatureVector::ComputeFeatureValues()
 
     int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
 
+
+    if(NUMBER_OF_FEATURES == 3U)
+    {
+        // Feature (from LS to MS bits in FV)
+        // Sensors
+        //1st: set if bot has atleast one neighbor in range 0-3 in the majority of of past X time-steps
+        if(CurrentStepNumber >= m_iEventSelectionTimeWindow)
+        {
+            // decision based on the last X time-steps
+            if(m_unSumTimeStepsNbrsRange0to3 > (unsigned)(0.5*(double)m_iEventSelectionTimeWindow))
+                m_pfFeatureValues[0] = 1.0;
+            else
+                m_pfFeatureValues[0] = 0.0;
+
+            // removing the fist entry of the moving time window  from the sum
+            m_unSumTimeStepsNbrsRange0to3 -=  m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex];
+            m_unSumTimeStepsNbrsRange3to6 -=  m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex];
+        }
+
+        // adding new values into the queue
+        unCloseRangeNbrCount = m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT);
+        if (unCloseRangeNbrCount > 0)
+        {
+            m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex] = 1;
+            m_unSumTimeStepsNbrsRange0to3++;
+        }
+        else
+            m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex] = 0;
+
+        unFarRangeNbrCount = (m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT) - unCloseRangeNbrCount);
+        if (unFarRangeNbrCount > 0)
+        {
+            m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex] = 1;
+            m_unSumTimeStepsNbrsRange3to6++;
+        }
+        else
+            m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex] = 0;
+
+
+        m_unNbrsCurrQueueIndex = (m_unNbrsCurrQueueIndex + 1) % m_iEventSelectionTimeWindow;
+
+        // Sensors-motor interactions
+        // Set if the occurance of the following event, atleast once in time window X
+        // 2nd: distance to nbrs 0-6 && change in angular acceleration
+
+        if(dist_nbrsagents < 6.0 &&
+                (angle_acceleration > m_tAngularAccelerationThreshold ||
+                 angle_acceleration < -m_tAngularAccelerationThreshold))
+            m_piLastOccuranceEvent[2] = CurrentStepNumber;
+
+        if(dist_nbrsagents == 6.0 &&
+                (angle_acceleration > m_tAngularAccelerationThreshold ||
+                 angle_acceleration < -m_tAngularAccelerationThreshold))
+            m_piLastOccuranceEvent[3] = CurrentStepNumber;
+
+
+        for(unsigned int featureindex = 2; featureindex <=2; featureindex++)
+            if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
+                m_pfFeatureValues[featureindex-1] = 1.0;
+            else
+                m_pfFeatureValues[featureindex-1] = 0.0;
+
+        // Motors
+        //3rd: distance travelled by bot in past Y time-steps. Higher than 5% of max-possible distance travelled is accepted as feature=1.
+        TVector2d vecAgentPos = *(m_pcAgent->GetPosition());
+
+        if(CurrentStepNumber >= m_iDistTravelledTimeWindow)
+        {
+            // distance travelled in last 100 time-steps
+            m_fSquaredDistTravelled =
+                    GetSquaredDistanceBetweenPositions(&vecAgentPos,
+                                                       &(m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex]));
+
+            // decision based on distance travelled in the last 100 time-steps
+            if(m_fSquaredDistTravelled >= m_fSquaredDistThreshold)
+                m_pfFeatureValues[2] = 1.0;
+            else
+                m_pfFeatureValues[2] = 0.0;
+        }
+
+        // adding new coordinate values into the queue
+        m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex] = vecAgentPos;
+        m_unCoordCurrQueueIndex = (m_unCoordCurrQueueIndex + 1) % m_iDistTravelledTimeWindow;
+    }
+
+    // 6 bit or more feature-vectors
     // Feature (from LS to MS bits in FV)
     // Sensors
     //1st: set if bot has atleast one neighbor in range 0-3 in the majority of of past X time-steps
@@ -487,6 +573,17 @@ void CFeatureVector::PrintFeatureDetails()
 std::string CFeatureVector::ToString()
 {
     char pchTemp[4096];
+
+    if(NUMBER_OF_FEATURES == 3U)
+        sprintf(pchTemp, "Values - "
+                "TS_nbrs:0to3: %f - "
+                "TW450_dist0to6_angacc: %1.1f - "
+                "DistTW100: %1.1f - fv: %u",
+
+                m_pfFeatureValues[0],
+                m_pfFeatureValues[1],
+                m_pfFeatureValues[2],
+                m_unValue);
 
 
     if(NUMBER_OF_FEATURES == 6U)
