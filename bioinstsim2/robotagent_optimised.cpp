@@ -351,14 +351,10 @@ void CRobotAgentOptimised::PrintFeatureVectorDistribution(unsigned int id)
 unsigned int CRobotAgentOptimised::GetColor()
 {
     //return m_unIdentification == TRACKAGENT ? GREEN : RED;
-    /*if(m_unIdentification == 1)
-        return GREEN;
-    else if (m_unIdentification == 15)
+    if(m_unIdentification == 15)
         return RED;
-    else  if (m_unIdentification == 5)
-        return YELLOW;
-     else
-        return BLUE;*/
+    else
+        return BLUE;
 
     /*if(m_iBehavIdentification  == 1)
         return GREEN;
@@ -375,10 +371,10 @@ unsigned int CRobotAgentOptimised::GetColor()
             else
                 return RED;
     #else
-    /*if(GetFeatureVector()->GetValue()==39U)
-        return RED;
-    else*/
-        return BLUE;
+//    /*if(GetFeatureVector()->GetValue()==39U)
+//        return RED;
+//    else*/
+//        return BLUE;
     #endif
 }
 
