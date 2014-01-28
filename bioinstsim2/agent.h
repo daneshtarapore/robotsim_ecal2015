@@ -37,8 +37,8 @@ enum ESwarmBehavType
 /******************************************************************************/
 /******************************************************************************/
 
-#define DEBUGFEATUREVECTORFLAG // verbose - prints stmts on cell densities, fvs etc... (currently only implemented for crm optimised model)
-#define DEBUGCROSSREGULATIONMODELFLAG
+//#define DEBUGFEATUREVECTORFLAG // verbose - prints stmts on cell densities, fvs etc... (currently only implemented for crm optimised model)
+//#define DEBUGCROSSREGULATIONMODELFLAG
 #define FLOATINGPOINTOPERATIONS
 
 /******************************************************************************/

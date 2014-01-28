@@ -185,7 +185,6 @@ void CFeatureVector::ComputeFeatureValues()
 
             // removing the fist entry of the moving time window  from the sum
             m_unSumTimeStepsNbrsRange0to3 -=  m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex];
-            m_unSumTimeStepsNbrsRange3to6 -=  m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex];
         }
 
         // adding new values into the queue
@@ -198,16 +197,6 @@ void CFeatureVector::ComputeFeatureValues()
         else
             m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex] = 0;
 
-        unFarRangeNbrCount = (m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT) - unCloseRangeNbrCount);
-        if (unFarRangeNbrCount > 0)
-        {
-            m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex] = 1;
-            m_unSumTimeStepsNbrsRange3to6++;
-        }
-        else
-            m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex] = 0;
-
-
         m_unNbrsCurrQueueIndex = (m_unNbrsCurrQueueIndex + 1) % m_iEventSelectionTimeWindow;
 
         // Sensors-motor interactions
@@ -217,19 +206,12 @@ void CFeatureVector::ComputeFeatureValues()
         if(dist_nbrsagents < 6.0 &&
                 (angle_acceleration > m_tAngularAccelerationThreshold ||
                  angle_acceleration < -m_tAngularAccelerationThreshold))
-            m_piLastOccuranceEvent[2] = CurrentStepNumber;
+            m_piLastOccuranceEvent[0] = CurrentStepNumber;
 
-        if(dist_nbrsagents == 6.0 &&
-                (angle_acceleration > m_tAngularAccelerationThreshold ||
-                 angle_acceleration < -m_tAngularAccelerationThreshold))
-            m_piLastOccuranceEvent[3] = CurrentStepNumber;
-
-
-        for(unsigned int featureindex = 2; featureindex <=2; featureindex++)
-            if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
-                m_pfFeatureValues[featureindex-1] = 1.0;
-            else
-                m_pfFeatureValues[featureindex-1] = 0.0;
+        if ((CurrentStepNumber - m_piLastOccuranceEvent[0]) <= m_iEventSelectionTimeWindow)
+                m_pfFeatureValues[1] = 1.0;
+        else
+                m_pfFeatureValues[1] = 0.0;
 
         // Motors
         //3rd: distance travelled by bot in past Y time-steps. Higher than 5% of max-possible distance travelled is accepted as feature=1.
@@ -252,6 +234,12 @@ void CFeatureVector::ComputeFeatureValues()
         // adding new coordinate values into the queue
         m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex] = vecAgentPos;
         m_unCoordCurrQueueIndex = (m_unCoordCurrQueueIndex + 1) % m_iDistTravelledTimeWindow;
+
+        #ifdef DEBUGFEATUREVECTORFLAG
+        if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
+        PrintFeatureDetails();
+        #endif
+        return;
     }
 
     // 6 bit or more feature-vectors
