@@ -479,7 +479,11 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         unsigned int unAttackers   = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
+        bool dbgflag = true;
+#else
         bool dbgflag = false;
+#endif
 
         m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);//true
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
@@ -498,7 +502,11 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             unsigned int unAttackers  = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
+            bool dbgflag = true;
+#else
             bool dbgflag = false;
+#endif
 
             m_pcNormalAgentToTrack->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
             printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
