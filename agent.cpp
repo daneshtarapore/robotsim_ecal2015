@@ -224,8 +224,8 @@ void CAgent::SimulationStep(unsigned int un_step_number)
     m_tAcceleration.x -= tTemp.x;
     m_tAcceleration.y -= tTemp.y;
 
-    m_tAngularVelocity     = GetVectorAngle(m_tVelocity,tTemp);
-    m_tAngularAcceleration = m_tAngularVelocity - tTempAngVelocity;
+    m_tAngularVelocity     = GetVectorAngle(m_tVelocity,tTemp); // [0 pi]
+    m_tAngularAcceleration = m_tAngularVelocity - tTempAngVelocity; // [-pi pi]
 }
 
 /******************************************************************************/
