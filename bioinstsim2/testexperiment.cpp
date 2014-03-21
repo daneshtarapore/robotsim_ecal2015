@@ -562,7 +562,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 #endif //DISABLEMODEL_RETAINRNDCALLS
 
 #ifdef FLOATINGPOINTOPERATIONS
-    if(un_step_number + 1 == CSimulator::GetInstance()->GetNumberOfCycles())
+    //if(un_step_number + 1 == CSimulator::GetInstance()->GetNumberOfCycles())
     {
         TAgentVector* allagents = m_pcSimulator->GetAllAgents();
         TAgentVectorIterator i = allagents->begin();
