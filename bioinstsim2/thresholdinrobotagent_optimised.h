@@ -46,6 +46,8 @@ protected:
     virtual void UpdateState();
 
     unsigned m_uThreshold;
+
+    unsigned m_uTolerableHD; // Tolerable hamming distance THD (in bits). FVs THD apart are not classified separately
 };
 
 
