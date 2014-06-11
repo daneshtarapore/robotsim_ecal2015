@@ -14,12 +14,16 @@ ThresholdinRobotAgentOptimised::ThresholdinRobotAgentOptimised(CRobotAgentOptimi
 
     m_uThreshold   = m_crmArguments->GetArgumentAsIntOr("th", 1);
 
+    m_uTolerableHD = m_crmArguments->GetArgumentAsIntOr("tol", 0); // Tolerable hamming distance THD (in bits). FVs THD apart are not classified separately
+
     if (m_crmArguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
         printf("numberoffeatures=#            Number of features in a single FV [%d]\n"
-               "th=#                          Abnormal agent detection threshold [%d]\n",
+               "th=#                          Abnormal agent detection threshold [%d]\n"
+               "tolhd=#                       Tolerable hamming distance [%d]\n" ,
                CFeatureVector::NUMBER_OF_FEATURES,
-               m_uThreshold);
+               m_uThreshold,
+               m_uTolerableHD);
         bHelpDisplayed = true;
     }
 }
@@ -51,7 +55,29 @@ void ThresholdinRobotAgentOptimised::UpdateState()
 
     while(it_fvsensed != fvsensed->end())
     {
-        if((*it_fvsensed).fRobots <= m_uThreshold)
+        double fRobotsFV = (*it_fvsensed).fRobots;
+
+        list<structFVsSensed>::iterator itnested_fvsensed = fvsensed->begin();
+        while(itnested_fvsensed != fvsensed->end())
+        {
+            if((*itnested_fvsensed).uFV != (*it_fvsensed).uFV)
+            {
+                /* XOr operation between the 2 feature vectors */
+                unsigned int unXoredString = ((*it_fvsensed).uFV ^ (*itnested_fvsensed).uFV);
+                /* Number of 1's from the result of the previous XOR operation,  at positions preset by mask */
+                unsigned int hammingdistance  = CRMinRobotAgentOptimised::GetNumberOfSetBits(unXoredString);
+
+                if(hammingdistance <= m_uTolerableHD)
+                {
+                    fRobotsFV += (*itnested_fvsensed).fRobots;
+                }
+            }
+            ++itnested_fvsensed;
+        }
+
+
+        //if((*it_fvsensed).fRobots <= (double)m_uThreshold)
+        if(fRobotsFV <= (double)m_uThreshold)
             robotAgent->SetMostWantedList(&it_fvsensed, 1); //Attack
         else
             robotAgent->SetMostWantedList(&it_fvsensed, 2); //Tolerate
