@@ -14,7 +14,7 @@ ThresholdinRobotAgentOptimised::ThresholdinRobotAgentOptimised(CRobotAgentOptimi
 
     m_uThreshold   = m_crmArguments->GetArgumentAsIntOr("th", 1);
 
-    m_uTolerableHD = m_crmArguments->GetArgumentAsIntOr("tol", 0); // Tolerable hamming distance THD (in bits). FVs THD apart are not classified separately
+    m_uTolerableHD = m_crmArguments->GetArgumentAsIntOr("tolhd", 0); // Tolerable hamming distance THD (in bits). FVs THD apart are not classified separately
 
     if (m_crmArguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
     {
