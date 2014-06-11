@@ -26,11 +26,11 @@ while [ "$count" -le "20" ]; do
 
         mkdir -p abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count
 
-	#gzip -d  abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out.gz
+	gzip -d  abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out.gz
 	if [ -s abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out ]
 	then
-		#gzip -c abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out > abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out.gz
-		#rm abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out
+		gzip -c abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out > abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out.gz
+		rm abnorm${Behav}/${ErrorBehav}/fv_${numberoffeatures}/result_t$count/nohup.out
 		ls
 	else
 
