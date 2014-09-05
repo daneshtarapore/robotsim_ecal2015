@@ -97,36 +97,6 @@ CFeatureVector::~CFeatureVector()
 
 unsigned int CFeatureVector::GetValue() const
 {
-/*    if(CSimulator::GetInstance()->GetSimulationStepNumber() < 2500U)
-    {
-        // aggregation
-        if(m_pcAgent->GetIdentification() <= 6)
-            return 55;
-        else if(m_pcAgent->GetIdentification() <= 18)
-            return 39;
-        else
-            return 38;
-    }
-    else if(CSimulator::GetInstance()->GetSimulationStepNumber() < 2500U + 3000U)
-    {
-        // flocking
-        if(m_pcAgent->GetIdentification() <= 13)
-            return 51;
-        else
-            return 49;
-    }
-    else
-    {
-        // aggregation
-        if(m_pcAgent->GetIdentification() <= 6)
-            return 55;
-        else if(m_pcAgent->GetIdentification() <= 18)
-            return 39;
-        else
-            return 38;
-    }*/
-
-
     return m_unValue;
 }
 
