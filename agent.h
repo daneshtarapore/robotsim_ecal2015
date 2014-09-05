@@ -27,7 +27,7 @@ enum ESwarmBehavType
 /******************************************************************************/
 /******************************************************************************/
 
-#define FDMODELTYPE  THRESHOLDONFVDIST // CRM // CRM_TCELLSINEXCESS //THRESHOLDONFVDIST
+#define FDMODELTYPE  CRM_TCELLSINEXCESS // CRM // CRM_TCELLSINEXCESS //THRESHOLDONFVDIST
 
 /******************************************************************************/
 /******************************************************************************/
