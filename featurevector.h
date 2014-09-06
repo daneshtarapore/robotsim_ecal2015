@@ -35,6 +35,7 @@ public:
     virtual ~CFeatureVector();
 
     static unsigned int NUMBER_OF_FEATURES;
+    static unsigned int MAX_NUMBER_OF_FEATURES;
     static unsigned int NUMBER_OF_FEATURE_VECTORS;
     static double       FEATURE_RANGE;
 
@@ -59,8 +60,11 @@ protected:
     unsigned int m_unLength;    
 
     float*         m_pfFeatureValues;
+    float*         m_pfAllFeatureValues;
     int*           m_piLastOccuranceEvent;
     int*           m_piLastOccuranceNegEvent;
+
+    std::vector <unsigned> m_piFeaturesSelected; // the features that are to be introduced into the feature vector
 
     int          m_iEventSelectionTimeWindow;
 

@@ -5,6 +5,7 @@
 /******************************************************************************/
 
 unsigned int CFeatureVector::NUMBER_OF_FEATURES        = 6;
+unsigned int CFeatureVector::MAX_NUMBER_OF_FEATURES    = 15;
 unsigned int CFeatureVector::NUMBER_OF_FEATURE_VECTORS = 0;
 double       CFeatureVector::FEATURE_RANGE             = 6.0;
 
@@ -23,6 +24,15 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     m_pfFeatureValues         = new float[m_unLength];
     m_piLastOccuranceEvent    = new int[m_unLength];
     m_piLastOccuranceNegEvent = new int[m_unLength];
+
+
+    m_pfAllFeatureValues     = new float[MAX_NUMBER_OF_FEATURES];
+
+    //m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6}; // the original 6 bit FV used in the BB paper. Features start from 1.
+    m_piFeaturesSelected     = {7, 8, 9, 10, 11, 12};
+
+    assert(m_piFeaturesSelected.size() == NUMBER_OF_FEATURES);
+
 
 
     m_iEventSelectionTimeWindow = MODELSTARTTIME; //1500;
@@ -123,7 +133,7 @@ unsigned int CFeatureVector::SimulationStep()
 /******************************************************************************/
 /******************************************************************************/
 
-void CFeatureVector::ComputeFeatureValues()
+/*void CFeatureVector::ComputeFeatureValues()
 {
     double dist_nbrsagents, angle_acceleration, angle_velocity, mag_velocity, mag_acceleration;
     double mag_relvelocity, dir_relvelocity;
@@ -179,9 +189,9 @@ void CFeatureVector::ComputeFeatureValues()
             m_piLastOccuranceEvent[0] = CurrentStepNumber;
 
         if ((CurrentStepNumber - m_piLastOccuranceEvent[0]) <= m_iEventSelectionTimeWindow)
-                m_pfFeatureValues[1] = 1.0;
+            m_pfFeatureValues[1] = 1.0;
         else
-                m_pfFeatureValues[1] = 0.0;
+            m_pfFeatureValues[1] = 0.0;
 
         // Motors
         //3rd: distance travelled by bot in past Y time-steps. Higher than 5% of max-possible distance travelled is accepted as feature=1.
@@ -205,10 +215,10 @@ void CFeatureVector::ComputeFeatureValues()
         m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex] = vecAgentPos;
         m_unCoordCurrQueueIndex = (m_unCoordCurrQueueIndex + 1) % m_iDistTravelledTimeWindow;
 
-        #ifdef DEBUGFEATUREVECTORFLAG
+#ifdef DEBUGFEATUREVECTORFLAG
         if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
-        PrintFeatureDetails();
-        #endif
+            PrintFeatureDetails();
+#endif
         return;
     }
 
@@ -434,8 +444,249 @@ void CFeatureVector::ComputeFeatureValues()
 
 
 #ifdef DEBUGFEATUREVECTORFLAG
-if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
-PrintFeatureDetails();
+    if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
+        PrintFeatureDetails();
+#endif
+}*/
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CFeatureVector::ComputeFeatureValues()
+{
+    double dist_nbrsagents, angle_acceleration, angle_velocity, mag_velocity, mag_acceleration;
+    double mag_relvelocity, dir_relvelocity;
+    unsigned int unCloseRangeNbrCount, unFarRangeNbrCount;
+
+    dist_nbrsagents    = m_pcAgent->GetAverageDistanceToSurroundingAgents(FEATURE_RANGE, ROBOT);
+    angle_acceleration = m_pcAgent->GetAngularAcceleration();
+    angle_velocity     = m_pcAgent->GetAngularVelocity();
+    mag_velocity       = Vec2dLength((*m_pcAgent->GetVelocity()));
+    mag_acceleration   = Vec2dLength((*m_pcAgent->GetAcceleration()));
+
+    m_pcAgent->GetRelativeVelocity(&mag_relvelocity, &dir_relvelocity, FEATURE_RANGE);
+
+    int CurrentStepNumber = (int) CSimulator::GetInstance()->GetSimulationStepNumber();
+
+    // Feature (from LS to MS bits in FV)
+    // Sensors
+    //1st: set if bot has atleast one neighbor in range 0-3 in the majority of of past X time-steps
+    //2nd: set if bot has atleast one neighbor in range 3-6 in the majority of of past X time-steps
+    if(CurrentStepNumber >= m_iEventSelectionTimeWindow)
+    {
+        // decision based on the last X time-steps
+        if(m_unSumTimeStepsNbrsRange0to3 > (unsigned)(0.5*(double)m_iEventSelectionTimeWindow))
+            m_pfAllFeatureValues[0] = 1.0;
+        else
+            m_pfAllFeatureValues[0] = 0.0;
+
+        if(m_unSumTimeStepsNbrsRange3to6 > (unsigned)(0.5*(double)m_iEventSelectionTimeWindow))
+            m_pfAllFeatureValues[1] = 1.0;
+        else
+            m_pfAllFeatureValues[1] = 0.0;
+
+        // removing the fist entry of the moving time window  from the sum
+        m_unSumTimeStepsNbrsRange0to3 -=  m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex];
+        m_unSumTimeStepsNbrsRange3to6 -=  m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex];
+    }
+
+    // adding new values into the queue
+    unCloseRangeNbrCount = m_pcAgent->CountAgents(FEATURE_RANGE/2.0, ROBOT);
+    if (unCloseRangeNbrCount > 0)
+    {
+        m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex] = 1;
+        m_unSumTimeStepsNbrsRange0to3++;
+    }
+    else
+        m_punNbrsRange0to3AtTimeStep[m_unNbrsCurrQueueIndex] = 0;
+
+    unFarRangeNbrCount = (m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT) - unCloseRangeNbrCount);
+    if (unFarRangeNbrCount > 0)
+    {
+        m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex] = 1;
+        m_unSumTimeStepsNbrsRange3to6++;
+    }
+    else
+        m_punNbrsRange3to6AtTimeStep[m_unNbrsCurrQueueIndex] = 0;
+
+
+    m_unNbrsCurrQueueIndex = (m_unNbrsCurrQueueIndex + 1) % m_iEventSelectionTimeWindow;
+
+
+#ifdef WILDCARDINFV
+
+    m_iWildCardBit = -1; // set to -1 if no wildcard bit present in FV
+
+    // Sensors-motor interactions
+    // Set if the occurance of the following event, atleast once in time window X
+    // 3rd: distance to nbrs 0-6 && change in angular acceleration
+    // 4th: no neighbors detected  && change in angular acceleration
+
+    if(dist_nbrsagents < 6.0)
+    {
+        if(angle_acceleration > m_tAngularAccelerationThreshold ||
+                angle_acceleration < -m_tAngularAccelerationThreshold)
+            m_piLastOccuranceEvent[2]    = CurrentStepNumber;
+        else
+            m_piLastOccuranceNegEvent[2] = CurrentStepNumber;
+    }
+    else
+    {
+        m_iWildCardBit = 2;
+    }
+
+    if(dist_nbrsagents == 6.0)
+    {
+        if(angle_acceleration > m_tAngularAccelerationThreshold ||
+                angle_acceleration   < -m_tAngularAccelerationThreshold)
+            m_piLastOccuranceEvent[3]    = CurrentStepNumber;
+        else
+            m_piLastOccuranceNegEvent[3] = CurrentStepNumber;
+    }
+    else
+    {
+        m_iWildCardBit = 3;
+    }
+
+    for(unsigned int featureindex = 2; featureindex <=3; featureindex++)
+    {
+        if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
+        {
+            m_pfAllFeatureValues[featureindex] = 1.0;
+
+            if (m_iWildCardBit == (int)(featureindex))
+                m_iWildCardBit = -1;
+        }
+        else if ((CurrentStepNumber - m_piLastOccuranceNegEvent[featureindex]) <= m_iEventSelectionTimeWindow)
+        {
+            m_pfAllFeatureValues[featureindex] = 0.0;
+
+            if (m_iWildCardBit == (int)(featureindex))
+                m_iWildCardBit = -1;
+        }
+        else
+        {
+            // default feature value in case of wild card
+            m_pfAllFeatureValues[featureindex] = 0.0;
+
+            if ((featureindex) == 3 && m_iWildCardBit == 2){
+                printf("\nBoth bits 2 and 3 cannot have WC");
+                exit(-1);}
+        }
+    }
+
+#else //not WILDCARDINFV
+
+    // Sensors-motor interactions
+    // Set if the occurance of the following event, atleast once in time window X
+    // 3rd: distance to nbrs 0-6 && change in angular acceleration
+    // 4th: no neighbors detected  && change in angular acceleration
+
+    if(dist_nbrsagents < 6.0 &&
+            (angle_acceleration > m_tAngularAccelerationThreshold ||
+             angle_acceleration < -m_tAngularAccelerationThreshold))
+    {
+        m_piLastOccuranceEvent[2] = CurrentStepNumber;
+    }
+
+    if(dist_nbrsagents == 6.0 &&
+            (angle_acceleration > m_tAngularAccelerationThreshold ||
+             angle_acceleration < -m_tAngularAccelerationThreshold))
+    {
+        m_piLastOccuranceEvent[3] = CurrentStepNumber;
+    }
+
+    for(unsigned int featureindex = 2; featureindex <=3; featureindex++)
+    {
+        if ((CurrentStepNumber - m_piLastOccuranceEvent[featureindex]) <= m_iEventSelectionTimeWindow)
+        {
+            m_pfAllFeatureValues[featureindex] = 1.0;
+        }
+        else
+        {
+            m_pfAllFeatureValues[featureindex] = 0.0;
+        }
+    }
+#endif //WILDCARDINFV
+
+    // Motors
+    //5th: distance travelled by bot in past Y time-steps. Higher than 5% of max-possible distance travelled is accepted as feature=1.
+    TVector2d vecAgentPos = *(m_pcAgent->GetPosition());
+
+    if(CurrentStepNumber >= m_iDistTravelledTimeWindow)
+    {
+        // distance travelled in last 100 time-steps
+        m_fSquaredDistTravelled =
+                GetSquaredDistanceBetweenPositions(&vecAgentPos,
+                                                   &(m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex]));
+
+
+        // decision based on distance travelled in the last 100 time-steps
+        if(m_fSquaredDistTravelled >= m_fSquaredDistThreshold)
+            m_pfAllFeatureValues[4] = 1.0;
+        else
+            m_pfAllFeatureValues[4] = 0.0;
+    }
+
+    // adding new coordinate values into the queue
+    m_pvecCoordAtTimeStep[m_unCoordCurrQueueIndex] = vecAgentPos;
+    m_unCoordCurrQueueIndex = (m_unCoordCurrQueueIndex + 1) % m_iDistTravelledTimeWindow;
+
+
+    //6th: velocity, higher than 5% of speed is accepted as feature=1
+    m_pfAllFeatureValues[5] = (mag_velocity >= m_fVelocityThreshold) ? 1.0:0.0;
+    //    if(mag_velocity >= m_fVelocityThreshold) // higher than 5% of speed is accepted as moving
+    //        m_pfFeatureValues[5] = 1.0;
+    //    else
+    //        m_pfFeatureValues[5] = 0.0;
+
+
+    m_pfAllFeatureValues[6] = (unCloseRangeNbrCount > 0) ? 1.0:0.0;
+    m_pfAllFeatureValues[7] = (unFarRangeNbrCount   > 0) ? 1.0:0.0;
+
+
+    if(dist_nbrsagents < 6.0  && (angle_velocity > m_tAngularVelocityThreshold))
+        m_piLastOccuranceEvent[0] = CurrentStepNumber;
+
+    if(dist_nbrsagents == 6.0 && (angle_velocity > m_tAngularVelocityThreshold))
+        m_piLastOccuranceEvent[1] = CurrentStepNumber;
+
+    if ((CurrentStepNumber - m_piLastOccuranceEvent[0]) <= m_iEventSelectionTimeWindow)
+        m_pfAllFeatureValues[8] = 1.0;
+    else
+        m_pfAllFeatureValues[8] = 0.0;
+
+    if ((CurrentStepNumber - m_piLastOccuranceEvent[1]) <= m_iEventSelectionTimeWindow)
+        m_pfAllFeatureValues[9] = 1.0;
+    else
+        m_pfAllFeatureValues[9] = 0.0;
+
+    m_pfAllFeatureValues[10] = (mag_acceleration   >= m_fAccelerationThreshold) ||
+            (mag_acceleration   <= -m_fAccelerationThreshold)
+            ? 1.0:0.0;
+
+    m_pfAllFeatureValues[11] = (angle_velocity     >= m_tAngularVelocityThreshold)    ? 1.0:0.0;
+
+    m_pfAllFeatureValues[12] = (angle_acceleration   >= m_tAngularAccelerationThreshold) ||
+            (angle_acceleration   <= -m_tAngularAccelerationThreshold)
+            ? 1.0:0.0;
+
+    m_pfAllFeatureValues[13] = (mag_relvelocity   >= m_fRelativeVelocityMagThreshold) ||
+            (mag_relvelocity   <= -m_fRelativeVelocityMagThreshold)
+            ? 1.0:0.0;
+
+    m_pfAllFeatureValues[14] = (dir_relvelocity   >= m_fRelativeVelocityDirThreshold) ||
+            (dir_relvelocity   <= -m_fRelativeVelocityDirThreshold)
+            ? 1.0:0.0;
+
+
+    // adding the selected features into the feature vector
+    for(size_t i = 0; i < m_piFeaturesSelected.size(); ++i)
+        m_pfFeatureValues[i] = m_pfAllFeatureValues[m_piFeaturesSelected[i]-1];
+
+#ifdef DEBUGFEATUREVECTORFLAG
+    if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
+        PrintFeatureDetails();
 #endif
 }
 
