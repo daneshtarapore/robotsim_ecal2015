@@ -1,5 +1,6 @@
 #include "featurevector.h"
 #include "assert.h"
+#include <iostream>
 
 /******************************************************************************/
 /******************************************************************************/
@@ -683,6 +684,14 @@ void CFeatureVector::ComputeFeatureValues()
     // adding the selected features into the feature vector
     for(size_t i = 0; i < m_piFeaturesSelected.size(); ++i)
         m_pfFeatureValues[i] = m_pfAllFeatureValues[m_piFeaturesSelected[i]-1];
+
+    if (CurrentStepNumber == 0 && m_pcAgent->GetIdentification()==0)
+    {
+        std::cout << std::endl << "Features selected ";
+        for(size_t i = 0; i < m_piFeaturesSelected.size(); ++i)
+            std::cout << m_piFeaturesSelected[i] << " ";
+        std::cout << std::endl;
+    }
 
 #ifdef DEBUGFEATUREVECTORFLAG
     if(FDMODELTYPE != LINEQ) // lineq - low expected run time; can come back and log more details if needed
