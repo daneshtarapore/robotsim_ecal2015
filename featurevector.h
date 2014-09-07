@@ -64,10 +64,6 @@ protected:
     int*           m_piLastOccuranceEvent;
     int*           m_piLastOccuranceNegEvent;
 
-    static std::vector <unsigned> initSelectedFeatures()
-    {
-        std::vector <unsigned> tmp = {7, 8, 9, 10, 14, 15}; return tmp;
-    }
 
     std::vector <unsigned> m_piFeaturesSelected; // the features that are to be introduced into the feature vector
     //m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6}; // the original 6 bit FV used in the BB paper. Features start from 1.

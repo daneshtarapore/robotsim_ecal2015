@@ -29,8 +29,8 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
 
     m_pfAllFeatureValues     = new float[MAX_NUMBER_OF_FEATURES];
 
-    //m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6}; // the original 6 bit FV used in the BB paper. Features start from 1.
-    m_piFeaturesSelected     = {7, 8, 9, 10, 14, 15};
+    m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6}; // the original 6 bit FV used in the BB paper. Features start from 1.
+    //m_piFeaturesSelected     = {7, 8, 9, 10, 14, 15};
 
     assert(m_piFeaturesSelected.size() == NUMBER_OF_FEATURES);
 
