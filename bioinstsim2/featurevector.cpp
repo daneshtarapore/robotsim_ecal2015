@@ -29,10 +29,12 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
 
     m_pfAllFeatureValues     = new float[MAX_NUMBER_OF_FEATURES];
 
-    m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6}; // the original 6 bit FV used in the BB paper.Features start at index 1.
+    //m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6}; // the original 6 bit FV used in the BB paper.Features start at index 1.
     //m_piFeaturesSelected     = {7, 8, 9, 10, 14, 15}; //already tested
     //m_piFeaturesSelected     = {2, 7, 9, 4, 11, 12};
     //m_piFeaturesSelected     = {1, 8, 3, 10, 6, 13};
+
+    m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6, 7, 8,  9};
 
     assert(m_piFeaturesSelected.size() == NUMBER_OF_FEATURES);
 
@@ -755,11 +757,11 @@ void CFeatureVector::PrintFeatureDetails()
         //               m_fSquaredDistTravelled, f_MaxSquareDistTravelled);
         //#endif //DISABLEMODEL_RETAINRNDCALLS
 
-        printf("\nStep: %d. FV for normal agent %d: #NBRS %d, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", CurrentStepNumber, m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),dist_nbrsagents,angle_acceleration,angle_velocity,
+        /*printf("\nStep: %d. FV for normal agent %d: #NBRS %d, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", CurrentStepNumber, m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),dist_nbrsagents,angle_acceleration,angle_velocity,
                mag_relativeagentvelocity,dir_relativeagentvelocity,
                mag_relativeagentacceleration,dir_relativeagentacceleration,
                m_pcAgent->GetVelocity()->x, m_pcAgent->GetVelocity()->y,
-               m_pcAgent->GetAcceleration()->x , m_pcAgent->GetAcceleration()->y);
+               m_pcAgent->GetAcceleration()->x , m_pcAgent->GetAcceleration()->y);*/
 
 #ifdef WILDCARDINFV
         printf("Step: %d, Alternate normal FV info (with WC on S-M features), TimeSteps_NbrsInRange0to3: %d, TimeSteps_NbrsInRange3to6: %d, SquaredDistTravelled: %f, SquaredDistThreshold: %f, WildCard: %d\n", CurrentStepNumber, m_unSumTimeStepsNbrsRange0to3, m_unSumTimeStepsNbrsRange3to6, m_fSquaredDistTravelled, m_fSquaredDistThreshold, m_iWildCardBit);
@@ -771,11 +773,11 @@ void CFeatureVector::PrintFeatureDetails()
 
     if (m_pcAgent->GetBehavIdentification() == -1) //&& CurrentStepNumber > MODELSTARTTIME)
     {
-        printf("\nStep: %d, FV for abnormal agent %d: #NBRS %d, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", CurrentStepNumber, m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),dist_nbrsagents,angle_acceleration,angle_velocity,
+        /*printf("\nStep: %d, FV for abnormal agent %d: #NBRS %d, AvgDistSurroundAgents %f, AngAcc %f, AngVel %f, RelVel_mag %f, RelVel_dir %f, RelAcc_mag %f, RelAcc_dir %f, Abs_vel [%f, %f], Abs_acel [%f, %f]\n", CurrentStepNumber, m_pcAgent->GetIdentification(), m_pcAgent->CountAgents(FEATURE_RANGE, ROBOT),dist_nbrsagents,angle_acceleration,angle_velocity,
                mag_relativeagentvelocity,dir_relativeagentvelocity,
                mag_relativeagentacceleration,dir_relativeagentacceleration,
                m_pcAgent->GetVelocity()->x, m_pcAgent->GetVelocity()->y,
-               m_pcAgent->GetAcceleration()->x , m_pcAgent->GetAcceleration()->y);
+               m_pcAgent->GetAcceleration()->x , m_pcAgent->GetAcceleration()->y);*/
 
 
 #ifdef WILDCARDINFV
