@@ -34,7 +34,7 @@ CFeatureVector::CFeatureVector(CAgent* pc_agent) : m_pcAgent(pc_agent)
     //m_piFeaturesSelected     = {2, 7, 9, 4, 11, 12};
     //m_piFeaturesSelected     = {1, 8, 3, 10, 6, 13};
 
-    m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6, 7, 8,  9};
+    m_piFeaturesSelected     = {1, 2, 3, 4, 5, 6};
 
     assert(m_piFeaturesSelected.size() == NUMBER_OF_FEATURES);
 
