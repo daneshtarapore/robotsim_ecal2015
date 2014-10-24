@@ -41,7 +41,9 @@ ThresholdinRobotAgentOptimised::~ThresholdinRobotAgentOptimised()
 void ThresholdinRobotAgentOptimised::SimulationStepUpdatePosition()
 {    
     Random::nextDouble(); /* We want the same sequence of random numbers generated as with the CRM */
-
+#ifdef FLOATINGPOINTOPERATIONS
+    robotAgent->IncNumberFloatingPtOperations(1); // below if condition
+#endif
     UpdateState();
 }
 
@@ -55,11 +57,22 @@ void ThresholdinRobotAgentOptimised::UpdateState()
 
     while(it_fvsensed != fvsensed->end())
     {
+        #ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(1); // above while condition
+        #endif
+
         double fRobotsFV = (*it_fvsensed).fRobots;
 
         list<structFVsSensed>::iterator itnested_fvsensed = fvsensed->begin();
-        while(itnested_fvsensed != fvsensed->end())
+        while(itnested_fvsensed != fvsensed->end())            
         {
+            #ifdef FLOATINGPOINTOPERATIONS
+                robotAgent->IncNumberFloatingPtOperations(1); // above while condition
+            #endif
+
+            #ifdef FLOATINGPOINTOPERATIONS
+                robotAgent->IncNumberFloatingPtOperations(1); // below if condition
+            #endif
             if((*itnested_fvsensed).uFV != (*it_fvsensed).uFV)
             {
                 /* XOr operation between the 2 feature vectors */
@@ -67,23 +80,44 @@ void ThresholdinRobotAgentOptimised::UpdateState()
                 /* Number of 1's from the result of the previous XOR operation,  at positions preset by mask */
                 unsigned int hammingdistance  = CRMinRobotAgentOptimised::GetNumberOfSetBits(unXoredString);
 
+                #ifdef FLOATINGPOINTOPERATIONS
+                    robotAgent->IncNumberFloatingPtOperations(3); // above two operations and below if condition
+                #endif
                 if(hammingdistance <= m_uTolerableHD)
                 {
                     fRobotsFV += (*itnested_fvsensed).fRobots;
+                    #ifdef FLOATINGPOINTOPERATIONS
+                        robotAgent->IncNumberFloatingPtOperations(1);
+                    #endif
                 }
             }
             ++itnested_fvsensed;
+            #ifdef FLOATINGPOINTOPERATIONS
+                robotAgent->IncNumberFloatingPtOperations(1);
+            #endif
         }
+        #ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(1); // above while condition - returning false
+        #endif
 
 
         //if((*it_fvsensed).fRobots <= (double)m_uThreshold)
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(1); // below if condition
+#endif
         if(fRobotsFV <= (double)m_uThreshold)
             robotAgent->SetMostWantedList(&it_fvsensed, 1); //Attack
         else
             robotAgent->SetMostWantedList(&it_fvsensed, 2); //Tolerate
 
          ++it_fvsensed;
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(1); //++it_fvsensed;
+#endif
     }
+    #ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(1);  // above while condition - returning false
+    #endif
 }
 
 /******************************************************************************/
