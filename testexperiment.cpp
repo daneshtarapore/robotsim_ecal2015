@@ -4,6 +4,7 @@
 
 #include <vector>
 #include "testexperiment.h"
+#include <iostream>
 
 #include "aggregatebehavior.h"
 #include "dispersebehavior.h"
@@ -188,9 +189,8 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
 
     m_ppcListAgentsCreated = new CAgent*[m_unNumberOfAgents];
     for(int i = 0; i < m_unNumberOfAgents; i++)
-    {
         m_ppcListAgentsCreated[i]     = NULL;
-    }
+
 }
 
 /******************************************************************************/
@@ -453,10 +453,33 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
     //TODO: DANESH
     // The code below is spreading the errorbehavior
-    if (un_step_number > MODELSTARTTIME && un_step_number >= m_unMisbehaveStep){
-        if (m_unSpreadPeriod > 0) {
-            if ((un_step_number - 1) % m_unSpreadPeriod == 0) {
-                SpreadBehavior(m_eerrorbehavType, m_fSpreadProbability); }}}
+    if(m_unSpreadPeriod >0)
+    {
+        unsigned int firstswitchat = 5000U;
+
+        if (un_step_number >= firstswitchat + m_unDurationofSwitch) // switch back slowly to old m_eswarmbehavType - except focal agent
+        {
+            unsigned int m_unSpreadPeriodNew;
+            m_unSpreadPeriodNew = (unsigned int)((float)m_unDurationofSwitch / (float)m_unNumberOfAgents);
+            if (m_unSpreadPeriodNew > 0)
+            {
+                if (un_step_number % m_unSpreadPeriodNew == 0)
+                    SpreadBehavior(un_step_number, m_eswarmbehavType, firstswitchat);
+            }
+        }
+
+        else if (un_step_number >= firstswitchat && un_step_number < firstswitchat+m_unDurationofSwitch) // spreads m_eerrorbehavType - starting with focal agent
+        {
+            unsigned int m_unSpreadPeriodNew;
+            m_unSpreadPeriodNew = (unsigned int)((float)m_unDurationofSwitch / (float)m_unNumberOfAgents);
+
+            if (m_unSpreadPeriodNew > 0)
+            {
+                if (un_step_number % m_unSpreadPeriodNew == 0)
+                    SpreadBehavior(un_step_number, m_eerrorbehavType,firstswitchat);
+            }
+        }
+    }
 
 
     if (un_step_number == m_unMisbehaveStep)
@@ -636,7 +659,7 @@ void CTestExperiment::ChaseAndCaptureAgent(CAgent* pc_agent_to_chase, unsigned i
 /******************************************************************************/
 /******************************************************************************/
 
-void CTestExperiment::SpreadBehavior(ESwarmBehavType e_behavior, double f_probability)
+void CTestExperiment::SpreadBehavior_Infection(ESwarmBehavType e_behavior, double f_probability)
 {
     TAgentList listInfectedAgents;
     
@@ -673,6 +696,49 @@ void CTestExperiment::SpreadBehavior(ESwarmBehavType e_behavior, double f_probab
                     index++;
                 }
             } while (index < tSortedAgents.size() && !found);
+        }
+    }
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CTestExperiment::SpreadBehavior(unsigned int stepnumber, ESwarmBehavType e_behavior, unsigned int firstswitchat)
+{
+    //TAgentList listUnchangeddAgents;
+
+    if(stepnumber==firstswitchat) // focal agent is first to change behavior
+    {
+        assert(m_pcMisbehaveAgent[0]->GetBehavior() != e_behavior);
+        m_pcMisbehaveAgent[0]->ClearBehaviors();
+        m_pcMisbehaveAgent[0]->SetBehavior(e_behavior);
+        m_pcMisbehaveAgent[0]->SetBehaviors(GetAgentBehavior(e_behavior, pcHomeToAgent));
+        return;
+    }
+
+    TAgentVector* vecAllAgents = CSimulator::GetInstance()->GetAllAgents();
+    for (TAgentVectorIterator i = vecAllAgents->begin(); i != vecAllAgents->end(); i++)
+    {
+        if ((*i)->GetType() == ROBOT)
+        {
+            if(stepnumber >= firstswitchat+m_unDurationofSwitch) // Dont allow focal agent to change back
+            {
+                if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior &&
+                        ((CROBOTAGENT*) (*i))->GetIdentification() != m_pcMisbehaveAgent[0]->GetIdentification())
+                {
+                    ((CROBOTAGENT*)(*i))->ClearBehaviors();
+                    ((CROBOTAGENT*)(*i))->SetBehavior(e_behavior);
+                    ((CROBOTAGENT*)(*i))->SetBehaviors(GetAgentBehavior(e_behavior, pcHomeToAgent));
+                    return;
+                }
+            }
+            else if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior)
+            {
+                ((CROBOTAGENT*)(*i))->ClearBehaviors();
+                ((CROBOTAGENT*)(*i))->SetBehavior(e_behavior);
+                ((CROBOTAGENT*)(*i))->SetBehaviors(GetAgentBehavior(e_behavior, pcHomeToAgent));
+                return;
+            }
         }
     }
 }
