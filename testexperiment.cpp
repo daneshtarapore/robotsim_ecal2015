@@ -124,6 +124,7 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
     m_unChaseAbnormalAgents  = pc_experiment_arguments->GetArgumentAsIntOr("chaseabnormalagents", 0);
     m_fSpreadProbability     = pc_experiment_arguments->GetArgumentAsDoubleOr("spreadprobability", 0.0);
     m_unSpreadPeriod         = pc_experiment_arguments->GetArgumentAsIntOr("spreadperiod", 0);
+    m_unFirstSwitchAt        = pc_experiment_arguments->GetArgumentAsIntOr("firstswitchat", 0);
 
 
     if (pc_experiment_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
@@ -176,6 +177,8 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
         printf("chaseabnormalagents=# Set to 1 misbehaving agents should be chased and boxed in [%d]\n", m_unChaseAbnormalAgents);
         printf("spreadprobability=#   Probability of an errorbehav'ing agent spreads its behavior to the nearest swarmbehav'ing neighbor [%1.4f]\n", m_fSpreadProbability);
         printf("spreadperiod=#        How often in simulation cycles that a potential spread of errorbehav should spread (0: never) [%d]\n", m_unSpreadPeriod);
+        printf("firststswitchat=#       First switch in behavior (instantaneous or slow) occurs when [%d]\n", m_unFirstSwitchAt);
+
 
         bHelpDisplayed = true;
     }
@@ -357,7 +360,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
     if(m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
     {
-        if(un_step_number == 5000U)
+        if(un_step_number == m_unFirstSwitchAt)
             for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
             {
                 // All agents switch behaviors since this was meant to see tolerance to normal behav and its transitions. No abnormal behavs
@@ -399,7 +402,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 #endif
             }
 
-        if(un_step_number == 5000U + m_unDurationofSwitch)
+        if(un_step_number == m_unFirstSwitchAt + m_unDurationofSwitch)
             for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
             {
                 // All agents switch back to aggregation behaviors
@@ -455,20 +458,18 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     // The code below is spreading the errorbehavior
     if(m_unSpreadPeriod >0)
     {
-        unsigned int firstswitchat = 5000U;
-
-        if (un_step_number >= firstswitchat + m_unDurationofSwitch) // switch back slowly to old m_eswarmbehavType - except focal agent
+        if (un_step_number >= m_unFirstSwitchAt + m_unDurationofSwitch) // switch back slowly to old m_eswarmbehavType - except focal agent
         {
             unsigned int m_unSpreadPeriodNew;
             m_unSpreadPeriodNew = (unsigned int)((float)m_unDurationofSwitch / (float)m_unNumberOfAgents);
             if (m_unSpreadPeriodNew > 0)
             {
                 if (un_step_number % m_unSpreadPeriodNew == 0)
-                    SpreadBehavior(un_step_number, m_eswarmbehavType, firstswitchat);
+                    SpreadBehavior(un_step_number, m_eswarmbehavType, m_unFirstSwitchAt);
             }
         }
 
-        else if (un_step_number >= firstswitchat && un_step_number < firstswitchat+m_unDurationofSwitch) // spreads m_eerrorbehavType - starting with focal agent
+        else if (un_step_number >= m_unFirstSwitchAt && un_step_number < m_unFirstSwitchAt+m_unDurationofSwitch) // spreads m_eerrorbehavType - starting with focal agent
         {
             unsigned int m_unSpreadPeriodNew;
             m_unSpreadPeriodNew = (unsigned int)((float)m_unDurationofSwitch / (float)m_unNumberOfAgents);
@@ -476,7 +477,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             if (m_unSpreadPeriodNew > 0)
             {
                 if (un_step_number % m_unSpreadPeriodNew == 0)
-                    SpreadBehavior(un_step_number, m_eerrorbehavType,firstswitchat);
+                    SpreadBehavior(un_step_number, m_eerrorbehavType,m_unFirstSwitchAt);
             }
         }
     }
