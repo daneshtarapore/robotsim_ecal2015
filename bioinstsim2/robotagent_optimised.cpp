@@ -350,11 +350,24 @@ void CRobotAgentOptimised::PrintFeatureVectorDistribution(unsigned int id)
 
 unsigned int CRobotAgentOptimised::GetColor()
 {
+    unsigned int unToleraters  = 0;
+    unsigned int unAttackers   = 0;
+    unsigned int unNbrsInSensoryRange = 0;
+
+    bool dbgflag = false;
+
+    this->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
+
+    if(unToleraters > unAttackers)
+        return GREEN;
+    else
+        return RED;
+
     //return m_unIdentification == TRACKAGENT ? GREEN : RED;
-    if(m_unIdentification == 15)
+    /*if(m_unIdentification == 15)
         return RED;
     else
-        return BLUE;
+        return BLUE;*/
 
     /*if(m_iBehavIdentification  == 1)
         return GREEN;
