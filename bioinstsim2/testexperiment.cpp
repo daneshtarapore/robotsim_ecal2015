@@ -709,11 +709,18 @@ void CTestExperiment::SpreadBehavior(unsigned int stepnumber, ESwarmBehavType e_
 
     if(stepnumber==firstswitchat) // focal agent is first to change behavior
     {
-        assert(m_pcMisbehaveAgent[0]->GetBehavior() != e_behavior);
-        m_pcMisbehaveAgent[0]->ClearBehaviors();
-        m_pcMisbehaveAgent[0]->SetBehavior(e_behavior);
-        m_pcMisbehaveAgent[0]->SetBehaviors(GetAgentBehavior(e_behavior, pcHomeToAgent));
-        return;
+        TAgentVector* vecAllAgents = CSimulator::GetInstance()->GetAllAgents();
+        for (TAgentVectorIterator i = vecAllAgents->begin(); i != vecAllAgents->end(); i++)
+        {
+            if ((*i)->GetType() == ROBOT && ((CROBOTAGENT*)(*i))->GetIdentification() == m_unAbnormalAgentToTrack)
+            {
+                assert(((CROBOTAGENT*)(*i))->GetBehavior() != e_behavior);
+                ((CROBOTAGENT*)(*i))->ClearBehaviors();
+                ((CROBOTAGENT*)(*i))->SetBehavior(e_behavior);
+                ((CROBOTAGENT*)(*i))->SetBehaviors(GetAgentBehavior(e_behavior, pcHomeToAgent));
+                return;
+            }
+        }
     }
 
     TAgentVector* vecAllAgents = CSimulator::GetInstance()->GetAllAgents();
@@ -724,7 +731,7 @@ void CTestExperiment::SpreadBehavior(unsigned int stepnumber, ESwarmBehavType e_
             if(stepnumber >= firstswitchat+m_unDurationofSwitch) // Dont allow focal agent to change back
             {
                 if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior &&
-                        ((CROBOTAGENT*) (*i))->GetIdentification() != m_pcMisbehaveAgent[0]->GetIdentification())
+                        ((CROBOTAGENT*) (*i))->GetIdentification() != m_unAbnormalAgentToTrack)
                 {
                     ((CROBOTAGENT*)(*i))->ClearBehaviors();
                     ((CROBOTAGENT*)(*i))->SetBehavior(e_behavior);
