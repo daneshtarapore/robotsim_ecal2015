@@ -34,7 +34,8 @@ protected:
     vector<CBehavior*> GetAgentBehavior(ESwarmBehavType swarmbehavType, CAgent*  previousAgent);
 
     virtual void ChaseAndCaptureAgent(CAgent* pc_agent_to_chase, unsigned int un_agents_to_assign);
-    virtual void SpreadBehavior(ESwarmBehavType e_behavior, double f_probability);
+    virtual void SpreadBehavior(unsigned int step_number, ESwarmBehavType e_behavior, unsigned int firstswitchat);
+    virtual void SpreadBehavior_Infection(ESwarmBehavType e_behavior, double f_probability);
 
     ESwarmBehavType m_eswarmbehavType, m_eerrorbehavType;
     //EErrorBehavType m_eerrorbehavType;
