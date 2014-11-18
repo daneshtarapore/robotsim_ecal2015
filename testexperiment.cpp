@@ -358,8 +358,10 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     //            printf("\nStepforfv: %d, Agent_id: %d, Agent_fv: %d",un_step_number,m_ppcListAgentsCreated[agentindex]->GetIdentification(),((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->GetFeatureVector()->GetValue());
     //        }
 
-    if(m_iSwitchNormalBehavior)  // Switching normal behavior during simulation run
+    if(m_iSwitchNormalBehavior==1)  // Switching normal behavior (SIMULATANEOUSLY ACROSS ALL AGENTS) during simulation run
     {
+        assert(m_unSpreadPeriod<=0); // if we are going to spread the behavior instantaneously across all the agents, we need to make sure that the switch to slowly spread the behavior across all agents is disabled.
+
         if(un_step_number == m_unFirstSwitchAt)
             for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
             {
@@ -454,22 +456,13 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         }
     }
 
-    //TODO: DANESH
+
     // The code below is spreading the errorbehavior
     if(m_unSpreadPeriod >0)
     {
-        if (un_step_number >= m_unFirstSwitchAt + m_unDurationofSwitch) // switch back slowly to old m_eswarmbehavType - except focal agent
-        {
-            unsigned int m_unSpreadPeriodNew;
-            m_unSpreadPeriodNew = (unsigned int)((float)m_unDurationofSwitch / (float)m_unNumberOfAgents);
-            if (m_unSpreadPeriodNew > 0)
-            {
-                if (un_step_number % m_unSpreadPeriodNew == 0)
-                    SpreadBehavior(un_step_number, m_eswarmbehavType, m_unFirstSwitchAt);
-            }
-        }
+        assert(m_iSwitchNormalBehavior==0); // if we are going to spread the behavior slowly across all agents, we need to make sure that the switch for instantaneous behavior transition is disabled.
 
-        else if (un_step_number >= m_unFirstSwitchAt && un_step_number < m_unFirstSwitchAt+m_unDurationofSwitch) // spreads m_eerrorbehavType - starting with focal agent
+        if (un_step_number >= m_unFirstSwitchAt && un_step_number < m_unFirstSwitchAt+m_unDurationofSwitch) // spreads m_eerrorbehavType - starting with focal agent
         {
             unsigned int m_unSpreadPeriodNew;
             m_unSpreadPeriodNew = (unsigned int)((float)m_unDurationofSwitch / (float)m_unNumberOfAgents);
@@ -478,6 +471,16 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             {
                 if (un_step_number % m_unSpreadPeriodNew == 0)
                     SpreadBehavior(un_step_number, m_eerrorbehavType,m_unFirstSwitchAt);
+            }
+        }
+        else if (un_step_number >= m_unFirstSwitchAt + m_unDurationofSwitch) // switch back slowly to old m_eswarmbehavType - except focal agent
+        {
+            unsigned int m_unSpreadPeriodNew;
+            m_unSpreadPeriodNew = (unsigned int)((float)m_unDurationofSwitch / (float)m_unNumberOfAgents);
+            if (m_unSpreadPeriodNew > 0)
+            {
+                if (un_step_number % m_unSpreadPeriodNew == 0)
+                    SpreadBehavior(un_step_number, m_eswarmbehavType, m_unFirstSwitchAt);
             }
         }
     }
@@ -501,6 +504,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
     {
         unsigned int unToleraters  = 0;
         unsigned int unAttackers   = 0;
+        unsigned int unSuspectors   = 0;
         unsigned int unNbrsInSensoryRange = 0;
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
@@ -509,9 +513,9 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         bool dbgflag = false;
 #endif
 
-        m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);//true
+        m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unSuspectors, &unNbrsInSensoryRange, dbgflag);//true
 
-        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
+        printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, susp: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unSuspectors, unNbrsInSensoryRange);
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
 
         //printf("\nMisbehavingAgentStats: ");
@@ -525,6 +529,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         {
             unsigned int unToleraters = 0;
             unsigned int unAttackers  = 0;
+            unsigned int unSuspectors   = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
@@ -533,10 +538,14 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             bool dbgflag = false;
 #endif
 
-            m_pcNormalAgentToTrack->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
+            m_pcNormalAgentToTrack->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unSuspectors, &unNbrsInSensoryRange, dbgflag);
 
-            /*printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
-            printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());*/
+
+
+            printf("\nStep: %d, NormalAgentResponse: tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unNbrsInSensoryRange);
+            printf("\nNormalAgentFeatureVector: %d\n\n", m_pcNormalAgentToTrack->GetFeatureVector()->GetValue());
+
+
 
             //printf("\nNormalAgentStats: ");
             //PrintStatsForAgent(m_pcNormalAgentToTrack);
@@ -576,12 +585,13 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
             unsigned int unToleraters  = 0;
             unsigned int unAttackers   = 0;
+            unsigned int unSuspectors   = 0;
             unsigned int unNbrsInSensoryRange = 0;
 
             bool dbgflag = false;
 
-            tmp_robotagent->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
-            printf("\nResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, neighboursinsensoryrange: %d", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unNbrsInSensoryRange);
+            tmp_robotagent->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unSuspectors, &unNbrsInSensoryRange, dbgflag);
+            printf("\nResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, susp: %d, neighboursinsensoryrange: %d", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unSuspectors, unNbrsInSensoryRange);
             i++;
         }
         printf("\n");
