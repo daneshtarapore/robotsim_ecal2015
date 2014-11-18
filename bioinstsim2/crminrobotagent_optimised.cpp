@@ -82,6 +82,8 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
 
     m_uHistoryTcells          = m_crmArguments->GetArgumentAsIntOr("hist_ts", 0);
 
+    m_fSuspicionThreshold     = m_crmArguments->GetArgumentAsDoubleOr("susp_th", 1.0);
+
 
     if(FDMODELTYPE == CRM_TCELLSINEXCESS)
         assert(kon == koff);
@@ -116,7 +118,8 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
 
                "seedfv-hd-range=#             Diversity of seed t-cell population [%d]\n"
 
-               "hist_ts=#                     T-cell populations recorded for time-steps  [%d]\n",
+               "hist_ts=#                     T-cell populations recorded for time-steps  [%d]\n"
+               "susp_th=#                     Threshold above which a FV is to be tolerated - but deemed suspicious. Range: [0,1]  [%f]\n",
                CFeatureVector::NUMBER_OF_FEATURES,
                seedE,
                seedR,
@@ -137,7 +140,8 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                m_fFVtoApcscaling_expbase, m_fFVtoApcscaling_exprate,
                m_uPersistenceThreshold, m_fIntegrationTime, m_fStartExpIntegrationTime,
                m_uSeedfvHdRange,
-               m_uHistoryTcells);
+               m_uHistoryTcells,
+               m_fSuspicionThreshold);
         bHelpDisplayed = true;
     }
 
@@ -1496,12 +1500,12 @@ void CRMinRobotAgentOptimised::UpdateState()
                     else if (tmp_E1 > tmp_R1)
                     { }
                     else
-                        suspicioncounter += 1.0;
+                        suspicioncounter += 1.0; // the FV would have been tolerated in the past
                 }
                 suspicioncounter = suspicioncounter / listlistTcells.size();
                 robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
-                if (suspicioncounter > 0.5)
-                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal
+                if (suspicioncounter > m_fSuspicionThreshold)
+                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal; else deemed abnormal.
             }
         }
         else

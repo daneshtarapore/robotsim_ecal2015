@@ -143,6 +143,8 @@ protected:
     unsigned m_uSeedfvHdRange; // diversity of seed t-cell population
 
     unsigned m_uHistoryTcells; // a history of t-cell populations (at each of the previous m_uHistoryTcells simulation time-steps)
+    float m_fSuspicionThreshold; // Threshold above which a FV is to be tolerated - but deemed suspicious [0,1]
+
 
 
 //    double*        m_pfEffectors;
