@@ -123,7 +123,8 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
     m_unDurationofSwitch     = pc_experiment_arguments->GetArgumentAsIntOr("durationofswitch", 0);
     m_unChaseAbnormalAgents  = pc_experiment_arguments->GetArgumentAsIntOr("chaseabnormalagents", 0);
     m_fSpreadProbability     = pc_experiment_arguments->GetArgumentAsDoubleOr("spreadprobability", 0.0);
-    m_unSpreadPeriod         = pc_experiment_arguments->GetArgumentAsIntOr("spreadperiod", 0);
+    m_unGradualBehaviorSpreadEnabled
+                             = pc_experiment_arguments->GetArgumentAsIntOr("slowspread_enabled", 0);
     m_unFirstSwitchAt        = pc_experiment_arguments->GetArgumentAsIntOr("firstswitchat", 0);
 
 
@@ -175,8 +176,8 @@ CTestExperiment::CTestExperiment(CArguments* pc_experiment_arguments,
         printf("durationofswitch=#   Set to number of steps the behavior is switched for during simulation [%d]\n", m_unDurationofSwitch);
 
         printf("chaseabnormalagents=# Set to 1 misbehaving agents should be chased and boxed in [%d]\n", m_unChaseAbnormalAgents);
-        printf("spreadprobability=#   Probability of an errorbehav'ing agent spreads its behavior to the nearest swarmbehav'ing neighbor [%1.4f]\n", m_fSpreadProbability);
-        printf("spreadperiod=#        How often in simulation cycles that a potential spread of errorbehav should spread (0: never) [%d]\n", m_unSpreadPeriod);
+        printf("spreadprobability=#   Probability of an errorbehav'ing agent spreads its behavior to the nearest swarmbehav'ing neighbor [used in SpreadBehavior_Infection(...)] [%1.4f]\n", m_fSpreadProbability);
+        printf("slowspread_enabled=#        Enable the gradual spread of errorbehav (0: disabled, 1: enabled) [%d]\n", m_unGradualBehaviorSpreadEnabled);
         printf("firststswitchat=#       First switch in behavior (instantaneous or slow) occurs when [%d]\n", m_unFirstSwitchAt);
 
 
@@ -360,7 +361,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
     if(m_iSwitchNormalBehavior==1)  // Switching normal behavior (SIMULATANEOUSLY ACROSS ALL AGENTS) during simulation run
     {
-        assert(m_unSpreadPeriod<=0); // if we are going to spread the behavior instantaneously across all the agents, we need to make sure that the switch to slowly spread the behavior across all agents is disabled.
+        assert(m_unGradualBehaviorSpreadEnabled==0); // if we are going to spread the behavior instantaneously across all the agents, we need to make sure that the switch to slowly spread the behavior across all agents is disabled.
 
         if(un_step_number == m_unFirstSwitchAt)
             for(int agentindex = 0; agentindex < m_unNumberOfAgents; agentindex++)
@@ -458,7 +459,7 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
 
     // The code below is spreading the errorbehavior
-    if(m_unSpreadPeriod >0)
+    if(m_unGradualBehaviorSpreadEnabled == 1)
     {
         assert(m_iSwitchNormalBehavior==0); // if we are going to spread the behavior slowly across all agents, we need to make sure that the switch for instantaneous behavior transition is disabled.
 
@@ -739,10 +740,11 @@ void CTestExperiment::SpreadBehavior(unsigned int stepnumber, ESwarmBehavType e_
     {
         if ((*i)->GetType() == ROBOT)
         {
-            if(stepnumber >= firstswitchat+m_unDurationofSwitch) // Dont allow focal agent to change back
+            if(stepnumber >= firstswitchat+m_unDurationofSwitch)  // the second switch in behavior
             {
-                if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior &&
-                        ((CROBOTAGENT*) (*i))->GetIdentification() != m_unAbnormalAgentToTrack)
+                /*if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior &&
+                        ((CROBOTAGENT*) (*i))->GetIdentification() != m_unAbnormalAgentToTrack) // Dont allow focal agent to change back*/
+                if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior)
                 {
                     ((CROBOTAGENT*)(*i))->ClearBehaviors();
                     ((CROBOTAGENT*)(*i))->SetBehavior(e_behavior);
@@ -750,7 +752,7 @@ void CTestExperiment::SpreadBehavior(unsigned int stepnumber, ESwarmBehavType e_
                     return;
                 }
             }
-            else if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior)
+            else if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior) // the first switch in behavior
             {
                 ((CROBOTAGENT*)(*i))->ClearBehaviors();
                 ((CROBOTAGENT*)(*i))->SetBehavior(e_behavior);

@@ -49,8 +49,8 @@ protected:
 
     unsigned int    m_unChaseAbnormalAgents;
     double          m_fSpreadProbability;     
-    unsigned int    m_unSpreadPeriod;
-    unsigned int m_unFirstSwitchAt;
+    unsigned int    m_unGradualBehaviorSpreadEnabled;
+    unsigned int    m_unFirstSwitchAt;
 
 #ifdef OPTIMISED
     CRobotAgentOptimised*    m_pcMisbehaveAgent[20];
