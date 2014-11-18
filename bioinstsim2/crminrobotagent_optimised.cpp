@@ -80,6 +80,8 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
     m_uSeedfvHdRange          = m_crmArguments->GetArgumentAsIntOr("seedfv-hd-range",
                                                                    CFeatureVector::NUMBER_OF_FEATURES);
 
+    m_uHistoryTcells          = m_crmArguments->GetArgumentAsIntOr("hist_ts", 0);
+
 
     if(FDMODELTYPE == CRM_TCELLSINEXCESS)
         assert(kon == koff);
@@ -112,7 +114,9 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
 	       "integrationtime=#.#           CRM integration time [%e]\n"
                "startexptintegrationtime=#.#  CRM integration time at start of experiment [%e]\n"
 
-               "seedfv-hd-range=#             Diversity of seed t-cell population [%d]\n",
+               "seedfv-hd-range=#             Diversity of seed t-cell population [%d]\n"
+
+               "hist_ts=#                     T-cell populations recorded for time-steps  [%d]\n",
                CFeatureVector::NUMBER_OF_FEATURES,
                seedE,
                seedR,
@@ -132,7 +136,8 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                m_fFVtoApcscaling,
                m_fFVtoApcscaling_expbase, m_fFVtoApcscaling_exprate,
                m_uPersistenceThreshold, m_fIntegrationTime, m_fStartExpIntegrationTime,
-               m_uSeedfvHdRange);
+               m_uSeedfvHdRange,
+               m_uHistoryTcells);
         bHelpDisplayed = true;
     }
 
@@ -1425,6 +1430,8 @@ void CRMinRobotAgentOptimised::PrintConjugatestoTcellList(unsigned int id, Conju
 
 void CRMinRobotAgentOptimised::UpdateState()
 {
+    unsigned int CurrentStepNumber = CSimulator::GetInstance()->GetSimulationStepNumber();
+
     double tmp_E, tmp_R, tmp_affinity;
     list<structAPC>::iterator it_apcs = listAPCs.begin();
     list<structTcell>::iterator it_tcells;
@@ -1450,7 +1457,8 @@ void CRMinRobotAgentOptimised::UpdateState()
         (*it_apcs).fE_weightedbyaffinity = tmp_E;
         (*it_apcs).fR_weightedbyaffinity = tmp_R;
 
-        if ((tmp_E + tmp_R) <= CELLLOWERBOUND || fabs(tmp_E - tmp_R) <= CELLLOWERBOUND) {
+        if ((tmp_E + tmp_R) <= CELLLOWERBOUND || fabs(tmp_E - tmp_R) <= CELLLOWERBOUND)
+        {
             //Dont know - no T-cells to make decision or E approx. equal to R
             robotAgent->SetMostWantedList(&it_fvsensed, 0);
 #ifdef FLOATINGPOINTOPERATIONS
@@ -1461,13 +1469,58 @@ void CRMinRobotAgentOptimised::UpdateState()
         else if (tmp_E > tmp_R) // (tmp_E/tmp_R > 1.0)
         //else if (tmp_E/tmp_R > 0.9)// > 0.95 // (tmp_E/tmp_R > 1.0)
             // Attack
+        {
             robotAgent->SetMostWantedList(&it_fvsensed, 1);
+            if (m_uHistoryTcells > 0)
+            {
+                double suspicioncounter = 0.0;
+                list< list<structTcell> >::iterator pop_index;
+                for(pop_index = listlistTcells.begin(); pop_index != listlistTcells.end(); ++pop_index)
+                {
+                    double tmp_E1, tmp_R1, tmp_affinity1;
+                    tmp_E1 = 0.0; tmp_R1 = 0.0;
+                    list<structTcell>::iterator it_tcells1;
+                    for(it_tcells1 =  (*pop_index).begin();
+                        it_tcells1 != (*pop_index).end(); ++it_tcells1)
+                    {
+                        tmp_affinity1 = NegExpDistAffinity((*it_tcells1).uFV, (*it_apcs).uFV, m_fcross_affinity);
+                        tmp_E1 += tmp_affinity1 * (*it_tcells1).fE;
+                        tmp_R1 += tmp_affinity1 * (*it_tcells1).fR;
+#ifdef FLOATINGPOINTOPERATIONS
+                        robotAgent->IncNumberFloatingPtOperations(4+3); //3 operations in NegExpDistAffinity
+#endif
+                    }
 
+                    if ((tmp_E1 + tmp_R1) <= CELLLOWERBOUND || fabs(tmp_E1 - tmp_R1) <= CELLLOWERBOUND)
+                    { }
+                    else if (tmp_E1 > tmp_R1)
+                    { }
+                    else
+                        suspicioncounter += 1.0;
+                }
+                suspicioncounter = suspicioncounter / listlistTcells.size();
+                robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
+                if (suspicioncounter > 0.5)
+                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal
+            }
+        }
         else
+        {
             // Tolerate
             robotAgent->SetMostWantedList(&it_fvsensed, 2);
-
+        }
          ++it_apcs; ++it_fvsensed;
+    }
+
+    if (m_uHistoryTcells > 0)
+    {
+        if(CurrentStepNumber < MODELSTARTTIME + m_uHistoryTcells + 1)
+            listlistTcells.push_back(listTcells);
+        else
+        {
+            listlistTcells.push_back(listTcells);
+            listlistTcells.pop_front();
+        }
     }
 }
 

@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <math.h>
 #include <list>
+#include <iostream>
 #include "arguments.h"
 #include "featurevector.h"
 #include "random.h"
@@ -141,6 +142,8 @@ protected:
 
     unsigned m_uSeedfvHdRange; // diversity of seed t-cell population
 
+    unsigned m_uHistoryTcells; // a history of t-cell populations (at each of the previous m_uHistoryTcells simulation time-steps)
+
 
 //    double*        m_pfEffectors;
 //    double*        m_pfRegulators;
@@ -169,6 +172,9 @@ protected:
 //    double** m_pfConj_tmp_Hu;
 
     list<structTcell> listTcells, listTcells_cpy; // list of non-zero t-cell clonaltypes and a copy in case integration has to be run again
+    list <list<structTcell> > listlistTcells; // a record of T-cells over previous X simulation steps
+
+
     list<structAPC>   listAPCs;
     virtual inline void IncIt(list<structTcell>::iterator *it_tcell, list<structTcell>* list)
     { (*it_tcell) == list->end() ? (*it_tcell):++(*it_tcell); }

@@ -23,12 +23,19 @@ struct structFVsSensed
 {
     unsigned int uFV;
     double fRobots;
-    unsigned int uMostWantedState;
+    unsigned int uMostWantedState; // 0:  Dont know - no T-cells to make decision or E approx. equal to R
+                                   // 1:  Attack
+                                   // 2:  Tolerate
+                                   // 3:  FV not in sensed list
+                                   // 4:  Suspicious to be abnormal
+
+    double fSuspicious; // proportion of the past time-steps when the FV would have been deemed as abnormal
 
     structFVsSensed(unsigned int fv, double density)
     {
         uFV     = fv;
         fRobots = density;
+        fSuspicious = 0.0;
     }
 };
 
@@ -90,7 +97,9 @@ public:
     virtual void SetMostWantedList(list<structFVsSensed>::iterator* it, unsigned int state);
     virtual unsigned int GetMostWantedState(unsigned int fv);
 
-    virtual void CheckNeighborsResponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_unconverged, bool b_logs);
+    virtual void SetSuspicion(list<structFVsSensed>::iterator* it, double state);
+
+    virtual void CheckNeighborsResponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_suspectors, unsigned int *pun_number_of_neighborsinsensoryrange, bool b_logs);
 
     virtual void PrintDecidingAgentDetails(CFeatureVector* m_pcFV, CRobotAgentOptimised* decidingrobot);
 

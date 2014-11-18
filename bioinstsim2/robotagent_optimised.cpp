@@ -342,7 +342,7 @@ void CRobotAgentOptimised::PrintFeatureVectorDistribution(unsigned int id)
     list<structFVsSensed>::iterator it;
     printf("\n====R%d Feature Vector Distribution=====\n",GetIdentification());
     for (it = listFVsSensed.begin(); it != listFVsSensed.end(); ++it)
-        printf("FV:%d,Robots:%f, ",(*it).uFV, (*it).fRobots);
+        printf("FV:%d, Robots:%f, Suspicion:%f ",(*it).uFV, (*it).fRobots, (*it).fSuspicious);
 }
 
 /******************************************************************************/
@@ -353,15 +353,19 @@ unsigned int CRobotAgentOptimised::GetColor()
     unsigned int unToleraters  = 0;
     unsigned int unAttackers   = 0;
     unsigned int unNbrsInSensoryRange = 0;
+    unsigned int unSuspectors = 0;
 
     bool dbgflag = false;
 
-    this->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unNbrsInSensoryRange, dbgflag);
+    this->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unSuspectors, &unNbrsInSensoryRange, dbgflag);
 
-    if(unToleraters > unAttackers)
+    if(unToleraters > (unAttackers+unSuspectors))
         return GREEN;
     else
-        return RED;
+        if(unSuspectors >= unAttackers)
+            return BLUE;
+        else
+            return RED;
 
     //return m_unIdentification == TRACKAGENT ? GREEN : RED;
     /*if(m_unIdentification == 15)
@@ -444,10 +448,17 @@ unsigned int CRobotAgentOptimised::GetMostWantedState(unsigned int fv)
     return 3; // if fv is not in the list (not sensed)
 }
 
+void CRobotAgentOptimised::SetSuspicion(list<structFVsSensed>::iterator* it, double state)
+{
+    list<structFVsSensed>::iterator it_fvsensed = (*it);
+
+    (*it_fvsensed).fSuspicious = state;
+}
+
 /******************************************************************************/
 /******************************************************************************/
 
-void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_neighborsinsensoryrange, bool b_logs)
+void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number_of_toleraters, unsigned int* pun_number_of_attackers, unsigned int* pun_number_of_suspectors, unsigned int* pun_number_of_neighborsinsensoryrange, bool b_logs)
 {
     (*pun_number_of_toleraters)  = 0;
     (*pun_number_of_attackers)   = 0;
@@ -459,7 +470,7 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
     SortAllAgentsAccordingToDistance(&tSortedAgents);
 
     // 1-11 because agent at index 0 is ourselves:
-    bool m_battackeragentlog=true, m_btolerateragentlog=true;
+    bool m_battackeragentlog=true, m_btolerateragentlog=true, m_bsuspectoragentlog=true;
     for (unsigned int nbrs = 1; nbrs < m_uNumVotingNbrs+1; nbrs++)
     {
         CRobotAgentOptimised* pcRobot         = (CRobotAgentOptimised*) tSortedAgents[nbrs];
@@ -492,6 +503,18 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
                 m_btolerateragentlog = false;
             }
         }
+        else if(fv_status == 4)
+        {
+            // FV deemed suspicious
+            (*pun_number_of_suspectors)++;
+            if(m_bsuspectoragentlog && b_logs)
+            {
+                printf("\nA suspector agent.");
+                PrintDecidingAgentDetails(m_pcFeatureVector, pcRobot);
+                m_bsuspectoragentlog = false;
+            }
+        }
+
 
         //float* FeatureVectorsSensed;
         //FeatureVectorsSensed = pcRobot->GetFeaturesSensed();
