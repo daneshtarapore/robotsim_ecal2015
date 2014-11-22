@@ -229,6 +229,8 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
     //if(m_fTryExchangeProbability > 0.0)
       DiffuseTcells(); /* We want the same sequence of random numbers generated, even when m_fTryExchangeProbability = 0.0 */
+      //DiffuseMasterTcells();
+
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
     if(this->robotAgent->GetIdentification()==1 || this->robotAgent->GetIdentification()==15)
@@ -249,7 +251,6 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
 /******************************************************************************/
 /******************************************************************************/
-
 void CRMinRobotAgentOptimised::DiffuseTcells()
 {
     m_fWeight = 0.0;
@@ -276,7 +277,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
             robotAgent->GetRandomRobotWithWeights(robotAgent->GetSelectedNumNearestNbrs());
 
     if(m_fTryExchangeProbability == 0.0) /* We want the same sequence of random numbers generated, even when m_fTryExchangeProbability = 0.0 */
-        return;	
+        return;
 
     if(pcRemoteRobotAgent == NULL) {
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
@@ -353,6 +354,150 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
    }
 
     while(it_tcells != listTcells.end()) {
+        listRemoteTcells->push_back(structTcell((*it_tcells).uFV,
+                                               (*it_tcells).fE * m_fTryExchangeProbability,
+                                               (*it_tcells).fR * m_fTryExchangeProbability,
+                                               (*it_tcells).uHistory,
+                                               NULL));
+        (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
+        (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
+        ++it_tcells;
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(6);
+#endif
+    }
+
+    while(it_remotetcells != listRemoteTcells->end()) {
+        if((*it_remotetcells).fE + (*it_remotetcells).fR <= CELLLOWERBOUND)
+            {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
+
+        listTcells.push_back(structTcell((*it_remotetcells).uFV,
+                                         (*it_remotetcells).fE * m_fTryExchangeProbability,
+                                         (*it_remotetcells).fR * m_fTryExchangeProbability,
+                                         (*it_remotetcells).uHistory,
+                                         NULL));
+        (*it_remotetcells).fE -= (*it_remotetcells).fE * m_fTryExchangeProbability;
+        (*it_remotetcells).fR -= (*it_remotetcells).fR * m_fTryExchangeProbability;
+        ++it_remotetcells;
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(6);
+#endif
+    }
+
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
+    printf("\nCommTime: %d, RobotId1: %d, RobotId2: %d\n",
+               CSimulator::GetInstance()->GetSimulationStepNumber(),
+               robotAgent->GetIdentification(), pcRemoteRobotAgent->GetIdentification());
+#endif
+
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CRMinRobotAgentOptimised::DiffuseMasterTcells()
+{
+    m_fMasterWeight = 0.0;
+    list<structTcell>* listRemoteTcells;
+    list<structTcell>::iterator it_tcells; list<structTcell>::iterator it_remotetcells;
+    for(it_tcells = masterlistTcells.begin(); it_tcells != masterlistTcells.end(); ++it_tcells)
+    {
+        m_fMasterWeight += (*it_tcells).fE + (*it_tcells).fR;
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(2);
+#endif
+    }
+
+    m_fMasterWeight = m_fMasterWeight * m_fMasterWeight;
+#ifdef FLOATINGPOINTOPERATIONS
+    robotAgent->IncNumberFloatingPtOperations(1);
+#endif
+
+    robotAgent->SetMasterWeight(m_fMasterWeight);
+
+
+    // select the robot from one of the 10 nearest neighbours - but in these expts. comm does not seem to be needed (comment: we dont know this for sure)
+    CRobotAgentOptimised* pcRemoteRobotAgent =
+            robotAgent->GetRandomRobotWithMasterWeights(robotAgent->GetSelectedNumNearestNbrs());
+
+    if(m_fTryExchangeProbability == 0.0) /* We want the same sequence of random numbers generated, even when m_fTryExchangeProbability = 0.0 */
+        return;	
+
+    if(pcRemoteRobotAgent == NULL) {
+#ifdef DEBUGCROSSREGULATIONMODELFLAG
+        printf("\nCommTime: %d, RobotId1: %d, RobotId2: %d\n",
+               CSimulator::GetInstance()->GetSimulationStepNumber(),
+               robotAgent->GetIdentification(), -1);
+#endif
+        return; }
+
+
+    CRMinRobotAgentOptimised* crminRemoteRobotAgent =
+            pcRemoteRobotAgent->GetCRMinRobotAgent();
+    assert(crminRemoteRobotAgent != NULL);
+
+    it_tcells = masterlistTcells.begin(); listRemoteTcells = crminRemoteRobotAgent->GetMasterListTcells();
+    it_remotetcells = listRemoteTcells->begin();
+
+    while(it_tcells != masterlistTcells.end() && it_remotetcells != listRemoteTcells->end())
+    {
+        if((*it_tcells).uFV == (*it_remotetcells).uFV)
+        {
+            double currEtoSend = (*it_tcells).fE  * m_fTryExchangeProbability;
+            double currRtoSend = (*it_tcells).fR  * m_fTryExchangeProbability;
+
+            double currEtoReceive = (*it_remotetcells).fE * m_fTryExchangeProbability;
+            double currRtoReceive = (*it_remotetcells).fR * m_fTryExchangeProbability;
+
+            (*it_remotetcells).fE += currEtoSend - currEtoReceive;
+            (*it_remotetcells).fR += currRtoSend - currRtoReceive;
+
+            (*it_tcells).fE  += currEtoReceive - currEtoSend;
+            (*it_tcells).fR  += currRtoReceive - currRtoSend;
+
+            ++it_tcells; ++it_remotetcells;
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(12);
+#endif
+            continue;
+        }
+
+        if((*it_tcells).uFV > (*it_remotetcells).uFV)
+        {
+            // the serial (instead of simultaneous) execution of the numerical integration and diffusion causes dead clones to be passed to and fro between robots after the numerical intgration has completed.
+            // this causes an unnecessary computation burden. we prevent this by checking for dead clonaltypes before receiving them (no needed on actual robot implementation)
+            if((*it_remotetcells).fE +(*it_remotetcells).fR <= CELLLOWERBOUND)
+                {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
+
+            listTcells.insert(it_tcells, structTcell((*it_remotetcells).uFV,
+                                                     (*it_remotetcells).fE * m_fTryExchangeProbability,
+                                                     (*it_remotetcells).fR * m_fTryExchangeProbability,
+                                                     (*it_remotetcells).uHistory,
+                                                     NULL));
+            (*it_remotetcells).fE -= (*it_remotetcells).fE * m_fTryExchangeProbability;
+            (*it_remotetcells).fR -= (*it_remotetcells).fR * m_fTryExchangeProbability;
+            ++it_remotetcells;
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(6);
+#endif
+        }
+        else
+        {
+            listRemoteTcells->insert(it_remotetcells, structTcell((*it_tcells).uFV,
+                                                      (*it_tcells).fE * m_fTryExchangeProbability,
+                                                      (*it_tcells).fR * m_fTryExchangeProbability,
+                                                      (*it_tcells).uHistory,
+                                                      NULL));
+            (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
+            (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
+            ++it_tcells;
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(6);
+#endif
+        }
+   }
+
+    while(it_tcells != masterlistTcells.end()) {
         listRemoteTcells->push_back(structTcell((*it_tcells).uFV,
                                                (*it_tcells).fE * m_fTryExchangeProbability,
                                                (*it_tcells).fR * m_fTryExchangeProbability,
