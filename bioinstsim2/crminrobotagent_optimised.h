@@ -107,6 +107,7 @@ protected:
     CRobotAgentOptimised* robotAgent;
 
     virtual void UpdateState();
+    virtual void MergeIntoMasterTcellList(list<structTcell>& listTcells, int mergeflag);
 
     virtual void UpdateAPCList(); //Sense()
     virtual void UpdateTcellList(unsigned int hammingdistance); //unsigned hammingdistance
@@ -174,8 +175,10 @@ protected:
 //    double** m_pfConj_tmp_Hu;
 
     list<structTcell> listTcells, listTcells_cpy; // list of non-zero t-cell clonaltypes and a copy in case integration has to be run again
-    list <list<structTcell> > listlistTcells; // a record of T-cells over previous X simulation steps
 
+
+    list <list<structTcell> > listlistTcells; // a record of T-cells over previous X simulation steps
+    list<structTcell> masterlistTcells; // list of non-zero t-cell clonaltypes and a copy in case integration has to be run again
 
     list<structAPC>   listAPCs;
     virtual inline void IncIt(list<structTcell>::iterator *it_tcell, list<structTcell>* list)

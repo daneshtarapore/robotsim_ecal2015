@@ -1504,8 +1504,33 @@ void CRMinRobotAgentOptimised::UpdateState()
                 }
                 suspicioncounter = suspicioncounter / listlistTcells.size();
                 robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
-                if (suspicioncounter > m_fSuspicionThreshold)
-                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal; else deemed abnormal.
+
+                /*if (suspicioncounter > m_fSuspicionThreshold)
+                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal; else deemed abnormal.*/
+
+                // using the master t-cell list
+                double tmp_E1, tmp_R1, tmp_affinity1;
+                tmp_E1 = 0.0; tmp_R1 = 0.0;
+                list<structTcell>::iterator it_mastertcellslist;
+                for(it_mastertcellslist =  masterlistTcells.begin();
+                    it_mastertcellslist != masterlistTcells.end(); ++it_mastertcellslist)
+                {
+                    tmp_affinity1 = NegExpDistAffinity((*it_mastertcellslist).uFV, (*it_apcs).uFV, m_fcross_affinity);
+                    tmp_E1 += tmp_affinity1 * (*it_mastertcellslist).fE;
+                    tmp_R1 += tmp_affinity1 * (*it_mastertcellslist).fR;
+#ifdef FLOATINGPOINTOPERATIONS
+                    robotAgent->IncNumberFloatingPtOperations(4+3); //3 operations in NegExpDistAffinity
+#endif
+                }
+
+                if ((tmp_E1 + tmp_R1) <= CELLLOWERBOUND || fabs(tmp_E1 - tmp_R1) <= CELLLOWERBOUND)
+                { }
+                else if (tmp_E1 > tmp_R1)
+                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal
+                else
+                    suspicioncounter += 1.0; // the FV would have been tolerated in the past
+
+                //robotAgent->SetSuspicion(&it_fvsensed, tmp_E1-tmp_R1); // set suspicion
             }
         }
         else
@@ -1519,10 +1544,16 @@ void CRMinRobotAgentOptimised::UpdateState()
     if (m_uHistoryTcells > 0)
     {
         if(CurrentStepNumber < MODELSTARTTIME + m_uHistoryTcells + 1)
+        {
             listlistTcells.push_back(listTcells);
+            MergeIntoMasterTcellList(listTcells, +1);
+        }
         else
         {
             listlistTcells.push_back(listTcells);
+            MergeIntoMasterTcellList(listTcells, +1);
+
+            MergeIntoMasterTcellList(listlistTcells.front(), -1);
             listlistTcells.pop_front();
         }
     }
@@ -1704,6 +1735,81 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
 
     listTcells_cpy.clear();
     listTcells_cpy = listTcells;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+void CRMinRobotAgentOptimised::MergeIntoMasterTcellList(list<structTcell>& listTcells, int mergeflag)
+{
+    list<structTcell>::iterator it_tcells = listTcells.begin();
+    list<structTcell>::iterator it_tcellsmaster = masterlistTcells.begin();
+
+    while(it_tcells != listTcells.end() && it_tcellsmaster != masterlistTcells.end())
+    {
+        if((*it_tcells).uFV == (*it_tcellsmaster).uFV)
+        {
+            if(mergeflag == +1)
+            {
+                (*it_tcellsmaster).fE += (*it_tcells).fE ;
+                (*it_tcellsmaster).fR += (*it_tcells).fR ;
+            }
+            else
+            {
+                (*it_tcellsmaster).fE = std::min(0.0, (*it_tcellsmaster).fE - (*it_tcells).fE);
+                (*it_tcellsmaster).fR = std::min(0.0, (*it_tcellsmaster).fR - (*it_tcells).fR);
+            }
+
+            ++it_tcells; ++it_tcellsmaster;
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(4);
+#endif
+            continue;
+        }
+
+        if((*it_tcells).uFV < (*it_tcellsmaster).uFV)
+        {
+            if(mergeflag == +1)
+            {
+                masterlistTcells.insert(it_tcellsmaster, structTcell((*it_tcells).uFV,
+                                                      (*it_tcells).fE,
+                                                      (*it_tcells).fR,
+                                                      (*it_tcells).uHistory,
+                                                      NULL));
+                ++it_tcells;
+            }
+            else
+            {
+                ++it_tcells;
+            }
+#ifdef FLOATINGPOINTOPERATIONS
+            robotAgent->IncNumberFloatingPtOperations(2);
+#endif
+        }
+        else
+        {
+             ++it_tcellsmaster;
+        }
+   }
+
+    while(it_tcells != listTcells.end())
+    {
+        if (mergeflag == +1) {
+            masterlistTcells.push_back(structTcell((*it_tcells).uFV,
+                                               (*it_tcells).fE,
+                                               (*it_tcells).fR,
+                                               (*it_tcells).uHistory,
+                                               NULL));
+            ++it_tcells;}
+        else
+        {
+            std::cerr << "Error in merge list" << std::endl;
+            assert(mergeflag == +1);
+        }
+#ifdef FLOATINGPOINTOPERATIONS
+        robotAgent->IncNumberFloatingPtOperations(1);
+#endif
+    }
 }
 
 /******************************************************************************/
