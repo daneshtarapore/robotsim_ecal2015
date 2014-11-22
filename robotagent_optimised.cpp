@@ -262,6 +262,44 @@ CRobotAgentOptimised* CRobotAgentOptimised::GetRandomRobotWithWeights(unsigned i
 /******************************************************************************/
 /******************************************************************************/
 
+CRobotAgentOptimised* CRobotAgentOptimised::GetRandomRobotWithMasterWeights(unsigned int u_nearestnbrs)
+{
+    TAgentVector tSortedAgents;
+
+    SortAllAgentsAccordingToDistance(&tSortedAgents);
+
+    double fWeightSum = 0.0;
+    // 1-11 if u_nearestnbrs is 10, because agent at index 0 is ourselves:
+    for (int i = 1; i < u_nearestnbrs+1; i++)
+    {
+        CRobotAgentOptimised* pcRobot = (CRobotAgentOptimised*) tSortedAgents[i];
+        fWeightSum += pcRobot->GetMasterWeight();
+    }
+
+    if (fWeightSum < 1e-10)
+        return NULL;
+
+    double fSelectedWeight  = Random::nextDouble() * fWeightSum;
+
+
+    CAgent* pcAgentSelected  = NULL;
+    for (int i = 1; i < u_nearestnbrs+1; i++)
+    {
+        CRobotAgentOptimised* pcRobot = (CRobotAgentOptimised*) tSortedAgents[i];
+        fSelectedWeight -= pcRobot->GetMasterWeight();
+
+        if(fSelectedWeight <= 0.0)
+        {
+            pcAgentSelected = pcRobot;
+            break;
+        }
+    }
+    return (CRobotAgentOptimised*) pcAgentSelected;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CRobotAgentOptimised::SetWeight(double f_weight)
 {
     m_fWeight = f_weight;
@@ -277,6 +315,24 @@ double CRobotAgentOptimised::GetWeight() const
 
 /******************************************************************************/
 /******************************************************************************/
+
+
+void CRobotAgentOptimised::SetMasterWeight(double f_weight)
+{
+    m_fMasterWeight = f_weight;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+double CRobotAgentOptimised::GetMasterWeight() const
+{
+    return m_fMasterWeight;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 
 double CRobotAgentOptimised::GetFVSenseRange() const
 {

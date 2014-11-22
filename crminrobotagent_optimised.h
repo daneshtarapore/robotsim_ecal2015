@@ -90,6 +90,7 @@ public:
     virtual void TcellNumericalIntegration_RK2();
     virtual void SimulationStepUpdatePosition();
     virtual void DiffuseTcells();
+    virtual void DiffuseMasterTcells();
 
     void ScaleDownConjugates(ConjugationIntegrationPhase CONJK);
 
@@ -98,6 +99,8 @@ public:
 
     inline list<structAPC>*    GetListAPCs() {return &listAPCs;}
     inline list<structTcell>*  GetListTcells() {return &listTcells;}
+
+    inline list<structTcell>*  GetMasterListTcells() {return &masterlistTcells;}
 
     static double NegExpDistAffinity(unsigned int v1, unsigned int v2, double k);
     static unsigned int GetNumberOfSetBits(unsigned int x);
@@ -202,7 +205,7 @@ protected:
     double          m_fcross_affinity; /* the level of cross affinity*/
 
 
-    double          m_fWeight;
+    double          m_fWeight, m_fMasterWeight;
     int             m_fApcscalingtype; //0: linear, 1: exp
     double          m_fFVtoApcscaling; //linear scaling - multiplicative factor
     double          m_fFVtoApcscaling_exprate, m_fFVtoApcscaling_expbase; //exp scaling - rate, and base value

@@ -75,12 +75,16 @@ public:
 
     virtual CRobotAgentOptimised* GetRandomRobotWithWeights(double f_range);
     virtual CRobotAgentOptimised* GetRandomRobotWithWeights(unsigned int u_nearestnbrs);
+    virtual CRobotAgentOptimised* GetRandomRobotWithMasterWeights(unsigned int u_nearestnbrs);
 
     virtual inline CRMinRobotAgentOptimised* GetCRMinRobotAgent() {return crminAgent;}
     virtual inline ThresholdinRobotAgentOptimised* GetThresholdinRobotAgent() {return thresholdinAgent;}
 
     virtual void  SetWeight(double f_weight);
     virtual double GetWeight() const;
+
+    virtual void  SetMasterWeight(double f_weight);
+    virtual double GetMasterWeight() const;
 
     virtual inline const CFeatureVector* GetFeatureVector() const {return m_pcFeatureVector;}
     virtual void Sense(unsigned int u_nearestnbrs);
@@ -135,7 +139,7 @@ protected:
     CRMinRobotAgentOptimised*   crminAgent;
     ThresholdinRobotAgentOptimised* thresholdinAgent;
 
-    double              m_fWeight;
+    double              m_fWeight, m_fMasterWeight;
     double              m_fBitflipProbabililty;
 
 //    float*              m_pfFeaturesSensed; //2^n
