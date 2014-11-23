@@ -470,6 +470,7 @@ void CRobotAgentOptimised::SetBehaviors(TBehaviorVector vec_behaviors)
 void CRobotAgentOptimised::ClearBehaviors()
 {
     m_vecBehaviors.clear();
+    assert(m_vecBehaviors.empty());
 }
 
 /******************************************************************************/

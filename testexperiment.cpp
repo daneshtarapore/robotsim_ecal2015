@@ -391,10 +391,10 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
                 //                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
                 //    #endif
 #ifdef OPTIMISED
-                TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(STOP, pcHomeToAgent); // dispersion
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
 
-                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eerrorbehavType);
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(STOP); // dispersion
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 #else
                 TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
@@ -424,16 +424,20 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
 
 #ifdef OPTIMISED
-                TBehaviorVector vec_newbehaviors = GetAgentBehavior(AGGREGATION, pcHomeToAgent);
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+                //TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
 
-                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(AGGREGATION);
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(DISPERSION);
+                //((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(DISPERSION);
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 #else
-                TBehaviorVector vec_newbehaviors = GetAgentBehavior(AGGREGATION, pcHomeToAgent);
+                //TBehaviorVector vec_newbehaviors = GetAgentBehavior(AGGREGATION, pcHomeToAgent);
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
                 ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
 
-                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(AGGREGATION);
+                //((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(AGGREGATION);
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(DISPERSION);
                 ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 #endif
             }
@@ -719,7 +723,8 @@ void CTestExperiment::SpreadBehavior(unsigned int stepnumber, ESwarmBehavType e_
 {
     //TAgentList listUnchangeddAgents;
 
-    if(stepnumber==firstswitchat) // focal agent is first to change behavior
+    if(stepnumber==firstswitchat ||
+       stepnumber== firstswitchat+m_unDurationofSwitch) // focal agent is first to change behavior
     {
         TAgentVector* vecAllAgents = CSimulator::GetInstance()->GetAllAgents();
         for (TAgentVectorIterator i = vecAllAgents->begin(); i != vecAllAgents->end(); i++)
@@ -740,7 +745,7 @@ void CTestExperiment::SpreadBehavior(unsigned int stepnumber, ESwarmBehavType e_
     {
         if ((*i)->GetType() == ROBOT)
         {
-            if(stepnumber >= firstswitchat+m_unDurationofSwitch)  // the second switch in behavior
+            if(stepnumber > firstswitchat+m_unDurationofSwitch)  // the second switch in behavior
             {
                 /*if (((CROBOTAGENT*) (*i))->GetBehavior() != e_behavior &&
                         ((CROBOTAGENT*) (*i))->GetIdentification() != m_unAbnormalAgentToTrack) // Dont allow focal agent to change back*/

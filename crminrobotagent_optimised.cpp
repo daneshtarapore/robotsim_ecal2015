@@ -1643,14 +1643,13 @@ void CRMinRobotAgentOptimised::UpdateState()
                     if ((tmp_E1 + tmp_R1) <= CELLLOWERBOUND || fabs(tmp_E1 - tmp_R1) <= CELLLOWERBOUND)
                     { }
                     else if (tmp_E1 > tmp_R1)
-                    { }
-                    else
-                        suspicioncounter += 1.0; // the FV would have been tolerated in the past
+                    {
+                        suspicioncounter += 1.0;
+                    }
                 }
                 suspicioncounter = suspicioncounter / listlistTcells.size();
-                robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
-
-                /*if (suspicioncounter > m_fSuspicionThreshold)
+                //robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
+                /*if (suspicioncounter < m_fSuspicionThreshold)
                     robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal; else deemed abnormal.*/
 
                 // using the master t-cell list
@@ -1671,11 +1670,11 @@ void CRMinRobotAgentOptimised::UpdateState()
                 if ((tmp_E1 + tmp_R1) <= CELLLOWERBOUND || fabs(tmp_E1 - tmp_R1) <= CELLLOWERBOUND)
                 { }
                 else if (tmp_E1 > tmp_R1)
-                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal
+                    robotAgent->SetMostWantedList(&it_fvsensed, 1); // deemed abnormal
                 else
-                    suspicioncounter += 1.0; // the FV would have been tolerated in the past
+                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // suspicion
 
-                //robotAgent->SetSuspicion(&it_fvsensed, tmp_E1-tmp_R1); // set suspicion
+                robotAgent->SetSuspicion(&it_fvsensed, tmp_E1-tmp_R1); //
             }
         }
         else
