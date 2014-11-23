@@ -391,10 +391,10 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
                 //                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
                 //    #endif
 #ifdef OPTIMISED
-                TBehaviorVector vec_newbehaviors = GetAgentBehavior(STOP, pcHomeToAgent); // dispersion
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent); // dispersion
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
 
-                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(STOP); // dispersion
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eerrorbehavType); // dispersion
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 #else
                 TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eerrorbehavType, pcHomeToAgent);
@@ -424,20 +424,20 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
 
 
 #ifdef OPTIMISED
-                TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eswarmbehavType, pcHomeToAgent);
                 //TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
 
-                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(DISPERSION);
+                ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eswarmbehavType);
                 //((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehavior(DISPERSION);
                 ((CRobotAgentOptimised*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 #else
                 //TBehaviorVector vec_newbehaviors = GetAgentBehavior(AGGREGATION, pcHomeToAgent);
-                TBehaviorVector vec_newbehaviors = GetAgentBehavior(DISPERSION, pcHomeToAgent);
+                TBehaviorVector vec_newbehaviors = GetAgentBehavior(m_eswarmbehavType, pcHomeToAgent);
                 ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->ClearBehaviors();
 
                 //((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(AGGREGATION);
-                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(DISPERSION);
+                ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehavior(m_eswarmbehavTypes);
                 ((CRobotAgent*)m_ppcListAgentsCreated[agentindex])->SetBehaviors(vec_newbehaviors);
 #endif
             }
