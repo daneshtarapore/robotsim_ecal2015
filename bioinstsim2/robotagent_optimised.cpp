@@ -519,6 +519,8 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
 {
     (*pun_number_of_toleraters)  = 0;
     (*pun_number_of_attackers)   = 0;
+    assert((*pun_number_of_suspectors)  == 0);
+    (*pun_number_of_suspectors)  = 0;
     (*pun_number_of_neighborsinsensoryrange) = 0;
 
 

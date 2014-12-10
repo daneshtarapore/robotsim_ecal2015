@@ -1648,12 +1648,12 @@ void CRMinRobotAgentOptimised::UpdateState()
                     }
                 }
                 suspicioncounter = suspicioncounter / listlistTcells.size();
-                //robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
-                /*if (suspicioncounter < m_fSuspicionThreshold)
-                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal; else deemed abnormal.*/
+                robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
+                if (suspicioncounter <= m_fSuspicionThreshold)
+                    robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal; else deemed abnormal.
 
                 // using the master t-cell list
-                double tmp_E1, tmp_R1, tmp_affinity1;
+                /*double tmp_E1, tmp_R1, tmp_affinity1;
                 tmp_E1 = 0.0; tmp_R1 = 0.0;
                 list<structTcell>::iterator it_mastertcellslist;
                 for(it_mastertcellslist =  masterlistTcells.begin();
@@ -1674,7 +1674,7 @@ void CRMinRobotAgentOptimised::UpdateState()
                 else
                     robotAgent->SetMostWantedList(&it_fvsensed, 4); // suspicion
 
-                robotAgent->SetSuspicion(&it_fvsensed, tmp_E1-tmp_R1); //
+                robotAgent->SetSuspicion(&it_fvsensed, tmp_E1-tmp_R1); */
             }
         }
         else
