@@ -1620,6 +1620,7 @@ void CRMinRobotAgentOptimised::UpdateState()
             // Attack
         {
             robotAgent->SetMostWantedList(&it_fvsensed, 1);
+#ifndef CRM_ENABLE_SENSORY_HISTORY
             if (m_uHistoryTcells > 0)
             {
                 double suspicioncounter = 0.0, totalcounter = 0.0;
@@ -1720,6 +1721,7 @@ void CRMinRobotAgentOptimised::UpdateState()
 
                 robotAgent->SetSuspicion(&it_fvsensed, tmp_E1-tmp_R1); */
             }
+#endif
         }
         else
         {
@@ -1729,6 +1731,7 @@ void CRMinRobotAgentOptimised::UpdateState()
          ++it_apcs; ++it_fvsensed;
     }
 
+#ifndef CRM_ENABLE_SENSORY_HISTORY
     if (m_uHistoryTcells > 0)
     {
         if(CurrentStepNumber < MODELSTARTTIME + m_uHistoryTcells + 1)
@@ -1745,6 +1748,7 @@ void CRMinRobotAgentOptimised::UpdateState()
             listlistTcells.pop_front();
         }
     }
+#endif
 }
 
 /******************************************************************************/

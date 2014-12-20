@@ -153,6 +153,10 @@ protected:
     double              m_fResponseRange;
     unsigned int        m_uSelectedNumNearestNbrs, m_uNumVotingNbrs;
 
+#ifdef CRM_ENABLE_SENSORY_HISTORY
+    float              m_fProbForgetFV;
+#endif
+
     unsigned int m_unConseqDetectedFaulty;
     bool m_bRobotDeactivated;
     int  m_iDEactivationTime;
