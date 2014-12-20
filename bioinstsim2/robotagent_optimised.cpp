@@ -34,6 +34,9 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
     m_uSelectedNumNearestNbrs     = pc_arguments->GetArgumentAsIntOr("selectnumnearestnbrs", 10);
     m_uNumVotingNbrs              = pc_arguments->GetArgumentAsIntOr("numvotingnbrs", 10);
 
+#ifdef CRM_ENABLE_SENSORY_HISTORY
+    m_fProbForgetFV               = pc_arguments->GetArgumentAsDoubleOr("prob_forget_fv", 1.0);
+#endif
 
     if(pc_arguments->GetArgumentIsDefined("help") && !bHelpDisplayed)
         printf("fvsenserange=#.#              Range at which other agents' FVs are sensed [%f]\n"
@@ -41,12 +44,19 @@ CRobotAgentOptimised::CRobotAgentOptimised(const char* pch_name, unsigned int un
                "responserange=#.#             Range at which a robot \"reponds\" to other features [%f]\n"
                "selectnumnearestnbrs=#        The number of nearest neighbours for FV sensing and T-cell diffusion (makes fvsenserange redundant) [%d]\n"
                "numvotingnbrs=#               The number of nearest neighbours for voting an agent abnormal) [%d]\n"
+#ifdef CRM_ENABLE_SENSORY_HISTORY
+               "prob_forget_fv=#             Probability to forget a FV (used if CRM_ENABLE_SENSORY_HISTORY is defined)) [%f]\n"
+#endif
                ,
                m_fFVSenseRange,
                CFeatureVector::FEATURE_RANGE,
                m_fResponseRange,
                m_uSelectedNumNearestNbrs,
                m_uNumVotingNbrs
+#ifdef CRM_ENABLE_SENSORY_HISTORY
+               ,m_fProbForgetFV
+#endif
+
                );
 
 
@@ -342,6 +352,7 @@ double CRobotAgentOptimised::GetFVSenseRange() const
 /******************************************************************************/
 /******************************************************************************/
 
+#ifdef CRM_ENABLE_SENSORY_HISTORY
 void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
 {
     listFVsSensed.clear();
@@ -355,6 +366,21 @@ void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
         UpdateFeatureVectorDistribution(pcRobot->GetFeatureVector()->GetValue(), 1.0);
     }
 }
+#else
+void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
+{
+    listFVsSensed.clear();
+    TAgentVector tSortedAgents;
+    SortAllAgentsAccordingToDistance(&tSortedAgents);
+
+    // 1-11 because agent at index 0 is ourselves:
+    for (int i = 1; i < u_nearestnbrs+1; i++)
+    {
+        CRobotAgentOptimised* pcRobot = (CRobotAgentOptimised*) tSortedAgents[i];
+        UpdateFeatureVectorDistribution(pcRobot->GetFeatureVector()->GetValue(), 1.0);
+    }
+}
+#endif
 
 /******************************************************************************/
 /******************************************************************************/
