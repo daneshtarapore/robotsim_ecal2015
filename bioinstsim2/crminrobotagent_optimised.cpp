@@ -1622,10 +1622,14 @@ void CRMinRobotAgentOptimised::UpdateState()
             robotAgent->SetMostWantedList(&it_fvsensed, 1);
             if (m_uHistoryTcells > 0)
             {
-                double suspicioncounter = 0.0;
+                double suspicioncounter = 0.0, totalcounter = 0.0;
+                double tolerantcounter = 0.0, attackcounter = 0.0, dontknowcounter = 0.0;
+
                 list< list<structTcell> >::iterator pop_index;
+                int tmp_index = 0; bool fv_present = false;
                 for(pop_index = listlistTcells.begin(); pop_index != listlistTcells.end(); ++pop_index)
                 {
+                    tmp_index++;
                     double tmp_E1, tmp_R1, tmp_affinity1;
                     tmp_E1 = 0.0; tmp_R1 = 0.0;
                     list<structTcell>::iterator it_tcells1;
@@ -1635,22 +1639,62 @@ void CRMinRobotAgentOptimised::UpdateState()
                         tmp_affinity1 = NegExpDistAffinity((*it_tcells1).uFV, (*it_apcs).uFV, m_fcross_affinity);
                         tmp_E1 += tmp_affinity1 * (*it_tcells1).fE;
                         tmp_R1 += tmp_affinity1 * (*it_tcells1).fR;
+
+                        if((*it_apcs).uFV == (*it_tcells1).uFV)
+                            fv_present = true;
+
 #ifdef FLOATINGPOINTOPERATIONS
                         robotAgent->IncNumberFloatingPtOperations(4+3); //3 operations in NegExpDistAffinity
 #endif
                     }
 
-                    if ((tmp_E1 + tmp_R1) <= CELLLOWERBOUND || fabs(tmp_E1 - tmp_R1) <= CELLLOWERBOUND)
-                    { }
+                    if(fv_present == false)
+                        suspicioncounter +=1.0;
                     else if (tmp_E1 > tmp_R1)
-                    {
-                        suspicioncounter += 1.0;
-                    }
+                        suspicioncounter +=1.0;
+
+//                    if (this->robotAgent->GetIdentification() == 7 && CSimulator::GetInstance()->GetSimulationStepNumber() == 7650)
+//                    {
+//                        // std::cerr << tmp_index << ": FV " << (*it_apcs).uFV <<  " suspicioncounter " << suspicioncounter << std::endl;
+//                        double tmp_E1, tmp_R1, tmp_affinity1;
+//                        tmp_E1 = 0.0; tmp_R1 = 0.0;
+//                        for(it_tcells1 =  (*pop_index).begin();
+//                            it_tcells1 != (*pop_index).end(); ++it_tcells1)
+//                        {
+//                            tmp_affinity1 = NegExpDistAffinity((*it_tcells1).uFV, (*it_apcs).uFV, m_fcross_affinity);
+//                            //std::cerr << "E[" << (*it_tcells1).uFV << "] = " << (*it_tcells1).fE << "R[" << (*it_tcells1).uFV << "] = " << (*it_tcells1).fR << "H[" << (*it_tcells1).uFV << "] = " <<  (*it_tcells1).uHistory  <<  "; ";
+
+//                            tmp_E1 += tmp_affinity1 * (*it_tcells1).fE;
+//                            tmp_R1 += tmp_affinity1 * (*it_tcells1).fR;
+//                        }
+//                        //std::cerr << "Total E = " << tmp_E1 << "Total R = " << tmp_R1;
+//                        //std::cerr << std::endl  << std::endl;
+//                    }
                 }
+
+
+//                if (this->robotAgent->GetIdentification() == 7 && CSimulator::GetInstance()->GetSimulationStepNumber() == 7650)
+//                {
+//                    std::cerr << " FV " << (*it_apcs).uFV <<  " suspicioncounter " << suspicioncounter << std::endl;
+
+//                    //exit(-1);
+//                }
+
+//                Exp set up 2
+//Step 7650
+//                ====R7 Feature Vector Distribution=====
+//                FV:12, Robots:1.000000, Suspicion:0.986000 FV:54, Robots:2.000000, Suspicion:0.000000 FV:60, Robots:1.000000, Suspicion:0.000000 FV:62, Robots:6.000000, Suspicion:0.000000
+
+//                FOR FV:12 how many dont knows, how many attack, and how many tolerate? dont knows may have to contribute to raise suspicion
+
                 suspicioncounter = suspicioncounter / listlistTcells.size();
+                //suspicioncounter = suspicioncounter / totalcounter;
                 robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
-                if (suspicioncounter <= m_fSuspicionThreshold)
+                if (suspicioncounter < m_fSuspicionThreshold)
                     robotAgent->SetMostWantedList(&it_fvsensed, 4); // deemed suspicious - but not abnormal; else deemed abnormal.
+
+
+
 
                 // using the master t-cell list
                 /*double tmp_E1, tmp_R1, tmp_affinity1;
@@ -1690,14 +1734,14 @@ void CRMinRobotAgentOptimised::UpdateState()
         if(CurrentStepNumber < MODELSTARTTIME + m_uHistoryTcells + 1)
         {
             listlistTcells.push_back(listTcells);
-            MergeIntoMasterTcellList(listTcells, +1);
+            //MergeIntoMasterTcellList(listTcells, +1);
         }
         else
         {
             listlistTcells.push_back(listTcells);
-            MergeIntoMasterTcellList(listTcells, +1);
+            //MergeIntoMasterTcellList(listTcells, +1);
 
-            MergeIntoMasterTcellList(listlistTcells.front(), -1);
+            //MergeIntoMasterTcellList(listlistTcells.front(), -1);
             listlistTcells.pop_front();
         }
     }
