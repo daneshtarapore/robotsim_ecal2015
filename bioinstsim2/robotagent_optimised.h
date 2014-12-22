@@ -37,6 +37,14 @@ struct structFVsSensed
         fRobots = density;
         fSuspicious = 0.0;
     }
+
+    structFVsSensed(unsigned int fv, double density, unsigned int state)
+    {
+        uFV     = fv;
+        fRobots = density;
+        uMostWantedState = state;
+        fSuspicious = 0.0;
+    }
 };
 
 /******************************************************************************/

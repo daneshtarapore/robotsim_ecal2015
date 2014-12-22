@@ -518,7 +518,11 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         bool dbgflag = false;
 #endif
 
+        dbgflag = true;
         m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unSuspectors, &unNbrsInSensoryRange, dbgflag);//true
+
+        if (CSimulator::GetInstance()->GetSimulationStepNumber() == 2550) //2550
+            exit(-1);
 
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, susp: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unSuspectors, unNbrsInSensoryRange);
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());

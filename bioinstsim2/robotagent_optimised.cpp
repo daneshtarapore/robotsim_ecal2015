@@ -118,13 +118,16 @@ void CRobotAgentOptimised::SimulationStepUpdatePosition()
         printf("\nStep: %d, FV for abnormal agent %d: %s\n", CurrentStepNumber, m_unIdentification, m_pcFeatureVector->ToString().c_str());
 #endif
 
-    Sense(GetSelectedNumNearestNbrs());
+    //Sense(GetSelectedNumNearestNbrs());
 
     if(CurrentStepNumber > MODELSTARTTIME)
+    {
+        Sense(GetSelectedNumNearestNbrs());
         if(FDMODELTYPE == CRM || FDMODELTYPE == CRM_TCELLSINEXCESS)
             crminAgent->SimulationStepUpdatePosition();
         else if(FDMODELTYPE == THRESHOLDONFVDIST)
             thresholdinAgent->SimulationStepUpdatePosition();
+    }
 
     CAgent::SimulationStepUpdatePosition();
 }
@@ -354,8 +357,17 @@ double CRobotAgentOptimised::GetFVSenseRange() const
 
 #ifdef CRM_ENABLE_SENSORY_HISTORY
 void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
-{
+{  
+    list<structFVsSensed>::iterator it, it_history;
+
+    // forget old FVs with probability m_fProbForgetFV
+    for (it = listFVsSensed.begin(); it != listFVsSensed.end(); ++it)
+        if(Random::nextDouble() <= m_fProbForgetFV)
+            it = listFVsSensed.erase(it);
+
+    list<structFVsSensed> tmp_list(listFVsSensed.begin(), listFVsSensed.end());
     listFVsSensed.clear();
+
     TAgentVector tSortedAgents;
     SortAllAgentsAccordingToDistance(&tSortedAgents);
 
@@ -365,6 +377,39 @@ void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
         CRobotAgentOptimised* pcRobot = (CRobotAgentOptimised*) tSortedAgents[i];
         UpdateFeatureVectorDistribution(pcRobot->GetFeatureVector()->GetValue(), 1.0);
     }
+
+
+    // integrate into the current list listFVsSensed the history from tmp_list
+    // if FV is the same in the current list, and in the history, - the history for that FV is ignored.
+    // else the FV is integrated into the current list
+    it = listFVsSensed.begin(); it_history = tmp_list.begin();
+    while(it_history != tmp_list.end() && it != listFVsSensed.end())
+    {
+        if((*it_history).uFV == (*it).uFV)
+        {
+            ++it_history; ++it;
+            continue;
+        }
+
+        if((*it_history).uFV < (*it).uFV)
+        {
+                listFVsSensed.insert(it, structFVsSensed((*it_history).uFV, (*it_history).fRobots, (*it_history).uMostWantedState));
+                ++it_history;
+        }
+        else
+             ++it;
+   }
+
+    while(it_history != tmp_list.end())
+    {
+            listFVsSensed.push_back(structFVsSensed((*it_history).uFV, (*it_history).fRobots, (*it_history).uMostWantedState));
+            ++it_history;
+    }
+
+    Normalize? so max sum is 0.02
+
+
+   add / forget ind robots fv -> normalize
 }
 #else
 void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
