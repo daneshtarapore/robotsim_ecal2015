@@ -1141,14 +1141,14 @@ void CRMinRobotAgentOptimised::ConjugatesQSS_ExcessTcells(bool bClearDeadConjuga
         {
              it_conj = (*it_apcs).listConjugatesonAPC.begin();
 
-             if((*it_conj).affinity == 0.0)
+             /*if((*it_conj).affinity == 0.0)
              {
                  printf("\n affinity is 0.0");
                  unsigned apcsize, tcellsize, conjtcellsize ;
                  apcsize   = listAPCs.size();
                  tcellsize = listTcells.size();
                  conjtcellsize = ((*it_apcs).listConjugatesonAPC).size();
-             }
+             }*/
 
              while(it_conj != (*it_apcs).listConjugatesonAPC.end())
                  if((*it_conj).deadconjugate)
@@ -2021,8 +2021,19 @@ double CRMinRobotAgentOptimised::NegExpDistAffinity(unsigned int v1, unsigned in
     unsigned int hammingdistance  = CRMinRobotAgentOptimised::GetNumberOfSetBits(unXoredString);
 
     //return 1.0 * exp(-(1.0/k) * (double)hammingdistance);
+
     // Should we normalize the hammingdistance when input to the exp function, or as above?
+
+#ifdef CRM_ENABLE_SENSORY_HISTORY
+    if ((double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES <= 1.0/6.0)
+        return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
+    else  // Affinities less than 0.1 have no effect on T-cell population cross-interactions. We do this to prevent intermediary regulatory T-cells (with FV between abnormal and normal FVs) to result in tolerance of abnromal FVs. This can occur even when the APC sub-populations are normalized. Without CRM_ENABLE_SENSORY_HISTORY such intermediary T-cell populations would disappear quickly and not linger in the FV history
+        return 0.0;
+#else
     return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
+#endif
+
+
     /*if(hammingdistance==0 || hammingdistance == 1)
 	return 1.0;
     else

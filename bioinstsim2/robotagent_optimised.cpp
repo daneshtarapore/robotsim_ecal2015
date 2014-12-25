@@ -406,10 +406,13 @@ void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
             ++it_history;
     }
 
-    Normalize? so max sum is 0.02
+    //Issue with  intermediary regulatory T-cells (with FV between abnormal and normal FVs) resulting in tolerance of abnromal FVs.
+    //Solution1: Normalize so max sum is 0.02
+    //Solution2: curtail affinity between T-cells and affinity
+    //Normalization does not always solve the problem. So we use solution 2
 
 
-   add / forget ind robots fv -> normalize
+    //We could also add / forget ind robots fv (seems more biologically intutive way to model history) and then normalize (to make sure abnormal FVs density stay below the bifurcation point), and also apply the curtail on the affinity.
 }
 #else
 void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
