@@ -518,7 +518,6 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
         bool dbgflag = false;
 #endif
 
-        dbgflag = true;
         m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unSuspectors, &unNbrsInSensoryRange, dbgflag);//true
 
 //        if (CSimulator::GetInstance()->GetSimulationStepNumber() == 2550) //2550
