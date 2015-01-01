@@ -79,11 +79,10 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
     
     m_uSeedfvHdRange          = m_crmArguments->GetArgumentAsIntOr("seedfv-hd-range",
                                                                    CFeatureVector::NUMBER_OF_FEATURES);
-
+#ifndef CRM_ENABLE_SENSORY_HISTORY
     m_uHistoryTcells          = m_crmArguments->GetArgumentAsIntOr("hist_ts", 0);
-
     m_fSuspicionThreshold     = m_crmArguments->GetArgumentAsDoubleOr("susp_th", 1.0);
-
+#endif
 
     if(FDMODELTYPE == CRM_TCELLSINEXCESS)
         assert(kon == koff);
@@ -118,9 +117,11 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
 
                "seedfv-hd-range=#             Diversity of seed t-cell population [%d]\n"
 
+#ifndef CRM_ENABLE_SENSORY_HISTORY
                "hist_ts=#                     T-cell populations recorded for time-steps  [%d]\n"
-               "susp_th=#                     Threshold above which a FV is to be tolerated - but deemed suspicious. Range: [0,1]  [%f]\n",
-               CFeatureVector::NUMBER_OF_FEATURES,
+               "susp_th=#                     Threshold above which a FV is to be tolerated - but deemed suspicious. Range: [0,1]  [%f]\n"
+#endif
+               ,CFeatureVector::NUMBER_OF_FEATURES,
                seedE,
                seedR,
                kon,
@@ -139,9 +140,13 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                m_fFVtoApcscaling,
                m_fFVtoApcscaling_expbase, m_fFVtoApcscaling_exprate,
                m_uPersistenceThreshold, m_fIntegrationTime, m_fStartExpIntegrationTime,
-               m_uSeedfvHdRange,
-               m_uHistoryTcells,
-               m_fSuspicionThreshold);
+               m_uSeedfvHdRange
+
+#ifndef CRM_ENABLE_SENSORY_HISTORY
+               ,m_uHistoryTcells,
+               m_fSuspicionThreshold
+#endif
+	       );
         bHelpDisplayed = true;
     }
 
