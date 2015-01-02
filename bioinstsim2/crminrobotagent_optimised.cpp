@@ -1300,7 +1300,7 @@ void CRMinRobotAgentOptimised::Derivative_ExcessTcells(TcellIntegrationPhase TK)
 
         if(((*it_apcs).fEffectorConjugatesPerAPC +
                        (*it_apcs).fRegulatorConjugatesPerAPC -
-                       (*it_apcs).fTotalSites) <= CONJUGATION_OVERFLOW_LIMIT)
+                       (*it_apcs).fTotalSites) > CONJUGATION_OVERFLOW_LIMIT)
         {
             std::cerr << " tmp_ratio " << tmp_ratio << " (*it_apcs).fTotalConjugates " << (*it_apcs).fTotalConjugates << " (*it_apcs).f_tcellsweightedaffinity_tmp " << (*it_apcs).f_tcellsweightedaffinity_tmp << std::endl;
         }
