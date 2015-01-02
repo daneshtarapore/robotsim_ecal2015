@@ -185,10 +185,10 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 {    
     unsigned PrntRobotId = robotAgent->GetIdentification();
 
-//    if(PrntRobotId == 80 && CSimulator::GetInstance()->GetSimulationStepNumber() == 1910)
-//    {
-//        #define DEBUGCROSSREGULATIONMODELFLAG
-//    }
+    if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+    {
+        #define DEBUGCROSSREGULATIONMODELFLAG
+    }
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
     robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
