@@ -187,7 +187,7 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
     if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
     {
-        #define DEBUGCROSSREGULATIONMODELFLAG
+         PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
     }
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
