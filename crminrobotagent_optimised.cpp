@@ -1146,14 +1146,14 @@ void CRMinRobotAgentOptimised::ConjugatesQSS_ExcessTcells(bool bClearDeadConjuga
         {
              it_conj = (*it_apcs).listConjugatesonAPC.begin();
 
-             /*if((*it_conj).affinity == 0.0)
+             if((*it_conj).affinity == 0.0)
              {
                  printf("\n affinity is 0.0");
                  unsigned apcsize, tcellsize, conjtcellsize ;
                  apcsize   = listAPCs.size();
                  tcellsize = listTcells.size();
                  conjtcellsize = ((*it_apcs).listConjugatesonAPC).size();
-             }*/
+             }
 
              while(it_conj != (*it_apcs).listConjugatesonAPC.end())
                  if((*it_conj).deadconjugate)
