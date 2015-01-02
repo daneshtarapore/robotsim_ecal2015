@@ -1176,6 +1176,9 @@ void CRMinRobotAgentOptimised::ConjugatesQSS_ExcessTcells(bool bClearDeadConjuga
                 apcsize   = listAPCs.size();
                 tcellsize = listTcells.size();
                 conjtcellsize = (*it_apcs).listConjugatesonAPC.size();
+
+                std::cerr << " apcsize, tcellsize, conjtcellsize (*it_apcs).fTotalSites  (*it_apcs).fAPC  (*it_apcs).uFV:   " << apcsize << "    " << tcellsize << "    " <<  conjtcellsize << "    " <<  (*it_apcs).fTotalSites << "    " <<    (*it_apcs).fAPC << "    " <<  (*it_apcs).uFV << std::endl << std::endl;
+                PrintCRMDetails(this->robotAgent->GetIdentification());
             }
 
             while(it_conj != (*it_apcs).listConjugatesonAPC.end())
@@ -1198,7 +1201,7 @@ void CRMinRobotAgentOptimised::ConjugatesQSS_ExcessTcells(bool bClearDeadConjuga
 
             if((*it_apcs).f_tcellsweightedaffinity_tmp == 0.0)
             {
-                printf("\n conjtcellsize = listConjugatesonAPC.size();");
+                printf("\n (*it_apcs).f_tcellsweightedaffinity_tmp == 0.0;");
                 unsigned apcsize, tcellsize, conjtcellsize ;
                 apcsize   = listAPCs.size();
                 tcellsize = listTcells.size();
@@ -1294,6 +1297,13 @@ void CRMinRobotAgentOptimised::Derivative_ExcessTcells(TcellIntegrationPhase TK)
 #ifdef FLOATINGPOINTOPERATIONS
         robotAgent->IncNumberFloatingPtOperations(3);
 #endif
+
+        if(((*it_apcs).fEffectorConjugatesPerAPC +
+                       (*it_apcs).fRegulatorConjugatesPerAPC -
+                       (*it_apcs).fTotalSites) <= CONJUGATION_OVERFLOW_LIMIT)
+        {
+            std::cerr << " tmp_ratio " << tmp_ratio << " (*it_apcs).fTotalConjugates " << (*it_apcs).fTotalConjugates << " (*it_apcs).f_tcellsweightedaffinity_tmp " << (*it_apcs).f_tcellsweightedaffinity_tmp << std::endl;
+        }
 
         assert((*it_apcs).fEffectorConjugatesPerAPC +
                (*it_apcs).fRegulatorConjugatesPerAPC -
