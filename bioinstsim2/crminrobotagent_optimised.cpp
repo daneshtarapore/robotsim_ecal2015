@@ -1203,6 +1203,9 @@ void CRMinRobotAgentOptimised::ConjugatesQSS_ExcessTcells(bool bClearDeadConjuga
                 apcsize   = listAPCs.size();
                 tcellsize = listTcells.size();
                 conjtcellsize = ((*it_apcs).listConjugatesonAPC).size();
+
+                std::cerr << " apcsize, tcellsize, conjtcellsize (*it_apcs).fTotalSites  (*it_apcs).fAPC  (*it_apcs).uFV " << apcsize << tcellsize << conjtcellsize << (*it_apcs).fTotalSites <<   (*it_apcs).fAPC << (*it_apcs).uFV << std::endl << std::endl;
+                PrintCRMDetails(this->robotAgent->GetIdentification());
             }
 
 
