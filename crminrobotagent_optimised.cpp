@@ -809,6 +809,14 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
                     b_tcelldeath = true;
                 MarkConjugatesOfDeadTcell(&it_tcells); //deleted later on when computing free stites and cells
                 (*it_tcells).listPtrstoConjugatesofTcell.clear();
+
+                if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+                {
+                    std::cerr << " (*it_tcells).uFV is being deleted " << (*it_tcells).uFV << std::endl;
+                    std::cerr << " (*it_tcells).fE is being deleted " << (*it_tcells).fE << std::endl;
+                    std::cerr << " (*it_tcells).fR is being deleted " << (*it_tcells).fR << std::endl << std::endl << std::endl;
+                }
+
                 it_tcells = listTcells.erase(it_tcells);
             }
 #ifdef FLOATINGPOINTOPERATIONS
