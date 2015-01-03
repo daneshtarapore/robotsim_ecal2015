@@ -619,10 +619,8 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 
     while(integration_t < integrationtimeofcrm)
     {
-//        if(this->robotAgent->GetIdentification() == 80 && CSimulator::GetInstance()->GetSimulationStepNumber() == 1910)
-//        {
-//            PrintAPCList(80);    PrintTcellList(80);
-//        }
+        if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+            printf("\n\n The integration time is NOW %f\n",integration_t);
 
         // Compute number of conjugates for T cells listTcells members fE and fR. Stores conjugates in listApcs member listConjugatesonAPC having member conjugate fConjugates
         if(FDMODELTYPE == CRM) //!TODO to avoid this check all the time, we could preprocess the code and define out the unused conjugate functions.
@@ -858,9 +856,6 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
         robotAgent->IncNumberFloatingPtOperations(1);
 #endif
     }
-
-    if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
-        printf("\n\n The integration time is NOW %f\n",integration_t);
 }
 
 /******************************************************************************/
