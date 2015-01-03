@@ -1307,11 +1307,11 @@ void CRMinRobotAgentOptimised::Derivative_ExcessTcells(TcellIntegrationPhase TK)
         robotAgent->IncNumberFloatingPtOperations(3);
 #endif
 
-        if(((*it_apcs).fEffectorConjugatesPerAPC +
+        if(!((*it_apcs).fEffectorConjugatesPerAPC +
                        (*it_apcs).fRegulatorConjugatesPerAPC -
-                       (*it_apcs).fTotalSites) > CONJUGATION_OVERFLOW_LIMIT)
+                       (*it_apcs).fTotalSites) <= CONJUGATION_OVERFLOW_LIMIT)
         {
-            std::cerr << " tmp_ratio " << tmp_ratio << " (*it_apcs).fTotalConjugates " << (*it_apcs).fTotalConjugates << " (*it_apcs).f_tcellsweightedaffinity_tmp " << (*it_apcs).f_tcellsweightedaffinity_tmp << std::endl;
+            std::cerr << std::endl << std::endl << " tmp_ratio " << tmp_ratio << " (*it_apcs).fTotalConjugates " << (*it_apcs).fTotalConjugates << " (*it_apcs).f_tcellsweightedaffinity_tmp " << (*it_apcs).f_tcellsweightedaffinity_tmp << std::endl<< std::endl<< std::endl;
         }
 
         assert((*it_apcs).fEffectorConjugatesPerAPC +

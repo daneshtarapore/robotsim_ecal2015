@@ -225,8 +225,8 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
             m_pfEffectors[i]       = currE*10.0;
             m_pfRegulators[i]      = 0.0;}
 #else
-        m_pfEffectors[i]       = currE;
-        m_pfRegulators[i]      = currR;
+        m_pfEffectors[i]       = 0.0;//currE;
+        m_pfRegulators[i]      = 0.0;//currR;
 #endif
 
         m_pfAPCs[i]            = 0.0;
@@ -255,6 +255,34 @@ CRMinRobotAgent::CRMinRobotAgent(CRobotAgent* ptr_robotAgent, CArguments* m_crmA
 
     assert(sites == 3U);
     assert(m_fcross_affinity > 0.0);
+
+
+    m_pfEffectors[0]=1.013573e+01; m_pfRegulators[0]=1.239414e+01;
+    m_pfEffectors[1]=1.004220e+01; m_pfRegulators[1]=1.072882e+01;
+    m_pfEffectors[2]=1.019084e+01; m_pfRegulators[2]=1.199276e+01;
+    m_pfEffectors[3]=1.021920e+01; m_pfRegulators[3]=1.024296e+01;
+    m_pfEffectors[5]=1.042126e+01; m_pfRegulators[5]=1.017626e+01;
+    m_pfEffectors[6]=1.008367e+01; m_pfRegulators[6]=1.032832e+01;
+    m_pfEffectors[7]=1.043156e+01; m_pfRegulators[7]=1.063774e+01;
+    m_pfEffectors[8]=1.078326e+01; m_pfRegulators[8]=1.032383e+01;
+    m_pfEffectors[12]=1.009964e-01; m_pfRegulators[12]=2.587830e-03;
+    m_pfEffectors[13]=2.128364e-02; m_pfRegulators[13]=3.396210e-04;
+    m_pfEffectors[14]=3.128210e-01; m_pfRegulators[14]=3.589119e-03;
+    m_pfEffectors[22]=1.035613e+01; m_pfRegulators[22]=1.083624e+01;
+    m_pfEffectors[24]=4.432948e-02; m_pfRegulators[24]=4.569674e-02;
+    m_pfEffectors[28]=1.435718e-01; m_pfRegulators[28]=3.467479e-01;
+    m_pfEffectors[30]=1.816949e-01; m_pfRegulators[30]=2.945318e-02;
+    m_pfEffectors[40]=3.128492e-01; m_pfRegulators[40]=1.021297e-02;
+    m_pfEffectors[44]=1.258025e+00; m_pfRegulators[44]=9.787533e-03;
+    m_pfEffectors[46]=1.608477e+00; m_pfRegulators[46]=1.172626e-02;
+    m_pfEffectors[48]=1.254773e+00; m_pfRegulators[48]=5.136244e-07;
+    m_pfEffectors[50]=7.813555e-02; m_pfRegulators[50]=3.647662e-08;
+    m_pfEffectors[52]=1.315272e-02; m_pfRegulators[52]=1.277780e-04;
+    m_pfEffectors[54]=6.932363e-02; m_pfRegulators[54]=1.844398e-01;
+    m_pfEffectors[56]=4.342204e-01; m_pfRegulators[56]=3.109407e-03;
+    m_pfEffectors[58]=3.195924e-01; m_pfRegulators[58]=2.990794e-03;
+    m_pfEffectors[60]=5.653300e-02; m_pfRegulators[60]=9.636729e-02;
+    m_pfEffectors[62]=2.442573e-04; m_pfRegulators[62]=1.188711e-02;
 }
 
 /******************************************************************************/
