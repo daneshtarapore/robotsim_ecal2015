@@ -187,7 +187,9 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
     if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
     {
-         PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
+        std::cerr << " before ";
+        robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
+        PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
     }
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
@@ -216,6 +218,13 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
     UpdateConjugatesToTcellList(); // update (actually recreating) list of pointers to conjugates, allocated to the apcs. //O(m-apc * ~n-conj)
     //PrintConjugatestoTcellList(PrntRobotId, CONJ);
 
+
+    if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+    {
+        std::cerr << " after ";
+        robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
+        PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
+    }
 
     m_fTCELL_UPPERLIMIT_STEPSIZE = TCELL_UPPERLIMIT_STEPSIZE;
     m_fTCELL_LOWERLIMIT_STEPSIZE = TCELL_LOWERLIMIT_STEPSIZE;
