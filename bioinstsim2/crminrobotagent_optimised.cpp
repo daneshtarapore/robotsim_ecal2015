@@ -187,9 +187,11 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
     if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
     {
-        std::cerr << " before ";
+        std::cerr << std::endl << " before ";
         robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
         PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
+        PrintConjugatestoAPCList(PrntRobotId, CONJ);
+        PrintConjugatestoTcellList(PrntRobotId, CONJ);
     }
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
@@ -221,9 +223,11 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
     if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
     {
-        std::cerr << " after ";
+        std::cerr << std::endl << " after ";
         robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
         PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
+        PrintConjugatestoAPCList(PrntRobotId, CONJ);
+        PrintConjugatestoTcellList(PrntRobotId, CONJ);
     }
 
     m_fTCELL_UPPERLIMIT_STEPSIZE = TCELL_UPPERLIMIT_STEPSIZE;
@@ -854,7 +858,9 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
         robotAgent->IncNumberFloatingPtOperations(1);
 #endif
     }
-    //printf("\n\n The integration time is NOW %f",integration_t);	
+
+    if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+        printf("\n\n The integration time is NOW %f\n",integration_t);
 }
 
 /******************************************************************************/
