@@ -620,7 +620,16 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
     while(integration_t < integrationtimeofcrm)
     {
         if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+        {
             printf("\n\n The integration time is NOW %f\n",integration_t);
+            unsigned PrntRobotId = robotAgent->GetIdentification();
+            robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
+            PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
+            PrintConjugatestoAPCList(PrntRobotId, CONJ);
+            PrintConjugatestoTcellList(PrntRobotId, CONJ);
+
+        }
+
 
         // Compute number of conjugates for T cells listTcells members fE and fR. Stores conjugates in listApcs member listConjugatesonAPC having member conjugate fConjugates
         if(FDMODELTYPE == CRM) //!TODO to avoid this check all the time, we could preprocess the code and define out the unused conjugate functions.
@@ -632,9 +641,7 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
         else
         {
             if(listTcells.size()==0)
-            {
                 printf("\n Integration time %f", integration_t);
-            }
 
             ConjugatesQSS_ExcessTcells(b_tcelldeath, K0);
             b_tcelldeath = false;
@@ -698,7 +705,8 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 
             if((*it_tcells).fR_Hu < 0.0)
                 (*it_tcells).fR_Hu = 0.0;
-            else {
+            else
+            {
                 double tmp_absdiff = fabs((*it_tcells).fR_Hu - (*it_tcells).fR_Eu);
 #ifdef FLOATINGPOINTOPERATIONS
                 robotAgent->IncNumberFloatingPtOperations(2);
@@ -769,12 +777,14 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 
             if((*it_tcells).fE < 0.0)
                 (*it_tcells).fE = 0.0;
-            else  {
+            else
+            {
                 double tmp_absincr = fabs(tmp_incr);
 #ifdef FLOATINGPOINTOPERATIONS
                 robotAgent->IncNumberFloatingPtOperations(1);
 #endif
-                if(tmp_absincr > convergence_errormax) {
+                if(tmp_absincr > convergence_errormax)
+                {
                     convergence_errormax      = tmp_absincr;
                     perc_convergence_errormax = (convergence_errormax / (*it_tcells).fE_prev) * 100.0;
 #ifdef FLOATINGPOINTOPERATIONS
