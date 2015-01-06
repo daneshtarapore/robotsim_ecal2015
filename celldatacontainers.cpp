@@ -164,11 +164,15 @@ unsigned structAPC::UpdateConjugateList(list<structTcell>* tcells, double cross_
 
         if((*it_conjs).utcellFV > (*it_tcells).uFV)
         {
-            listConjugatesonAPC.insert(it_conjs, structConj(&(*it_tcells), this, cross_affinity));
-            ++it_tcells;
+            //! TODO: ONLY ADD CONJUGATES IF AFFINITY > 0. THHIS WILL SAVE ON COMPUTATION IN WALKING SHORTER CONJUGATE LISTS, AND IN MEMORY USED TO STORE THESE LISTS.
+            //if(CRMinRobotAgentOptimised::NegExpDistAffinity((*it_tcells).uFV, this->uFV, cross_affinity) > 0.0)
+            {
+                listConjugatesonAPC.insert(it_conjs, structConj(&(*it_tcells), this, cross_affinity));
 #ifdef FLOATINGPOINTOPERATIONS
-            u_NumFpOperations += 3;
+                u_NumFpOperations += 3;
 #endif
+            }
+            ++it_tcells;
         }
         else
             it_conjs = listConjugatesonAPC.erase(it_conjs);
@@ -179,11 +183,15 @@ unsigned structAPC::UpdateConjugateList(list<structTcell>* tcells, double cross_
 
     while(it_tcells != tcells->end())
     {
-        listConjugatesonAPC.push_back(structConj(&(*it_tcells), this, cross_affinity));
-        ++it_tcells;
+        //! TODO: ONLY ADD CONJUGATES IF AFFINITY > 0. THHIS WILL SAVE ON COMPUTATION IN WALKING SHORTER CONJUGATE LISTS, AND IN MEMORY USED TO STORE THESE LISTS.
+        //if(CRMinRobotAgentOptimised::NegExpDistAffinity((*it_tcells).uFV, this->uFV, cross_affinity) > 0.0)
+        {
+            listConjugatesonAPC.push_back(structConj(&(*it_tcells), this, cross_affinity));
 #ifdef FLOATINGPOINTOPERATIONS
-        u_NumFpOperations += 3;
+            u_NumFpOperations += 3;
 #endif
+        }
+        ++it_tcells;
     }
     return u_NumFpOperations;
 }

@@ -3,7 +3,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#define CELLLOWERBOUND 1e-3 //todo: set as percentage instead of absolute value
+#define CELLLOWERBOUND 1.0e-3 //todo: set as percentage instead of absolute value
 // note: could result in euler-huen diff at 0, for high error thresholds. In that case, lower this value
 
 #define CONJUGATION_OVERFLOW_LIMIT 1.0e-10  //todo: set as percentage instead of absolute value
@@ -111,16 +111,16 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                "fvapcscaling_expbase=#.#      Exponential scaling parameter of [FV] to [APC] [%f]\n"
                "fvapcscaling_exprate=#.#      Exponential scaling parameter of [FV] to [APC] [%f]\n"
 
-               "perst_th=#                    Persistence threshold [%d]\n" 
-	       "integrationtime=#.#           CRM integration time [%e]\n"
+               "perst_th=#                    Persistence threshold [%d]\n"
+               "integrationtime=#.#           CRM integration time [%e]\n"
                "startexptintegrationtime=#.#  CRM integration time at start of experiment [%e]\n"
 
                "seedfv-hd-range=#             Diversity of seed t-cell population [%d]\n"
 
-#ifndef CRM_ENABLE_SENSORY_HISTORY
+       #ifndef CRM_ENABLE_SENSORY_HISTORY
                "hist_ts=#                     T-cell populations recorded for time-steps  [%d]\n"
                "susp_th=#                     Threshold above which a FV is to be tolerated - but deemed suspicious. Range: [0,1]  [%f]\n"
-#endif
+       #endif
                ,CFeatureVector::NUMBER_OF_FEATURES,
                seedE,
                seedR,
@@ -142,11 +142,11 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
                m_uPersistenceThreshold, m_fIntegrationTime, m_fStartExpIntegrationTime,
                m_uSeedfvHdRange
 
-#ifndef CRM_ENABLE_SENSORY_HISTORY
+       #ifndef CRM_ENABLE_SENSORY_HISTORY
                ,m_uHistoryTcells,
                m_fSuspicionThreshold
-#endif
-	       );
+       #endif
+               );
         bHelpDisplayed = true;
     }
 
@@ -185,14 +185,14 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 {    
     unsigned PrntRobotId = robotAgent->GetIdentification();
 
-    if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+    /*if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
     {
-        std::cerr << std::endl << " before ";
+        std::cout << std::endl << " before ";
         robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
         PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
         PrintConjugatestoAPCList(PrntRobotId, CONJ);
         PrintConjugatestoTcellList(PrntRobotId, CONJ);
-    }
+    }*/
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
     robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
@@ -221,14 +221,16 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
     //PrintConjugatestoTcellList(PrntRobotId, CONJ);
 
 
-    if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+    /*if(PrntRobotId == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
     {
-        std::cerr << std::endl << " after ";
+        std::cout << std::endl << " after ";
         robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
         PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
         PrintConjugatestoAPCList(PrntRobotId, CONJ);
         PrintConjugatestoTcellList(PrntRobotId, CONJ);
-    }
+    }*/
+
+
 
     m_fTCELL_UPPERLIMIT_STEPSIZE = TCELL_UPPERLIMIT_STEPSIZE;
     m_fTCELL_LOWERLIMIT_STEPSIZE = TCELL_LOWERLIMIT_STEPSIZE;
@@ -241,13 +243,11 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
 
     TcellNumericalIntegration_RK2();
 
-    //printf("\n postprocessing\n");
-    //PrintCRMDetails(PrntRobotId);
 #endif
 
     //if(m_fTryExchangeProbability > 0.0)
-      DiffuseTcells(); /* We want the same sequence of random numbers generated, even when m_fTryExchangeProbability = 0.0 */
-      //DiffuseMasterTcells();
+    DiffuseTcells(); /* We want the same sequence of random numbers generated, even when m_fTryExchangeProbability = 0.0 */
+    //DiffuseMasterTcells();
 
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
@@ -259,7 +259,7 @@ void CRMinRobotAgentOptimised::SimulationStepUpdatePosition()
         for(it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
             printf("Clone: %d, A: %f, E: %f, R: %f ",(*it_tcells).uFV,
                    ((*it_tcells).ptrAPCWithAffinity1)==NULL?
-                   GetAPC((*it_tcells).uFV):((*it_tcells).ptrAPCWithAffinity1)->fAPC,
+                       GetAPC((*it_tcells).uFV):((*it_tcells).ptrAPCWithAffinity1)->fAPC,
                    (*it_tcells).fE, (*it_tcells).fR);
         printf("\n");}
 #endif
@@ -341,7 +341,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
             // the serial (instead of simultaneous) execution of the numerical integration and diffusion causes dead clones to be passed to and fro between robots after the numerical intgration has completed.
             // this causes an unnecessary computation burden. we prevent this by checking for dead clonaltypes before receiving them (no needed on actual robot implementation)
             if((*it_remotetcells).fE +(*it_remotetcells).fR <= CELLLOWERBOUND)
-                {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
+            {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
 
             listTcells.insert(it_tcells, structTcell((*it_remotetcells).uFV,
                                                      (*it_remotetcells).fE * m_fTryExchangeProbability,
@@ -358,10 +358,10 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
         else
         {
             listRemoteTcells->insert(it_remotetcells, structTcell((*it_tcells).uFV,
-                                                      (*it_tcells).fE * m_fTryExchangeProbability,
-                                                      (*it_tcells).fR * m_fTryExchangeProbability,
-                                                      (*it_tcells).uHistory,
-                                                      NULL));
+                                                                  (*it_tcells).fE * m_fTryExchangeProbability,
+                                                                  (*it_tcells).fR * m_fTryExchangeProbability,
+                                                                  (*it_tcells).uHistory,
+                                                                  NULL));
             (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
             (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
             ++it_tcells;
@@ -369,14 +369,14 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
             robotAgent->IncNumberFloatingPtOperations(6);
 #endif
         }
-   }
+    }
 
     while(it_tcells != listTcells.end()) {
         listRemoteTcells->push_back(structTcell((*it_tcells).uFV,
-                                               (*it_tcells).fE * m_fTryExchangeProbability,
-                                               (*it_tcells).fR * m_fTryExchangeProbability,
-                                               (*it_tcells).uHistory,
-                                               NULL));
+                                                (*it_tcells).fE * m_fTryExchangeProbability,
+                                                (*it_tcells).fR * m_fTryExchangeProbability,
+                                                (*it_tcells).uHistory,
+                                                NULL));
         (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
         (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
         ++it_tcells;
@@ -387,7 +387,7 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
 
     while(it_remotetcells != listRemoteTcells->end()) {
         if((*it_remotetcells).fE + (*it_remotetcells).fR <= CELLLOWERBOUND)
-            {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
+        {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
 
         listTcells.push_back(structTcell((*it_remotetcells).uFV,
                                          (*it_remotetcells).fE * m_fTryExchangeProbability,
@@ -404,8 +404,8 @@ void CRMinRobotAgentOptimised::DiffuseTcells()
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
     printf("\nCommTime: %d, RobotId1: %d, RobotId2: %d\n",
-               CSimulator::GetInstance()->GetSimulationStepNumber(),
-               robotAgent->GetIdentification(), pcRemoteRobotAgent->GetIdentification());
+           CSimulator::GetInstance()->GetSimulationStepNumber(),
+           robotAgent->GetIdentification(), pcRemoteRobotAgent->GetIdentification());
 #endif
 
 }
@@ -439,7 +439,7 @@ void CRMinRobotAgentOptimised::DiffuseMasterTcells()
             robotAgent->GetRandomRobotWithMasterWeights(robotAgent->GetSelectedNumNearestNbrs());
 
     if(m_fTryExchangeProbability == 0.0) /* We want the same sequence of random numbers generated, even when m_fTryExchangeProbability = 0.0 */
-        return;	
+        return;
 
     if(pcRemoteRobotAgent == NULL) {
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
@@ -485,7 +485,7 @@ void CRMinRobotAgentOptimised::DiffuseMasterTcells()
             // the serial (instead of simultaneous) execution of the numerical integration and diffusion causes dead clones to be passed to and fro between robots after the numerical intgration has completed.
             // this causes an unnecessary computation burden. we prevent this by checking for dead clonaltypes before receiving them (no needed on actual robot implementation)
             if((*it_remotetcells).fE +(*it_remotetcells).fR <= CELLLOWERBOUND)
-                {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
+            {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
 
             listTcells.insert(it_tcells, structTcell((*it_remotetcells).uFV,
                                                      (*it_remotetcells).fE * m_fTryExchangeProbability,
@@ -502,10 +502,10 @@ void CRMinRobotAgentOptimised::DiffuseMasterTcells()
         else
         {
             listRemoteTcells->insert(it_remotetcells, structTcell((*it_tcells).uFV,
-                                                      (*it_tcells).fE * m_fTryExchangeProbability,
-                                                      (*it_tcells).fR * m_fTryExchangeProbability,
-                                                      (*it_tcells).uHistory,
-                                                      NULL));
+                                                                  (*it_tcells).fE * m_fTryExchangeProbability,
+                                                                  (*it_tcells).fR * m_fTryExchangeProbability,
+                                                                  (*it_tcells).uHistory,
+                                                                  NULL));
             (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
             (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
             ++it_tcells;
@@ -513,14 +513,14 @@ void CRMinRobotAgentOptimised::DiffuseMasterTcells()
             robotAgent->IncNumberFloatingPtOperations(6);
 #endif
         }
-   }
+    }
 
     while(it_tcells != masterlistTcells.end()) {
         listRemoteTcells->push_back(structTcell((*it_tcells).uFV,
-                                               (*it_tcells).fE * m_fTryExchangeProbability,
-                                               (*it_tcells).fR * m_fTryExchangeProbability,
-                                               (*it_tcells).uHistory,
-                                               NULL));
+                                                (*it_tcells).fE * m_fTryExchangeProbability,
+                                                (*it_tcells).fR * m_fTryExchangeProbability,
+                                                (*it_tcells).uHistory,
+                                                NULL));
         (*it_tcells).fE -= (*it_tcells).fE * m_fTryExchangeProbability;
         (*it_tcells).fR -= (*it_tcells).fR * m_fTryExchangeProbability;
         ++it_tcells;
@@ -531,7 +531,7 @@ void CRMinRobotAgentOptimised::DiffuseMasterTcells()
 
     while(it_remotetcells != listRemoteTcells->end()) {
         if((*it_remotetcells).fE + (*it_remotetcells).fR <= CELLLOWERBOUND)
-            {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
+        {++it_remotetcells; robotAgent->IncNumberFloatingPtOperations(1); continue;}
 
         listTcells.push_back(structTcell((*it_remotetcells).uFV,
                                          (*it_remotetcells).fE * m_fTryExchangeProbability,
@@ -548,8 +548,8 @@ void CRMinRobotAgentOptimised::DiffuseMasterTcells()
 
 #ifdef DEBUGCROSSREGULATIONMODELFLAG
     printf("\nCommTime: %d, RobotId1: %d, RobotId2: %d\n",
-               CSimulator::GetInstance()->GetSimulationStepNumber(),
-               robotAgent->GetIdentification(), pcRemoteRobotAgent->GetIdentification());
+           CSimulator::GetInstance()->GetSimulationStepNumber(),
+           robotAgent->GetIdentification(), pcRemoteRobotAgent->GetIdentification());
 #endif
 
 }
@@ -563,23 +563,23 @@ double CRMinRobotAgentOptimised::GetIntegrationTime_StepFunction()
 
     if(persistencethreshold == 0U)
     {
-	//printf("\n Returned integration time is %f",m_fIntegrationTime);
-	return m_fIntegrationTime;	
+        //printf("\n Returned integration time is %f",m_fIntegrationTime);
+        return m_fIntegrationTime;
     }
 
     //unsigned long int minhistory = 0; unsigned int fv;
     for(list<structTcell>::iterator it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
     {
-        //if (((*it_tcells).uHistory <= persistencethreshold) && (GetAPC((*it_tcells).uFV) > 0.0))  
-        if (((*it_tcells).uHistory > 0 && (*it_tcells).uHistory <= persistencethreshold) && (GetAPC((*it_tcells).uFV) > 0.0))  
-	{
-  	    //double reducedintegration_t = 1.0e+1;	
-  	    double reducedintegration_t = 0.0;	
-	    m_fTCELL_UPPERLIMIT_STEPSIZE = 10.0;
-	    return reducedintegration_t;
+        //if (((*it_tcells).uHistory <= persistencethreshold) && (GetAPC((*it_tcells).uFV) > 0.0))
+        if (((*it_tcells).uHistory > 0 && (*it_tcells).uHistory <= persistencethreshold) && (GetAPC((*it_tcells).uFV) > 0.0))
+        {
+            //double reducedintegration_t = 1.0e+1;
+            double reducedintegration_t = 0.0;
+            m_fTCELL_UPPERLIMIT_STEPSIZE = 10.0;
+            return reducedintegration_t;
             //minhistory = (*it_tcells).uHistory;
-            //fv         = (*it_tcells).uFV;      
-	}
+            //fv         = (*it_tcells).uFV;
+        }
     }
 
     /*if(minhistory < persistencethreshold)
@@ -607,28 +607,32 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
     m_fTCELL_UPPERLIMIT_STEPSIZE = TCELL_UPPERLIMIT_STEPSIZE;
     //if(CSimulator::GetInstance()->GetSimulationStepNumber() < 0)//MODELSTARTTIME + 10)
 
-    #ifdef DISABLE_PERSISTENCE_HACK
-	integrationtimeofcrm = m_fIntegrationTime;
-    #else
+#ifdef DISABLE_PERSISTENCE_HACK
+    integrationtimeofcrm = m_fIntegrationTime;
+#else
     if(CSimulator::GetInstance()->GetSimulationStepNumber() < MODELSTARTTIME + 10)
-         { integrationtimeofcrm = m_fStartExpIntegrationTime; }
+    { integrationtimeofcrm = m_fStartExpIntegrationTime; }
     else {
         integrationtimeofcrm = GetIntegrationTime_StepFunction();}
-    #endif
- 	
+#endif
+
 
     while(integration_t < integrationtimeofcrm)
     {
-        if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+        /*if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
         {
+            {
+                it_tcells = listTcells.begin();
+                std::cout << std::endl << std::endl << " special last " << " (*it_tcells).fE " << (*it_tcells).fE << " (*it_tcells).fR " << (*it_tcells).fR;
+            }
             printf("\n\n The integration time is NOW %f\n",integration_t);
+            printf("\nConvergence error = %f (perc:%f)", m_dconvergence_error, m_dpercconvergence_error);
             unsigned PrntRobotId = robotAgent->GetIdentification();
             robotAgent->PrintFeatureVectorDistribution(PrntRobotId);
             PrintAPCList(PrntRobotId); PrintTcellList(PrntRobotId);
             PrintConjugatestoAPCList(PrntRobotId, CONJ);
             PrintConjugatestoTcellList(PrntRobotId, CONJ);
-
-        }
+        }*/
 
 
         // Compute number of conjugates for T cells listTcells members fE and fR. Stores conjugates in listApcs member listConjugatesonAPC having member conjugate fConjugates
@@ -648,6 +652,7 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
             Derivative_ExcessTcells(K0);
         }
 
+
         for(it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
         {
             (*it_tcells).fE_Eu = (*it_tcells).fE + step_h * (*it_tcells).fDeltaE_k0;
@@ -662,6 +667,13 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
             robotAgent->IncNumberFloatingPtOperations(4);
 #endif
         }
+
+        /*if (integration_t > 2306903.0  && integration_t <= 2453140.0)
+        {
+            it_tcells = listTcells.begin();
+            std::cout << std::endl << std::endl << " special " << " (*it_tcells).fE_Eu " << (*it_tcells).fE_Eu << " (*it_tcells).fR_Eu " << (*it_tcells).fR_Eu << " step_size " << step_h;
+        }*/
+
 
 
         if(FDMODELTYPE == CRM)
@@ -688,7 +700,8 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 
             if((*it_tcells).fE_Hu < 0.0)
                 (*it_tcells).fE_Hu = 0.0;
-            else {
+            else
+            {
                 double tmp_absdiff = fabs((*it_tcells).fE_Hu - (*it_tcells).fE_Eu);
 #ifdef FLOATINGPOINTOPERATIONS
                 robotAgent->IncNumberFloatingPtOperations(2);
@@ -716,6 +729,12 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
             }
         }
 
+        /*if (integration_t > 2306903.0  && integration_t <= 2453140.0)
+        {
+            it_tcells = listTcells.begin();
+            std::cout << std::endl << std::endl << " special " << " (*it_tcells).fE_Hu " << (*it_tcells).fE_Hu << " (*it_tcells).fR_Hu " << (*it_tcells).fR_Hu << " step_size " << step_h << " absDiffHuenEuler " << absDiffHuenEuler;
+        }*/
+
         if(absDiffHuenEuler == 0.0)
         {
             if(b_prevdiff0occurance && step_h == m_fTCELL_LOWERLIMIT_STEPSIZE)
@@ -731,7 +750,7 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
                     b_prevdiff0occurance = false;
 
 #ifdef FLOATINGPOINTOPERATIONS
-                robotAgent->IncNumberFloatingPtOperations(2);
+                    robotAgent->IncNumberFloatingPtOperations(2);
 #endif
                     continue;
                 }
@@ -763,9 +782,17 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
         else if(step_h < m_fTCELL_LOWERLIMIT_STEPSIZE)
             step_h = m_fTCELL_LOWERLIMIT_STEPSIZE;
 
+        /*if (integration_t > 2306903.0  && integration_t <= 2453140.0)
+        {
+            it_tcells = listTcells.begin();
+            std::cout << std::endl << std::endl << " special " << " (*it_tcells).fE_prev " << (*it_tcells).fE << " (*it_tcells).fDeltaE_k0 " << (*it_tcells).fDeltaE_k0 << " step_size " << step_h;
+            std::cout << std::endl << std::endl << " special " << " (*it_tcells).fR_prev " << (*it_tcells).fR << " (*it_tcells).fDeltaR_k0 " << (*it_tcells).fDeltaR_k0 << " step_size " << step_h;
+        }*/
+
 
         convergence_errormax = -1.0;
-        for(it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
+        it_tcells = listTcells.begin();
+        while(it_tcells != listTcells.end()) // REMEMBER A FOR LOOP HERE WILL CAUSE RUNTIME ERRORS IF THE LAST T-CELL CLONAL POPULATION IS DELETED.
         {
             (*it_tcells).fE_prev = (*it_tcells).fE; (*it_tcells).fR_prev = (*it_tcells).fR;
 
@@ -801,12 +828,14 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 
             if((*it_tcells).fR < 0.0)
                 (*it_tcells).fR = 0.0;
-            else {
+            else
+            {
                 double tmp_absincr = fabs(tmp_incr);
 #ifdef FLOATINGPOINTOPERATIONS
                 robotAgent->IncNumberFloatingPtOperations(1);
 #endif
-                if(tmp_absincr > convergence_errormax) {
+                if(tmp_absincr > convergence_errormax)
+                {
                     convergence_errormax      = tmp_absincr;
                     perc_convergence_errormax = (convergence_errormax / (*it_tcells).fR_prev) * 100.0;
 #ifdef FLOATINGPOINTOPERATIONS
@@ -815,6 +844,12 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
                 }
             }
 
+            /*if (integration_t > 2306903.0  && integration_t <= 2453140.0)
+            {
+                list<structTcell>::iterator it_tcells1 = listTcells.begin();
+                std::cout << std::endl << std::endl << " special in loop" << " (*it_tcells1).fE " << (*it_tcells1).fE << " (*it_tcells1).fR " << (*it_tcells1).fR;
+            }*/
+
             if(((*it_tcells).fE + (*it_tcells).fR) <= CELLLOWERBOUND)
             {
                 if(FDMODELTYPE == CRM_TCELLSINEXCESS)
@@ -822,19 +857,38 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
                 MarkConjugatesOfDeadTcell(&it_tcells); //deleted later on when computing free stites and cells
                 (*it_tcells).listPtrstoConjugatesofTcell.clear();
 
-                if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+                /*if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
                 {
-                    std::cerr << " (*it_tcells).uFV is being deleted " << (*it_tcells).uFV << std::endl;
-                    std::cerr << " (*it_tcells).fE is being deleted " << (*it_tcells).fE << std::endl;
-                    std::cerr << " (*it_tcells).fR is being deleted " << (*it_tcells).fR << std::endl << std::endl << std::endl;
-                }
+                    //how is fv62 deleted before fv52. are they not in ascending order? ISSUE WAS WE WERE ERASING THE LAST ELEMENT OF THE LIST, ITERATING IN A FOR LOOP.
+                    std::cout << " (*it_tcells).uFV is being deleted " << (*it_tcells).uFV << std::endl;
+                    std::cout << " (*it_tcells).fE is being deleted " << (*it_tcells).fE << std::endl;
+                    std::cout << " (*it_tcells).fR is being deleted " << (*it_tcells).fR << std::endl << std::endl << std::endl;
+                }*/
 
                 it_tcells = listTcells.erase(it_tcells);
-            }
+                /*std::cout  << std::endl << " (*it_tcells).uFV is now pointed to" << (*it_tcells).uFV << std::endl;
+                list<structTcell>::iterator it_tcells1 = listTcells.end();
+                std::cout  << std::endl << " (listTcells.end()).uFV is now last pointed to" << (*it_tcells1).uFV << std::endl;*/
+
+                /*if (integration_t > 2306903.0  && integration_t <= 2453140.0)
+                {
+                    list<structTcell>::iterator it_tcells1 = listTcells.begin();
+                    std::cout << std::endl << std::endl << " special in death loop" << " (*it_tcells1).fE " << (*it_tcells1).fE << " (*it_tcells1).fR " << (*it_tcells1).fR;
+                }*/
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(1);
+                robotAgent->IncNumberFloatingPtOperations(1);
 #endif
+                continue;
+            }
+
+            ++it_tcells;
         }
+
+        /*if (integration_t > 2306903.0  && integration_t <= 2453140.0)
+        {
+            it_tcells = listTcells.begin();
+            std::cout << std::endl << std::endl << " special " << " (*it_tcells).fE " << (*it_tcells).fE << " (*it_tcells).fR " << (*it_tcells).fR;
+        }*/
 
         if(listTcells.size() == 0)
         {
@@ -854,6 +908,13 @@ void CRMinRobotAgentOptimised::TcellNumericalIntegration_RK2()
 #endif
             continue;
         }
+
+        /*if (integration_t > 2306903.0  && integration_t <= 2453140.0)
+        {
+            it_tcells = listTcells.begin();
+            std::cout << std::endl << std::endl << " special " << " (*it_tcells).fE " << (*it_tcells).fE << " (*it_tcells).fR " << (*it_tcells).fR;
+        }*/
+
 
         m_dconvergence_error     = convergence_errormax;
         m_dpercconvergence_error = perc_convergence_errormax;
@@ -924,7 +985,10 @@ void CRMinRobotAgentOptimised::MarkConjugatesOfDeadTcell(list<structTcell>::iter
     list<structConj*>::iterator it_conjptr;
     for(it_conjptr = (*ptrit_tcells)->listPtrstoConjugatesofTcell.begin();
         it_conjptr != (*ptrit_tcells)->listPtrstoConjugatesofTcell.end(); ++it_conjptr)
+    {
         (*it_conjptr)->deadconjugate = true;
+        (*it_conjptr)->ptrTcell = nullptr; ////NEW
+    }
 }
 
 /******************************************************************************/
@@ -988,12 +1052,12 @@ void CRMinRobotAgentOptimised::ConjugatesQSS(bool bResetConjugates, TcellIntegra
                 it_conjs != (*it_apcs).listConjugatesonAPC.end(); ++it_conjs)
             {
                 (*it_conjs).fDelta_k0 = kon * (*it_conjs).affinity *
-                                        ((*it_conjs).ptrTcell)->fFreeTcells *
-                                        (*it_apcs).fAvailableSites -
-                                        koff * (*it_conjs).fConjugates;
+                        ((*it_conjs).ptrTcell)->fFreeTcells *
+                        (*it_apcs).fAvailableSites -
+                        koff * (*it_conjs).fConjugates;
 
                 (*it_conjs).fConjugates_k0 = (*it_conjs).fConjugates +
-                                              conjstep_h * (*it_conjs).fDelta_k0;
+                        conjstep_h * (*it_conjs).fDelta_k0;
 
                 if((*it_conjs).fConjugates_k0 < 0.0)
                     (*it_conjs).fConjugates_k0 = 0.0;
@@ -1018,13 +1082,13 @@ void CRMinRobotAgentOptimised::ConjugatesQSS(bool bResetConjugates, TcellIntegra
                 it_conjs != (*it_apcs).listConjugatesonAPC.end(); ++it_conjs)
             {
                 (*it_conjs).fDelta_k1 = kon * (*it_conjs).affinity *
-                                        ((*it_conjs).ptrTcell)->fFreeTcells *
-                                        (*it_apcs).fAvailableSites -
-                                        koff * (*it_conjs).fConjugates_k0;
+                        ((*it_conjs).ptrTcell)->fFreeTcells *
+                        (*it_apcs).fAvailableSites -
+                        koff * (*it_conjs).fConjugates_k0;
 
                 (*it_conjs).fConjugates_k1 = (*it_conjs).fConjugates +
-                                              0.5 * conjstep_h * ((*it_conjs).fDelta_k0 +
-                                                                  (*it_conjs).fDelta_k1);
+                        0.5 * conjstep_h * ((*it_conjs).fDelta_k0 +
+                                            (*it_conjs).fDelta_k1);
 
                 if((*it_conjs).fConjugates_k1 < 0.0)
                     (*it_conjs).fConjugates_k1 = 0.0;
@@ -1087,7 +1151,7 @@ void CRMinRobotAgentOptimised::ConjugatesQSS(bool bResetConjugates, TcellIntegra
         assert(absDiffHuenEuler >= 0.0);
 
         if(conjintegration_t > REDUCESTEPSIZE_CONJ_INTEGRATION_TIME &&
-           ERRORALLOWED_CONJ_STEPSIZE >= 1.0e-3) {
+                ERRORALLOWED_CONJ_STEPSIZE >= 1.0e-3) {
             /*The system is most likely stiff and oscillating around the "true" value, as the slope approaches 0*/
             /*we reduce the step size to reduce the difference between the oscillating values*/
 
@@ -1163,18 +1227,18 @@ void CRMinRobotAgentOptimised::ConjugatesQSS_ExcessTcells(bool bClearDeadConjuga
 {
     list<structAPC>::iterator  it_apcs; list<structConj>::iterator it_conj;
 
-//    if(listTcells.size() == 0)
-//    {
-//        printf("\n Robot id: %d",this->robotAgent->GetIdentification());
-//        printf("\n Simulation step: %d",CSimulator::GetInstance()->GetSimulationStepNumber());
-//    }
+    //    if(listTcells.size() == 0)
+    //    {
+    //        printf("\n Robot id: %d",this->robotAgent->GetIdentification());
+    //        printf("\n Simulation step: %d",CSimulator::GetInstance()->GetSimulationStepNumber());
+    //    }
 
     if(bClearDeadConjugates)
         for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
         {
-             it_conj = (*it_apcs).listConjugatesonAPC.begin();
+            it_conj = (*it_apcs).listConjugatesonAPC.begin();
 
-             /*if((*it_conj).affinity == 0.0)
+            /*if((*it_conj).affinity == 0.0)
              {
                  printf("\n affinity is 0.0");
                  unsigned apcsize, tcellsize, conjtcellsize ;
@@ -1183,70 +1247,72 @@ void CRMinRobotAgentOptimised::ConjugatesQSS_ExcessTcells(bool bClearDeadConjuga
                  conjtcellsize = ((*it_apcs).listConjugatesonAPC).size();
              }*/
 
-             while(it_conj != (*it_apcs).listConjugatesonAPC.end())
-                 if((*it_conj).deadconjugate)
-                     it_conj = (*it_apcs).listConjugatesonAPC.erase(it_conj);
-                 else
-                     ++it_conj;
+            while(it_conj != (*it_apcs).listConjugatesonAPC.end())
+                if((*it_conj).deadconjugate)
+                    it_conj = (*it_apcs).listConjugatesonAPC.erase(it_conj);
+                else
+                    ++it_conj;
         }
 
-       for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
-       {
-            (*it_apcs).f_tcellsweightedaffinity_tmp = 0.0;
-            (*it_apcs).f_ecellsweightedaffinity_tmp = 0.0; (*it_apcs).f_rcellsweightedaffinity_tmp = 0.0;
-            it_conj = (*it_apcs).listConjugatesonAPC.begin();
+    for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
+    {
+        (*it_apcs).f_tcellsweightedaffinity_tmp = 0.0;
+        (*it_apcs).f_ecellsweightedaffinity_tmp = 0.0; (*it_apcs).f_rcellsweightedaffinity_tmp = 0.0;
+        it_conj = (*it_apcs).listConjugatesonAPC.begin();
 
 
-            if((*it_apcs).listConjugatesonAPC.size() == 0)
-            {
-                printf("\n conjtcellsize = listConjugatesonAPC.size();");
-                unsigned apcsize, tcellsize, conjtcellsize ;
-                apcsize   = listAPCs.size();
-                tcellsize = listTcells.size();
-                conjtcellsize = (*it_apcs).listConjugatesonAPC.size();
+        if((*it_apcs).listConjugatesonAPC.size() == 0)
+        {
+            printf("\n conjtcellsize = listConjugatesonAPC.size();");
+            unsigned apcsize, tcellsize, conjtcellsize ;
+            apcsize   = listAPCs.size();
+            tcellsize = listTcells.size();
+            conjtcellsize = (*it_apcs).listConjugatesonAPC.size();
 
-                std::cerr << " apcsize, tcellsize, conjtcellsize (*it_apcs).fTotalSites  (*it_apcs).fAPC  (*it_apcs).uFV:   " << apcsize << "    " << tcellsize << "    " <<  conjtcellsize << "    " <<  (*it_apcs).fTotalSites << "    " <<    (*it_apcs).fAPC << "    " <<  (*it_apcs).uFV << std::endl << std::endl;
-                PrintCRMDetails(this->robotAgent->GetIdentification());
-            }
+            std::cout << " apcsize, tcellsize, conjtcellsize (*it_apcs).fTotalSites  (*it_apcs).fAPC  (*it_apcs).uFV:   " << apcsize << "    " << tcellsize << "    " <<  conjtcellsize << "    " <<  (*it_apcs).fTotalSites << "    " <<    (*it_apcs).fAPC << "    " <<  (*it_apcs).uFV << std::endl << std::endl;
+            PrintCRMDetails(this->robotAgent->GetIdentification());
+        }
 
-            while(it_conj != (*it_apcs).listConjugatesonAPC.end())
-            {
-                (*it_apcs).f_tcellsweightedaffinity_tmp +=
-                        (*it_conj).affinity * ((*it_conj).ptrTcell->GetE(TK) +
-                                               (*it_conj).ptrTcell->GetR(TK));
+        while(it_conj != (*it_apcs).listConjugatesonAPC.end())
+        {
+            //assert((*it_conj).affinity == NegExpDistAffinity((*it_conj).ptrTcell->uFV, (*it_apcs).uFV, m_fcross_affinity));
 
-                (*it_apcs).f_ecellsweightedaffinity_tmp +=
-                        (*it_conj).affinity * (*it_conj).ptrTcell->GetE(TK);
+            (*it_apcs).f_tcellsweightedaffinity_tmp +=
+                    (*it_conj).affinity * ((*it_conj).ptrTcell->GetE(TK) +
+                                           (*it_conj).ptrTcell->GetR(TK));
 
-                (*it_apcs).f_rcellsweightedaffinity_tmp +=
-                        (*it_conj).affinity * (*it_conj).ptrTcell->GetR(TK);
+            (*it_apcs).f_ecellsweightedaffinity_tmp +=
+                    (*it_conj).affinity * (*it_conj).ptrTcell->GetE(TK);
 
-                ++it_conj;
+            (*it_apcs).f_rcellsweightedaffinity_tmp +=
+                    (*it_conj).affinity * (*it_conj).ptrTcell->GetR(TK);
+
+            ++it_conj;
 #ifdef FLOATINGPOINTOPERATIONS
-                robotAgent->IncNumberFloatingPtOperations(7);
+            robotAgent->IncNumberFloatingPtOperations(7);
 #endif
-            }
+        }
 
-            if((*it_apcs).f_tcellsweightedaffinity_tmp == 0.0)
-            {
-                printf("\n (*it_apcs).f_tcellsweightedaffinity_tmp == 0.0;");
-                unsigned apcsize, tcellsize, conjtcellsize ;
-                apcsize   = listAPCs.size();
-                tcellsize = listTcells.size();
-                conjtcellsize = ((*it_apcs).listConjugatesonAPC).size();
+        if((*it_apcs).f_tcellsweightedaffinity_tmp == 0.0)
+        {
+            printf("\n (*it_apcs).f_tcellsweightedaffinity_tmp == 0.0;");
+            unsigned apcsize, tcellsize, conjtcellsize ;
+            apcsize   = listAPCs.size();
+            tcellsize = listTcells.size();
+            conjtcellsize = ((*it_apcs).listConjugatesonAPC).size();
 
-                std::cerr << " apcsize, tcellsize, conjtcellsize (*it_apcs).fTotalSites  (*it_apcs).fAPC  (*it_apcs).uFV:   " << apcsize << "    " << tcellsize << "    " <<  conjtcellsize << "    " <<  (*it_apcs).fTotalSites << "    " <<    (*it_apcs).fAPC << "    " <<  (*it_apcs).uFV << std::endl << std::endl;
-                PrintCRMDetails(this->robotAgent->GetIdentification());
-            }
+            std::cout << " apcsize, tcellsize, conjtcellsize (*it_apcs).fTotalSites  (*it_apcs).fAPC  (*it_apcs).uFV:   " << apcsize << "    " << tcellsize << "    " <<  conjtcellsize << "    " <<  (*it_apcs).fTotalSites << "    " <<    (*it_apcs).fAPC << "    " <<  (*it_apcs).uFV << std::endl << std::endl;
+            PrintCRMDetails(this->robotAgent->GetIdentification());
+        }
 
 
-            (*it_apcs).fTotalConjugates = ((*it_apcs).fTotalSites *
-                                           (*it_apcs).f_tcellsweightedaffinity_tmp) /
-                                          ((*it_apcs).f_tcellsweightedaffinity_tmp + 1.0);
+        (*it_apcs).fTotalConjugates = ((*it_apcs).fTotalSites *
+                                       (*it_apcs).f_tcellsweightedaffinity_tmp) /
+                                       ((*it_apcs).f_tcellsweightedaffinity_tmp + 1.0);
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(3);
+        robotAgent->IncNumberFloatingPtOperations(3);
 #endif
-       }
+    }
 }
 
 /******************************************************************************/
@@ -1280,9 +1346,9 @@ void CRMinRobotAgentOptimised::Derivative(TcellIntegrationPhase TK)
                 it_conjptr != (*it_tcells).listPtrstoConjugatesofTcell.end(); ++it_conjptr)
             {
                 (*it_conjptr)->fEffectorConjugates  = ((*it_tcells).GetE(TK) / tmp_totalcells) *
-                                                     (*it_conjptr)->fConjugates;
+                        (*it_conjptr)->fConjugates;
                 (*it_conjptr)->fRegulatorConjugates = ((*it_tcells).GetR(TK) / tmp_totalcells) *
-                                                     (*it_conjptr)->fConjugates;
+                        (*it_conjptr)->fConjugates;
 #ifdef FLOATINGPOINTOPERATIONS
                 robotAgent->IncNumberFloatingPtOperations(4);
 #endif
@@ -1305,7 +1371,7 @@ void CRMinRobotAgentOptimised::Derivative(TcellIntegrationPhase TK)
         }
 
         assert(((*it_apcs).fEffectorConjugatesPerAPC + (*it_apcs).fRegulatorConjugatesPerAPC -
-               (*it_apcs).fTotalSites) <= CONJUGATION_OVERFLOW_LIMIT);
+                (*it_apcs).fTotalSites) <= CONJUGATION_OVERFLOW_LIMIT);
     }
 
     ComputeNewDerivative(TK);
@@ -1327,15 +1393,18 @@ void CRMinRobotAgentOptimised::Derivative_ExcessTcells(TcellIntegrationPhase TK)
 #endif
 
         if(!(((*it_apcs).fEffectorConjugatesPerAPC +
-                       (*it_apcs).fRegulatorConjugatesPerAPC -
-                       (*it_apcs).fTotalSites) <= CONJUGATION_OVERFLOW_LIMIT))
+              (*it_apcs).fRegulatorConjugatesPerAPC -
+              (*it_apcs).fTotalSites) <= CONJUGATION_OVERFLOW_LIMIT))
         {
-            std::cerr << std::endl << std::endl << " tmp_ratio " << tmp_ratio << " (*it_apcs).fTotalConjugates " << (*it_apcs).fTotalConjugates << " (*it_apcs).f_tcellsweightedaffinity_tmp " << (*it_apcs).f_tcellsweightedaffinity_tmp << std::endl<< std::endl<< std::endl;
-        }
+            std::cout << std::endl << std::endl << " tmp_ratio " << tmp_ratio << " (*it_apcs).fTotalConjugates " << (*it_apcs).fTotalConjugates << " (*it_apcs).f_tcellsweightedaffinity_tmp " << (*it_apcs).f_tcellsweightedaffinity_tmp << std::endl<< std::endl<< std::endl;
 
+            std::cout << std::endl << " m_fTCELL_UPPERLIMIT_STEPSIZE  " << m_fTCELL_UPPERLIMIT_STEPSIZE  << " m_fTCELL_LOWERLIMIT_STEPSIZE " << m_fTCELL_LOWERLIMIT_STEPSIZE << " m_fERRORALLOWED_TCELL_STEPSIZE " << m_fERRORALLOWED_TCELL_STEPSIZE << " m_fTCELL_CONVERGENCE " << m_fTCELL_CONVERGENCE << std::endl<< std::endl<< std::endl;
+        }
         assert((*it_apcs).fEffectorConjugatesPerAPC +
                (*it_apcs).fRegulatorConjugatesPerAPC -
                (*it_apcs).fTotalSites <= CONJUGATION_OVERFLOW_LIMIT);
+
+
 
         it_conj = (*it_apcs).listConjugatesonAPC.begin();
         while(it_conj != (*it_apcs).listConjugatesonAPC.end())
@@ -1345,19 +1414,19 @@ void CRMinRobotAgentOptimised::Derivative_ExcessTcells(TcellIntegrationPhase TK)
             robotAgent->IncNumberFloatingPtOperations(1);
 #endif
 
-            if(totaltcellcount <= CELLLOWERBOUND) {
+            if(totaltcellcount <= CELLLOWERBOUND)
+            {
                 (*it_conj).fEffectorConjugates  = 0.0; (*it_conj).fRegulatorConjugates = 0.0;
                 (*it_conj).fConjugates          = 0.0;
             }
-            else {
-                //(*it_conj).fConjugates = (*it_apcs).fTotalConjugates * (*it_conj).affinity *
-                //                          totaltcellcount/(*it_apcs).f_tcellsweightedaffinity_tmp;
+            else
+            {
                 (*it_conj).fConjugates = tmp_ratio * (*it_conj).affinity * totaltcellcount;
 
                 (*it_conj).fEffectorConjugates  = ((*it_conj).ptrTcell->GetE(TK)/totaltcellcount) *
-                                                  (*it_conj).fConjugates;
+                        (*it_conj).fConjugates;
                 (*it_conj).fRegulatorConjugates = ((*it_conj).ptrTcell->GetR(TK)/totaltcellcount) *
-                                                  (*it_conj).fConjugates;
+                        (*it_conj).fConjugates;
 #ifdef FLOATINGPOINTOPERATIONS
                 robotAgent->IncNumberFloatingPtOperations(6);
 #endif
@@ -1388,19 +1457,19 @@ void CRMinRobotAgentOptimised::ComputeNewDerivative(TcellIntegrationPhase TK)
 
             double tmp_exp1 = 9.0 * tmp_apcconc * tmp_apcconc;
             double tmp_exp2 = (tmp_apcptr->fRegulatorConjugatesPerAPC - 3.0 * tmp_apcconc) *
-                              (tmp_apcptr->fRegulatorConjugatesPerAPC - 3.0 * tmp_apcconc);
+                    (tmp_apcptr->fRegulatorConjugatesPerAPC - 3.0 * tmp_apcconc);
             double Pe = tmp_exp2 / tmp_exp1;
 
             effector_incr  += kpe * Pe * (*it_conjptr)->fEffectorConjugates;
 
             double Pr = (6.0 * tmp_apcconc - tmp_apcptr->fEffectorConjugatesPerAPC) *
-                        tmp_apcptr->fEffectorConjugatesPerAPC / tmp_exp1;
+                    tmp_apcptr->fEffectorConjugatesPerAPC / tmp_exp1;
             regulator_incr += kpr * Pr * (*it_conjptr)->fRegulatorConjugates;
 
 #ifdef FLOATINGPOINTOPERATIONS
             robotAgent->IncNumberFloatingPtOperations(18);
 #endif
-        }        
+        }
 
 #ifndef SELECTIVE_TCELL_INFLUX_RATE
         effector_incr  += se_rate - kde * (*it_tcells).GetE(TK);
@@ -1479,7 +1548,7 @@ void CRMinRobotAgentOptimised::FreeTcellsAndAvailableAPCSites(TcellIntegrationPh
 #endif
         }
         (*it_tcells).fFreeTcells = (*it_tcells).GetE(TK) + (*it_tcells).GetR(TK) -
-                                   fConjugatesOfTcell;
+                fConjugatesOfTcell;
 
         //we scale down the conjugates factored based on their initial values if the error is not too high. the conjugation error is ERRORALLOWED_CONJ_STEPSIZE which is orders of magniture less than the CONJUGATION_OVERFLOW_LIMIT
         if(-((*it_tcells).fFreeTcells) > CONJUGATION_OVERFLOW_LIMIT)
@@ -1526,10 +1595,10 @@ void CRMinRobotAgentOptimised::PrintCRMDetails(unsigned id)
 
 void CRMinRobotAgentOptimised::PrintAPCList(unsigned int id)
 {
-   if(!(robotAgent->GetIdentification() == id))
-    return;
+    if(!(robotAgent->GetIdentification() == id))
+        return;
 
-   list<structAPC>::iterator it_apcs;
+    list<structAPC>::iterator it_apcs;
     printf("\n==========R%d APCs list================\n", robotAgent->GetIdentification());
     for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
         printf("APC[%d]=%f  ", (*it_apcs).uFV, (*it_apcs).fAPC);
@@ -1540,10 +1609,10 @@ void CRMinRobotAgentOptimised::PrintAPCList(unsigned int id)
 
 void CRMinRobotAgentOptimised::PrintTcellResponseToAPCList(unsigned int id)
 {
-   if(!(robotAgent->GetIdentification() == id))
-    return;
+    if(!(robotAgent->GetIdentification() == id))
+        return;
 
-   list<structAPC>::iterator it_apcs;
+    list<structAPC>::iterator it_apcs;
     printf("\n==========R%d APCs list================\n", robotAgent->GetIdentification());
     for(it_apcs = listAPCs.begin(); it_apcs != listAPCs.end(); ++it_apcs)
         printf("APC[%d]=%f [wtsumE]:%f [wtsumR]:%f ", (*it_apcs).uFV, (*it_apcs).fAPC,
@@ -1562,15 +1631,15 @@ void CRMinRobotAgentOptimised::PrintTcellList(unsigned int id)
     printf("\n===========R%d T cell list==============\n", robotAgent->GetIdentification());
     for(it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
         printf("E[%d]=%e,R[%d]=%e (A=%f) [History=%lu]  ", (*it_tcells).uFV, (*it_tcells).fE,
-                (*it_tcells).uFV, (*it_tcells).fR, GetAPC((*it_tcells).uFV), (*it_tcells).uHistory);
+               (*it_tcells).uFV, (*it_tcells).fR, GetAPC((*it_tcells).uFV), (*it_tcells).uHistory);
 
     //!TODO: Solve the bug causing the below stmt in the printf function to print nonsensical A densities
     //!TODO:  ((*it_tcells).ptrAPCWithAffinity1) == NULL ?
     //            GetAPC((*it_tcells).uFV) : ((*it_tcells).ptrAPCWithAffinity1)->fAPC)
-//    printf("E[%d]=%e,R[%d]=%e (A=%f)   ", (*it_tcells).uFV, (*it_tcells).fE,
-//            (*it_tcells).uFV, (*it_tcells).fR,
-//            ((*it_tcells).ptrAPCWithAffinity1) == NULL ?
-//            GetAPC((*it_tcells).uFV) : ((*it_tcells).ptrAPCWithAffinity1)->fAPC);
+    //    printf("E[%d]=%e,R[%d]=%e (A=%f)   ", (*it_tcells).uFV, (*it_tcells).fE,
+    //            (*it_tcells).uFV, (*it_tcells).fR,
+    //            ((*it_tcells).ptrAPCWithAffinity1) == NULL ?
+    //            GetAPC((*it_tcells).uFV) : ((*it_tcells).ptrAPCWithAffinity1)->fAPC);
 }
 
 /******************************************************************************/
@@ -1662,7 +1731,7 @@ void CRMinRobotAgentOptimised::UpdateState()
         }
 
         else if (tmp_E > tmp_R) // (tmp_E/tmp_R > 1.0)
-        //else if (tmp_E/tmp_R > 0.9)// > 0.95 // (tmp_E/tmp_R > 1.0)
+            //else if (tmp_E/tmp_R > 0.9)// > 0.95 // (tmp_E/tmp_R > 1.0)
             // Attack
         {
             robotAgent->SetMostWantedList(&it_fvsensed, 1);
@@ -1700,39 +1769,39 @@ void CRMinRobotAgentOptimised::UpdateState()
                     else if (tmp_E1 > tmp_R1)
                         suspicioncounter +=1.0;
 
-//                    if (this->robotAgent->GetIdentification() == 7 && CSimulator::GetInstance()->GetSimulationStepNumber() == 7650)
-//                    {
-//                        // std::cerr << tmp_index << ": FV " << (*it_apcs).uFV <<  " suspicioncounter " << suspicioncounter << std::endl;
-//                        double tmp_E1, tmp_R1, tmp_affinity1;
-//                        tmp_E1 = 0.0; tmp_R1 = 0.0;
-//                        for(it_tcells1 =  (*pop_index).begin();
-//                            it_tcells1 != (*pop_index).end(); ++it_tcells1)
-//                        {
-//                            tmp_affinity1 = NegExpDistAffinity((*it_tcells1).uFV, (*it_apcs).uFV, m_fcross_affinity);
-//                            //std::cerr << "E[" << (*it_tcells1).uFV << "] = " << (*it_tcells1).fE << "R[" << (*it_tcells1).uFV << "] = " << (*it_tcells1).fR << "H[" << (*it_tcells1).uFV << "] = " <<  (*it_tcells1).uHistory  <<  "; ";
+                    //                    if (this->robotAgent->GetIdentification() == 7 && CSimulator::GetInstance()->GetSimulationStepNumber() == 7650)
+                    //                    {
+                    //                        // std::cerr << tmp_index << ": FV " << (*it_apcs).uFV <<  " suspicioncounter " << suspicioncounter << std::endl;
+                    //                        double tmp_E1, tmp_R1, tmp_affinity1;
+                    //                        tmp_E1 = 0.0; tmp_R1 = 0.0;
+                    //                        for(it_tcells1 =  (*pop_index).begin();
+                    //                            it_tcells1 != (*pop_index).end(); ++it_tcells1)
+                    //                        {
+                    //                            tmp_affinity1 = NegExpDistAffinity((*it_tcells1).uFV, (*it_apcs).uFV, m_fcross_affinity);
+                    //                            //std::cerr << "E[" << (*it_tcells1).uFV << "] = " << (*it_tcells1).fE << "R[" << (*it_tcells1).uFV << "] = " << (*it_tcells1).fR << "H[" << (*it_tcells1).uFV << "] = " <<  (*it_tcells1).uHistory  <<  "; ";
 
-//                            tmp_E1 += tmp_affinity1 * (*it_tcells1).fE;
-//                            tmp_R1 += tmp_affinity1 * (*it_tcells1).fR;
-//                        }
-//                        //std::cerr << "Total E = " << tmp_E1 << "Total R = " << tmp_R1;
-//                        //std::cerr << std::endl  << std::endl;
-//                    }
+                    //                            tmp_E1 += tmp_affinity1 * (*it_tcells1).fE;
+                    //                            tmp_R1 += tmp_affinity1 * (*it_tcells1).fR;
+                    //                        }
+                    //                        //std::cerr << "Total E = " << tmp_E1 << "Total R = " << tmp_R1;
+                    //                        //std::cerr << std::endl  << std::endl;
+                    //                    }
                 }
 
 
-//                if (this->robotAgent->GetIdentification() == 7 && CSimulator::GetInstance()->GetSimulationStepNumber() == 7650)
-//                {
-//                    std::cerr << " FV " << (*it_apcs).uFV <<  " suspicioncounter " << suspicioncounter << std::endl;
+                //                if (this->robotAgent->GetIdentification() == 7 && CSimulator::GetInstance()->GetSimulationStepNumber() == 7650)
+                //                {
+                //                    std::cerr << " FV " << (*it_apcs).uFV <<  " suspicioncounter " << suspicioncounter << std::endl;
 
-//                    //exit(-1);
-//                }
+                //                    //exit(-1);
+                //                }
 
-//                Exp set up 2
-//Step 7650
-//                ====R7 Feature Vector Distribution=====
-//                FV:12, Robots:1.000000, Suspicion:0.986000 FV:54, Robots:2.000000, Suspicion:0.000000 FV:60, Robots:1.000000, Suspicion:0.000000 FV:62, Robots:6.000000, Suspicion:0.000000
+                //                Exp set up 2
+                //Step 7650
+                //                ====R7 Feature Vector Distribution=====
+                //                FV:12, Robots:1.000000, Suspicion:0.986000 FV:54, Robots:2.000000, Suspicion:0.000000 FV:60, Robots:1.000000, Suspicion:0.000000 FV:62, Robots:6.000000, Suspicion:0.000000
 
-//                FOR FV:12 how many dont knows, how many attack, and how many tolerate? dont knows may have to contribute to raise suspicion
+                //                FOR FV:12 how many dont knows, how many attack, and how many tolerate? dont knows may have to contribute to raise suspicion
 
                 suspicioncounter = suspicioncounter / listlistTcells.size();
                 //suspicioncounter = suspicioncounter / totalcounter;
@@ -1774,7 +1843,7 @@ void CRMinRobotAgentOptimised::UpdateState()
             // Tolerate
             robotAgent->SetMostWantedList(&it_fvsensed, 2);
         }
-         ++it_apcs; ++it_fvsensed;
+        ++it_apcs; ++it_fvsensed;
     }
 
 #ifndef CRM_ENABLE_SENSORY_HISTORY
@@ -1838,7 +1907,7 @@ void CRMinRobotAgentOptimised::UpdateAPCList()
             else // (*it_fvsensed).fRobots >= 1
                 listAPCs.insert(it_apcs, structAPC((*it_fvsensed).uFV,
                                                    m_fFVtoApcscaling_expbase * exp(((*it_fvsensed).fRobots - 1)*
-                                                                                    m_fFVtoApcscaling_exprate),
+                                                                                   m_fFVtoApcscaling_exprate),
                                                    (double)sites));
             ++it_fvsensed;
 
@@ -1862,10 +1931,10 @@ void CRMinRobotAgentOptimised::UpdateAPCList()
         else // (*it_fvsensed).fRobots >= 1
             listAPCs.push_back(structAPC((*it_fvsensed).uFV,
                                          m_fFVtoApcscaling_expbase * exp(((*it_fvsensed).fRobots - 1)*
-                                                                          m_fFVtoApcscaling_exprate),
+                                                                         m_fFVtoApcscaling_exprate),
                                          (double)sites));
 #ifdef FLOATINGPOINTOPERATIONS
-            robotAgent->IncNumberFloatingPtOperations(2 + m_fApcscalingtype*2);  // also a multiplication of apcs*sites in constructor of structAPC
+        robotAgent->IncNumberFloatingPtOperations(2 + m_fApcscalingtype*2);  // also a multiplication of apcs*sites in constructor of structAPC
 #endif
         ++it_fvsensed; }
 }
@@ -1973,6 +2042,39 @@ void CRMinRobotAgentOptimised::UpdateTcellList(unsigned hammingdistance)
 
     listTcells_cpy.clear();
     listTcells_cpy = listTcells;
+
+    /*if(this->robotAgent->GetIdentification() == 8 && CSimulator::GetInstance()->GetSimulationStepNumber() == 5973)
+    {
+        assert(listTcells.size() == 26);
+        it_tcells = listTcells.begin();
+        (*it_tcells).fE=1.013573e+01; (*it_tcells).fR=1.239414e+01;++it_tcells;
+        (*it_tcells).fE=1.004220e+01; (*it_tcells).fR=1.072882e+01;++it_tcells;
+        (*it_tcells).fE=1.019084e+01; (*it_tcells).fR=1.199276e+01;++it_tcells;
+        (*it_tcells).fE=1.021920e+01; (*it_tcells).fR=1.024296e+01;++it_tcells;
+        (*it_tcells).fE=1.042126e+01; (*it_tcells).fR=1.017626e+01;++it_tcells;
+        (*it_tcells).fE=1.008367e+01; (*it_tcells).fR=1.032832e+01;++it_tcells;
+        (*it_tcells).fE=1.043156e+01; (*it_tcells).fR=1.063774e+01;++it_tcells;
+        (*it_tcells).fE=1.078326e+01; (*it_tcells).fR=1.032383e+01;++it_tcells;
+        (*it_tcells).fE=1.009964e-01; (*it_tcells).fR=2.587830e-03;++it_tcells;
+        (*it_tcells).fE=2.128364e-02; (*it_tcells).fR=3.396210e-04;++it_tcells;
+        (*it_tcells).fE=3.128210e-01; (*it_tcells).fR=3.589119e-03;++it_tcells;
+        (*it_tcells).fE=1.035613e+01; (*it_tcells).fR=1.083624e+01;++it_tcells;
+        (*it_tcells).fE=4.432948e-02; (*it_tcells).fR=4.569674e-02;++it_tcells;
+        (*it_tcells).fE=1.435718e-01; (*it_tcells).fR=3.467479e-01;++it_tcells;
+        (*it_tcells).fE=1.816949e-01; (*it_tcells).fR=2.945318e-02;++it_tcells;
+        (*it_tcells).fE=3.128492e-01; (*it_tcells).fR=1.021297e-02;++it_tcells;
+        (*it_tcells).fE=1.258025e+00; (*it_tcells).fR=9.787533e-03;++it_tcells;
+        (*it_tcells).fE=1.608477e+00; (*it_tcells).fR=1.172626e-02;++it_tcells;
+        (*it_tcells).fE=1.254773e+00; (*it_tcells).fR=5.136244e-07;++it_tcells;
+        (*it_tcells).fE=7.813555e-02; (*it_tcells).fR=3.647662e-08;++it_tcells;
+        (*it_tcells).fE=1.315272e-02; (*it_tcells).fR=1.277780e-04;++it_tcells;
+        (*it_tcells).fE=6.932363e-02; (*it_tcells).fR=1.844398e-01;++it_tcells;
+        (*it_tcells).fE=4.342204e-01; (*it_tcells).fR=3.109407e-03;++it_tcells;
+        (*it_tcells).fE=3.195924e-01; (*it_tcells).fR=2.990794e-03;++it_tcells;
+        (*it_tcells).fE=5.653300e-02; (*it_tcells).fR=9.636729e-02;++it_tcells;
+        (*it_tcells).fE=2.442573e-04; (*it_tcells).fR=1.188711e-02;
+        return;
+    }*/
 }
 
 /******************************************************************************/
@@ -2010,10 +2112,10 @@ void CRMinRobotAgentOptimised::MergeIntoMasterTcellList(list<structTcell>& listT
             if(mergeflag == +1)
             {
                 masterlistTcells.insert(it_tcellsmaster, structTcell((*it_tcells).uFV,
-                                                      (*it_tcells).fE,
-                                                      (*it_tcells).fR,
-                                                      (*it_tcells).uHistory,
-                                                      NULL));
+                                                                     (*it_tcells).fE,
+                                                                     (*it_tcells).fR,
+                                                                     (*it_tcells).uHistory,
+                                                                     NULL));
                 ++it_tcells;
             }
             else
@@ -2026,18 +2128,18 @@ void CRMinRobotAgentOptimised::MergeIntoMasterTcellList(list<structTcell>& listT
         }
         else
         {
-             ++it_tcellsmaster;
+            ++it_tcellsmaster;
         }
-   }
+    }
 
     while(it_tcells != listTcells.end())
     {
         if (mergeflag == +1) {
             masterlistTcells.push_back(structTcell((*it_tcells).uFV,
-                                               (*it_tcells).fE,
-                                               (*it_tcells).fR,
-                                               (*it_tcells).uHistory,
-                                               NULL));
+                                                   (*it_tcells).fE,
+                                                   (*it_tcells).fR,
+                                                   (*it_tcells).uHistory,
+                                                   NULL));
             ++it_tcells;}
         else
         {
@@ -2078,13 +2180,6 @@ double CRMinRobotAgentOptimised::NegExpDistAffinity(unsigned int v1, unsigned in
 #else
     return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
 #endif
-
-
-    /*if(hammingdistance==0 || hammingdistance == 1)
-	return 1.0;
-    else
-	return 0.0;	*/
-
 }
 
 /******************************************************************************/
@@ -2134,7 +2229,7 @@ void CRMinRobotAgentOptimised::SetCurrE(unsigned int thtype, double f_currE)
     list<structTcell>::iterator it_tcells;
     for(it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
         if((*it_tcells).uFV == thtype)
-            { (*it_tcells).fE = f_currE; return; }
+        { (*it_tcells).fE = f_currE; return; }
 
     printf("\n Effector clonaltype %d not found in list - code can be modified to insert in list",thtype);
     exit(-1);
@@ -2148,7 +2243,7 @@ void CRMinRobotAgentOptimised::SetCurrR(unsigned int thtype, double f_currR)
     list<structTcell>::iterator it_tcells;
     for(it_tcells = listTcells.begin(); it_tcells != listTcells.end(); ++it_tcells)
         if((*it_tcells).uFV == thtype)
-            { (*it_tcells).fR = f_currR; return; }
+        { (*it_tcells).fR = f_currR; return; }
 
     printf("\n Regulator clonaltype %d not found in list - code can be modified to insert in list",thtype);
     exit(-1);
