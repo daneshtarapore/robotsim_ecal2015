@@ -29,7 +29,7 @@ enum ESwarmBehavType
 
 #define FDMODELTYPE  CRM_TCELLSINEXCESS // CRM // CRM_TCELLSINEXCESS //THRESHOLDONFVDIST
 
-#define CRM_ENABLE_SENSORY_HISTORY
+//#define CRM_ENABLE_SENSORY_HISTORY
 
 /******************************************************************************/
 /******************************************************************************/

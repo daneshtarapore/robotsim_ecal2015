@@ -79,9 +79,11 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
     
     m_uSeedfvHdRange          = m_crmArguments->GetArgumentAsIntOr("seedfv-hd-range",
                                                                    CFeatureVector::NUMBER_OF_FEATURES);
+
 #ifndef CRM_ENABLE_SENSORY_HISTORY
     m_uHistoryTcells          = m_crmArguments->GetArgumentAsIntOr("hist_ts", 0);
     m_fSuspicionThreshold     = m_crmArguments->GetArgumentAsDoubleOr("susp_th", 1.0);
+    m_fNewFVSuspicionIncr     = m_crmArguments->GetArgumentAsDoubleOr("newfvsusp_incr", 1.0);
 #endif
 
     if(FDMODELTYPE == CRM_TCELLSINEXCESS)
@@ -120,6 +122,7 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
        #ifndef CRM_ENABLE_SENSORY_HISTORY
                "hist_ts=#                     T-cell populations recorded for time-steps  [%d]\n"
                "susp_th=#                     Threshold above which a FV is to be tolerated - but deemed suspicious. Range: [0,1]  [%f]\n"
+               "newfvsusp_incr=#              Increment to suspicioun counter when encountering a new FV. Range: [0,1]  [%f]\n"
        #endif
                ,CFeatureVector::NUMBER_OF_FEATURES,
                seedE,
@@ -144,7 +147,8 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
 
        #ifndef CRM_ENABLE_SENSORY_HISTORY
                ,m_uHistoryTcells,
-               m_fSuspicionThreshold
+               m_fSuspicionThreshold,
+               m_fNewFVSuspicionIncr
        #endif
                );
         bHelpDisplayed = true;
@@ -1756,7 +1760,9 @@ void CRMinRobotAgentOptimised::UpdateState()
                         tmp_E1 += tmp_affinity1 * (*it_tcells1).fE;
                         tmp_R1 += tmp_affinity1 * (*it_tcells1).fR;
 
-                        if((*it_apcs).uFV == (*it_tcells1).uFV)
+                        unsigned int hammingdistance  = CRMinRobotAgentOptimised::GetNumberOfSetBits((*it_apcs).uFV ^ (*it_tcells1).uFV);
+                        if ((double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES < 2.0/6.0)
+                        //if((*it_apcs).uFV == (*it_tcells1).uFV)
                             fv_present = true;
 
 #ifdef FLOATINGPOINTOPERATIONS
@@ -1765,7 +1771,8 @@ void CRMinRobotAgentOptimised::UpdateState()
                     }
 
                     if(fv_present == false)
-                        suspicioncounter +=1.0;
+                        //suspicioncounter +=1.0;
+                        suspicioncounter += m_fNewFVSuspicionIncr; // 1.0/10.0; //effect of taking different sub-unit values?
                     else if (tmp_E1 > tmp_R1)
                         suspicioncounter +=1.0;
 
@@ -2173,9 +2180,9 @@ double CRMinRobotAgentOptimised::NegExpDistAffinity(unsigned int v1, unsigned in
     // Should we normalize the hammingdistance when input to the exp function, or as above?
 
 #ifdef CRM_ENABLE_SENSORY_HISTORY
-    if ((double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES <= 1.0/6.0)
+    if ((double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES < 2.0/6.0)
         return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
-    else  // Affinities less than 0.1 have no effect on T-cell population cross-interactions. We do this to prevent intermediary regulatory T-cells (with FV between abnormal and normal FVs) to result in tolerance of abnromal FVs. This can occur even when the APC sub-populations are normalized. Without CRM_ENABLE_SENSORY_HISTORY such intermediary T-cell populations would disappear quickly and not linger in the FV history
+    else  // Affinities less than 0.108 have no effect on T-cell population cross-interactions. We do this to prevent intermediary regulatory T-cells (with FV between abnormal and normal FVs) to result in tolerance of abnromal FVs. This can occur even when the APC sub-populations are normalized. Without CRM_ENABLE_SENSORY_HISTORY such intermediary T-cell populations would disappear quickly and not linger in the FV history
         return 0.0;
 #else
     return 1.0 * exp(-(1.0/k) * (double)hammingdistance / (double) CFeatureVector::NUMBER_OF_FEATURES);
