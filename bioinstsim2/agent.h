@@ -91,8 +91,10 @@ enum EControllerType
 enum EAgentType 
 {
     ANY,
+    LIGHT,
     ROBOT,
-    LIGHT
+    FORAGINGTOKEN,
+    NESTSITE
 };
 
 /******************************************************************************/

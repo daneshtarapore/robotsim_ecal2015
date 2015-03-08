@@ -111,8 +111,8 @@ void CExperiment::CreateAndAddAgents(CSimulator* pc_simulator)
 {
     if (m_pcAgentArguments->GetArgumentIsDefined("help")) 
     {
-        printf("ThAgent setup:\n"
-               "  count=#                Set the number of ThAgents (%d)\n", m_unNumberOfAgents);                  
+        printf("Agents setup:\n"
+               "  count=#                Set the total number of Agents (including robots) (%d)\n", m_unNumberOfAgents);
     }
 
     for (int i = 0; i < m_unNumberOfAgents; i++)
