@@ -1,4 +1,3 @@
-//!TODO replace the many preprocessor OPTIMISE switches used in typecasting with some smart typedef
 
 #include <vector>
 #include "foragingexperiment.h"
@@ -18,9 +17,9 @@
 /******************************************************************************/
 
 CForagingExperiment::CForagingExperiment(CArguments* pc_experiment_arguments,
-                                 CArguments* pc_arena_arguments,
-                                 CArguments* pc_agent_arguments,
-                                 CArguments* pc_model_arguments) :
+                                         CArguments* pc_arena_arguments,
+                                         CArguments* pc_agent_arguments,
+                                         CArguments* pc_model_arguments) :
     CExperiment(pc_experiment_arguments, pc_arena_arguments, pc_agent_arguments, pc_model_arguments)
 {    
     static bool bHelpDisplayed = false;
@@ -117,7 +116,7 @@ CForagingExperiment::CForagingExperiment(CArguments* pc_experiment_arguments,
     m_iSwitchNormalBehavior  = pc_experiment_arguments->GetArgumentAsIntOr("switchnormalbehav", 0);
     m_unDurationofSwitch     = pc_experiment_arguments->GetArgumentAsIntOr("durationofswitch", 0);
     m_unGradualBehaviorSpreadEnabled
-                             = pc_experiment_arguments->GetArgumentAsIntOr("slowspread_enabled", 0);
+            = pc_experiment_arguments->GetArgumentAsIntOr("slowspread_enabled", 0);
     m_unFirstSwitchAt        = pc_experiment_arguments->GetArgumentAsIntOr("firstswitchat", 0);
 
 
@@ -158,6 +157,8 @@ CForagingExperiment::CForagingExperiment(CArguments* pc_experiment_arguments,
             pchErrorBehavior = "UNKNOWN";
         }
 
+        printf("numrobots=#               Number of robots [%d]\n",m_unNumRobots);
+        printf("numforagingtokens=#       Number of foraging tokens [%d]\n",m_unNumForagingTokens);
         printf("swarmbehav=[AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2,STRLN,RNDWK,CIRCLE,STOP] -- behavior selected: %s\n", pchSwarmBehavior);
         printf("errorbehav=[STRLN,RNDWK,CIRCLE,STOP,AGGREGATION,DISPERSION,FLOCKING,HOMING1,HOMING2]                        -- behavior selected: %s\n", pchErrorBehavior);
         printf("misbehavestep=#       Step when agent starts misbehaving [%d]\n",m_unMisbehaveStep);
@@ -210,49 +211,59 @@ CForagingExperiment::~CForagingExperiment()
 
 CAgent* CForagingExperiment::CreateAgent()
 {
-    m_unNumRobots + m_unNumForagingTokens;
-
-
     static unsigned int id = 0;
-    static CAgent* pcPreviousAgent = NULL;
-    
-    vector<CBehavior*> vecBehaviors;
-    vecBehaviors = GetAgentBehavior(m_eswarmbehavType, pcPreviousAgent);
+    CAgent* pcAgent;
 
-    CAgent* pcAgent = new CRobotAgentOptimised("robot", id++, m_pcAgentArguments, m_pcModelArguments, vecBehaviors);
-    pcAgent->SetBehavior(m_eswarmbehavType);
-
-    for(int i = 0; i < m_unNumAbnormalAgents; i++)
+    if(id < m_unNumRobots)
     {
-        if ((id - 1 + i) == m_unAbnormalAgentToTrack)
+        static CAgent* pcPreviousAgent = NULL;
+
+        vector<CBehavior*> vecBehaviors;
+        vecBehaviors = GetAgentBehavior(m_eswarmbehavType, pcPreviousAgent);
+
+        pcAgent = new CRobotAgentOptimised("robot", id++, m_pcAgentArguments, m_pcModelArguments, vecBehaviors);
+        pcAgent->SetBehavior(m_eswarmbehavType);
+
+        for(int i = 0; i < m_unNumAbnormalAgents; i++)
         {
-            m_pcMisbehaveAgent[i] = (CRobotAgentOptimised*) pcAgent;
-            pcAgent->SetBehavIdentification(-1); //abnormal agent
+            if ((id - 1 + i) == m_unAbnormalAgentToTrack)
+            {
+                m_pcMisbehaveAgent[i] = (CRobotAgentOptimised*) pcAgent;
+                pcAgent->SetBehavIdentification(-1); //abnormal agent
+            }
         }
-    }
 
-    if ((id - 1) == m_unNormalAgentToTrack)
-    {
-        m_pcNormalAgentToTrack = (CRobotAgentOptimised*) pcAgent;
-        pcAgent->SetBehavIdentification(1); // normal agent
-    }
-
-    if(m_eswarmbehavType == HOMING1)
-    {
-        if (pcPreviousAgent == NULL)
+        if ((id - 1) == m_unNormalAgentToTrack)
         {
-            pcPreviousAgent = pcAgent;
-            pcHomeToAgent   = pcAgent;
+            m_pcNormalAgentToTrack = (CRobotAgentOptimised*) pcAgent;
+            pcAgent->SetBehavIdentification(1); // normal agent
         }
+
+        if(m_eswarmbehavType == HOMING1)
+            if (pcPreviousAgent == NULL)
+            {
+                pcPreviousAgent = pcAgent;
+                pcHomeToAgent   = pcAgent;
+            }
+            else
+                pcPreviousAgent = pcAgent;
+
+        m_ppcListRobotsCreated[id-1] = pcAgent;
+    }
+    else if(id < m_unNumRobots+m_unNumForagingTokens)
+    {
+        unsigned int un_numResourcesInToken = 10;
+        pcAgent = new CForagingTokenAgent("token", id++, un_numResourcesInToken, m_pcAgentArguments);
     }
     else
-        pcPreviousAgent = pcAgent;
-
-    m_ppcListRobotsCreated[id-1] = pcAgent;
-
-
+    {
+        float f_numTokensCollected = 0.0;
+        pcAgent = new CNestSiteAgent("nest", id++, f_numTokensCollected, m_pcAgentArguments);
+        pcNestSiteAgent = pcAgent;
+    }
 
     return pcAgent;
+
 }
 
 /******************************************************************************/
@@ -469,8 +480,8 @@ void CForagingExperiment::SimulationStep(unsigned int un_step_number)
 
         m_pcMisbehaveAgent[0]->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unSuspectors, &unNbrsInSensoryRange, dbgflag);//true
 
-//        if (CSimulator::GetInstance()->GetSimulationStepNumber() == 2550) //2550
-//            exit(-1);
+        //        if (CSimulator::GetInstance()->GetSimulationStepNumber() == 2550) //2550
+        //            exit(-1);
 
         printf("\nStep: %d, MisbehavingAgentResponse: tol: %d, att: %d, susp: %d, neighboursinsensoryrange: %d", un_step_number, unToleraters, unAttackers, unSuspectors, unNbrsInSensoryRange);
         printf("\nMisbehavingAgentFeatureVector: %d\n\n", m_pcMisbehaveAgent[0]->GetFeatureVector()->GetValue());
@@ -572,7 +583,7 @@ void CForagingExperiment::SpreadBehavior(unsigned int stepnumber, ESwarmBehavTyp
     //TAgentList listUnchangeddAgents;
 
     if(stepnumber==firstswitchat ||
-       stepnumber== firstswitchat+m_unDurationofSwitch) // focal agent is first to change behavior
+            stepnumber== firstswitchat+m_unDurationofSwitch) // focal agent is first to change behavior
     {
         TAgentVector* vecAllAgents = CSimulator::GetInstance()->GetAllAgents();
         for (TAgentVectorIterator i = vecAllAgents->begin(); i != vecAllAgents->end(); i++)
