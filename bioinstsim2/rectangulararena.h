@@ -22,6 +22,7 @@ public:
     virtual ~CRectangularArena();
 
     virtual bool IsObstacle(TVector2d* t_position);
+    virtual void MoveAgent(CAgent* pc_agent, TVector2d* pt_new_position);
 };
 
 /******************************************************************************/

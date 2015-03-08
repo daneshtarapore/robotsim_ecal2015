@@ -37,3 +37,23 @@ bool CRectangularArena::IsObstacle(TVector2d* t_position)
 /******************************************************************************/
 /******************************************************************************/
 
+void CRectangularArena::MoveAgent(CAgent* pc_agent, TVector2d* pt_new_position)
+{
+    if (!IsObstacle(pt_new_position)) {
+
+        unsigned int unOldArrayPosition = XYToArrayPosition(pc_agent->GetPosition());
+        unsigned int unNewArrayPosition = XYToArrayPosition(pt_new_position); 
+
+        pc_agent->SetPosition(pt_new_position);
+
+        if (unOldArrayPosition != unNewArrayPosition)
+        {
+            RemoveAgent(pc_agent, unOldArrayPosition);
+            AddAgent(pc_agent, unNewArrayPosition);
+        }
+    }
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
