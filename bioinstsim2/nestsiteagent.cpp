@@ -4,10 +4,10 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CNestSiteAgent::CNestSiteAgent(const char* pch_name, unsigned int un_identification, unsigned int un_numTokensCollected, CArguments* pc_arguments) :
+CNestSiteAgent::CNestSiteAgent(const char* pch_name, unsigned int un_identification, float f_numTokensCollected, CArguments* pc_arguments) :
         CAgent(pch_name, un_identification, pc_arguments)
 {
-    this->un_numTokensCollected = un_numTokensCollected;
+    this->f_numTokensCollected = f_numTokensCollected;
 }
 
 /******************************************************************************/

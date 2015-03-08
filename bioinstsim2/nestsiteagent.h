@@ -25,7 +25,7 @@ using namespace std;
 class CNestSiteAgent : public CAgent
 {
 public: 
-    CNestSiteAgent(const char* pch_name, unsigned int un_identification, unsigned int un_numTokensCollected, CArguments *pc_arguments);
+    CNestSiteAgent(const char* pch_name, unsigned int un_identification, float f_numTokensCollected, CArguments *pc_arguments);
 
     virtual ~CNestSiteAgent();
     
@@ -40,7 +40,7 @@ public:
     virtual inline unsigned int GetColor() {return GREY;}
 
 protected:
-    unsigned int un_numTokensCollected;
+    float f_numTokensCollected;
 
 };
 

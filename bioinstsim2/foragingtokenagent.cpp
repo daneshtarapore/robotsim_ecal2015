@@ -8,7 +8,6 @@ CForagingTokenAgent::CForagingTokenAgent(const char* pch_name, unsigned int un_i
         CAgent(pch_name, un_identification, pc_arguments)
 {
     un_numResourcesInToken = un_numResourcesInToken;
-    m_bRobotDeactivated = false;
 }
 
 /******************************************************************************/
