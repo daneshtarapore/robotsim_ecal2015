@@ -17,9 +17,7 @@
 
 // Experiments:
 #include "testexperiment.h"
-//#include "proliferationvsinternalcounterexperiment.h"
-//#include "proliferationvsmacromodelexperiment.h"
-//#include "multimacromodelexperiment.h"
+#include "foragingexperiment.h"
 
 
 #define OPTIONSFILEBUFFERSIZE (1024 * 10)
@@ -28,21 +26,21 @@
 /******************************************************************************/
 
 struct option CBioInstSim::m_tLongOptions[] = {
-    {"help",             0, 0,              'h'},
-    {"verbose",          0, 0,              'v'},
-    {"random-seed",      1, 0,              's'},
-    {"arena",            1, 0,              'a'},
-    {"experiment",       1, 0,              'e'},
-    {"agent",            1, 0,              'T'},
-    {"model",            1, 0,              'M'},
-    {"apcagent",         1, 0,              'A'},   
-    {"analyzer",         1, 0,              'Z'},
-    {"no-rendering",     0, 0,              'z'},
-    {"number-of-cycles", 1, 0,              'n'},
-    {"enable-analysis",  1, 0,              'Z'},
-    {"silent",           0, 0,              'S'},
-    {"color-file",       1, 0,              'c'},
-    {0, 0, 0, 0}
+{"help",             0, 0,              'h'},
+{"verbose",          0, 0,              'v'},
+{"random-seed",      1, 0,              's'},
+{"arena",            1, 0,              'a'},
+{"experiment",       1, 0,              'e'},
+{"agent",            1, 0,              'T'},
+{"model",            1, 0,              'M'},
+{"apcagent",         1, 0,              'A'},
+{"analyzer",         1, 0,              'Z'},
+{"no-rendering",     0, 0,              'z'},
+{"number-of-cycles", 1, 0,              'n'},
+{"enable-analysis",  1, 0,              'Z'},
+{"silent",           0, 0,              'S'},
+{"color-file",       1, 0,              'c'},
+{0, 0, 0, 0}
 };
 
 
@@ -66,7 +64,7 @@ CBioInstSim::CBioInstSim(int argc, char** argv) :
     m_pchColorFilename(NULL)
 
 {
-    for (int i = 0; i < argc; i++) 
+    for (int i = 0; i < argc; i++)
     {
         printf("%s ", argv[i]);
     }
@@ -92,7 +90,7 @@ void CBioInstSim::Run()
     m_pcSimulator  = m_pcExperiment->CreateSimulator(m_unNumberOfCycles);
     m_pcSimulator->SetExperiment(m_pcExperiment);
 
-    if (m_pcPopulationAnalyzerArguments != NULL) 
+    if (m_pcPopulationAnalyzerArguments != NULL)
     {
         CPopulationAnalyzer* pcAnalyzer = new CPopulationAnalyzer(m_pcPopulationAnalyzerArguments);
         m_pcSimulator->AddChild(pcAnalyzer);
@@ -129,14 +127,14 @@ void CBioInstSim::ParseArguments()
     pchOptionFileOutput[0] = '\0';
 
     // First parse the options:
-    while ((cOption = getopt_long(m_argc, m_argv, 
-                                  "hvs:a:e:T:M:A:zn:SZ:c:", 
+    while ((cOption = getopt_long(m_argc, m_argv,
+                                  "hvs:a:e:T:M:A:zn:SZ:c:",
                                   m_tLongOptions, &nOptionIndex)) != -1)
     {
         if (nOptionIndex <= 0)
         {
             char pchTempOption[16];
-            sprintf(pchTempOption, "-%c", cOption);           
+            sprintf(pchTempOption, "-%c", cOption);
             strcat(pchOptionFileOutput, pchTempOption);
         } else {
             strcat(pchOptionFileOutput, "--");
@@ -163,12 +161,12 @@ void CBioInstSim::ParseArguments()
             break;
 
 
-        case 's' : 	  
-    	    m_unRandomSeed = atoi(optarg);
+        case 's' :
+            m_unRandomSeed = atoi(optarg);
             Random::set_seed(m_unRandomSeed);
             DEBUGOUT1("Setting random-seed to %d, from command-line", m_unRandomSeed);
             break;
-           
+
 
         case 'z':
             m_bRendering = false;
@@ -192,7 +190,7 @@ void CBioInstSim::ParseArguments()
 
         case 'Z':
             m_pcPopulationAnalyzerArguments = new CArguments(optarg);
-//            printf("optarg = %d\n", optarg);
+            //            printf("optarg = %d\n", optarg);
 
             break;
 
@@ -212,8 +210,8 @@ void CBioInstSim::ParseArguments()
         default:
             ERROR("Unrecognized option or missing parameter");
             exit(-1);
-        }        
-    }    
+        }
+    }
 
     if (m_pcExperimentArguments == NULL)
     {
@@ -271,7 +269,7 @@ CExperiment* CBioInstSim::CreateExperiment()
 
     CExperiment* pcExperiment = NULL;
 
-    if (m_pcExperimentArguments->GetArgumentIsDefined("help")) 
+    if (m_pcExperimentArguments->GetArgumentIsDefined("help"))
     {
         printf("Experiment help:\n"
                "  name = [PROLIFERATIONVSRECRUITMENT(P1)]\n"
@@ -279,23 +277,33 @@ CExperiment* CBioInstSim::CreateExperiment()
         
     }
     
-    if (!m_pcExperimentArguments->GetArgumentIsDefined("name")) 
+    if (!m_pcExperimentArguments->GetArgumentIsDefined("name"))
     {
-        pcExperiment = new CExperiment(m_pcExperimentArguments, 
-                                       m_pcArenaArguments,                                     
+        pcExperiment = new CExperiment(m_pcExperimentArguments,
+                                       m_pcArenaArguments,
                                        m_pcAgentArguments,
                                        m_pcModelArguments);
         
-    } else {
+    }
+    else
+    {
         const char* pchExperimentName = m_pcExperimentArguments->GetArgumentAsString("name");
-        if (strcmp(pchExperimentName, "TEST") == 0) 
+        if (strcmp(pchExperimentName, "TEST") == 0)
         {
-            pcExperiment = new CTestExperiment(m_pcExperimentArguments, 
-                                               m_pcArenaArguments,                                     
+            pcExperiment = new CTestExperiment(m_pcExperimentArguments,
+                                               m_pcArenaArguments,
                                                m_pcAgentArguments,
                                                m_pcModelArguments);
             
-        } 
+        }
+        else if (strcmp(pchExperimentName, "FORAGING") == 0)
+        {
+            pcExperiment = new CForagingExperiment(m_pcExperimentArguments,
+                                               m_pcArenaArguments,
+                                               m_pcAgentArguments,
+                                               m_pcModelArguments);
+
+        }
     }
 
     return pcExperiment;
