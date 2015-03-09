@@ -12,11 +12,6 @@
 /******************************************************************************/
 /******************************************************************************/
 
-#define OPTIMISED
-
-/******************************************************************************/
-/******************************************************************************/
-
 class CForagingExperiment : public CExperiment
 {
 public:
@@ -28,16 +23,15 @@ public:
     
     virtual CAgent*     CreateAgent();
     virtual void SimulationStep(unsigned int un_step_number);
+    unsigned int GetNumForagingTokens();
+
    
 protected:
     virtual void PrintStatsForAgent(CAgent* pc_agent);
     virtual void PrintVelocityDifference(CAgent* pc_agent, double f_range);
     vector<CBehavior*> GetAgentBehavior(ESwarmBehavType swarmbehavType, CAgent*  previousAgent);
 
-    virtual void SpreadBehavior(unsigned int step_number, ESwarmBehavType e_behavior, unsigned int firstswitchat);
-
     ESwarmBehavType m_eswarmbehavType, m_eerrorbehavType;
-    //EErrorBehavType m_eerrorbehavType;
 
     unsigned int    m_unNumForagingTokens, m_unNumRobots;
     unsigned int    m_unMisbehaveStep;
