@@ -181,6 +181,7 @@ public:
     static double RADIUS;
         
     virtual CAgent* GetClosestAgent(double f_range, EAgentType e_type);
+    virtual CAgent* GetClosestAgent(double f_range, EAgentType e_type1, EAgentType e_type2);
 
     virtual TVector2d    GetCenterOfMassOfSurroundingAgents(double f_range, EAgentType e_type);
     virtual double       GetAverageDistanceToSurroundingAgents(double f_range, EAgentType e_type);
@@ -195,6 +196,7 @@ public:
     virtual void MoveTowards(TVector2d t_position, double f_max_speed);
 
     virtual void SortAllAgentsAccordingToDistance(TAgentVector* pt_result);
+    virtual void SortAllAgentsAccordingToDistance(TAgentVector* pt_result, EAgentType e_type);
     virtual void SetBehavior(ESwarmBehavType e_behavior);
     virtual ESwarmBehavType GetBehavior();
 

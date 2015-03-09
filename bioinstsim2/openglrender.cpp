@@ -22,16 +22,16 @@ using namespace std;
 
 
 #define Vec2dRotate(angle, vec)                         \
-  {                                                     \
-     double xt_ = vec.x;                                 \
-     vec.x = cos(angle) * vec.x - sin(angle) * vec.y;   \
-     vec.y = cos(angle) * vec.y + sin(angle) * xt_;     \
-  }
+{                                                     \
+    double xt_ = vec.x;                                 \
+    vec.x = cos(angle) * vec.x - sin(angle) * vec.y;   \
+    vec.y = cos(angle) * vec.y + sin(angle) * xt_;     \
+    }
 
 
 // Find the angle of one vector
 #define Vec2dOwnAngle(vec) \
-     (atan2(vec.y, vec.x))
+    (atan2(vec.y, vec.x))
 
 
 // X11 display info
@@ -87,13 +87,13 @@ COpenGLRender::COpenGLRender(const char* pch_agent_color_filename, unsigned int 
 
         while (! myfile.eof() )
         {
-            myfile >> step >> id >> fv >> tol >> attck >> nbrswithfv;            
+            myfile >> step >> id >> fv >> tol >> attck >> nbrswithfv;
 
             if (tol > attck)
                 m_ppunColors[step][id] = TOLERATED;
-            else if (tol < attck)                
+            else if (tol < attck)
                 m_ppunColors[step][id] = ATTACKED;
-            else 
+            else
                 m_ppunColors[step][id] = NEUTRAL;
         }
     } else {
@@ -109,7 +109,7 @@ COpenGLRender::COpenGLRender(const char* pch_agent_color_filename, unsigned int 
     m_bOutputStatistics = true;
     
     //TODO:
-    m_unNumberOfColors = 100; 
+    m_unNumberOfColors = 100;
     GenerateColors();
 
     StartGraphics();
@@ -129,7 +129,7 @@ COpenGLRender::~COpenGLRender()
 
 void COpenGLRender::StartGraphics()
 {
-//    pause = initial_pause;
+    //    pause = initial_pause;
     // create X11 display connection
     display = XOpenDisplay (NULL);
     if (!display) ERROR("Can not open X11 display");
@@ -140,7 +140,7 @@ void COpenGLRender::StartGraphics()
                                GLX_RED_SIZE,4, GLX_GREEN_SIZE,4,
                                GLX_BLUE_SIZE,4, None};
     visual = glXChooseVisual (display,screen,attribList);
-    if (!visual) 
+    if (!visual)
         ERROR ("no good X11 visual found for OpenGL");
 
     // create colormap
@@ -152,7 +152,7 @@ void COpenGLRender::StartGraphics()
     glx_context = 0;
     last_key_pressed = 0;
 
-    if (m_nWindowWidth < 1 || m_nWindowHeight < 1) 
+    if (m_nWindowWidth < 1 || m_nWindowHeight < 1)
         ERROR("Bad window width or height");
 
     // create the window
@@ -160,22 +160,22 @@ void COpenGLRender::StartGraphics()
     attributes.background_pixel = BlackPixel(display,screen);
     attributes.colormap = colormap;
     attributes.event_mask = ButtonPressMask | ButtonReleaseMask |
-        KeyPressMask | KeyReleaseMask | ButtonMotionMask | PointerMotionHintMask |
-        StructureNotifyMask;
+            KeyPressMask | KeyReleaseMask | ButtonMotionMask | PointerMotionHintMask |
+            StructureNotifyMask;
     win = XCreateWindow (display,
-                         RootWindow(display,screen), 
-                         50, 
-                         50, 
-                         m_nWindowWidth, 
+                         RootWindow(display,screen),
+                         50,
+                         50,
+                         m_nWindowWidth,
                          m_nWindowHeight,
-                         0,visual->depth, 
+                         0,visual->depth,
                          InputOutput,
                          visual->visual,
                          CWBackPixel | CWColormap | CWEventMask,&attributes);
 
     // associate a GLX context with the window
     glx_context = glXCreateContext (display,visual,0,GL_TRUE);
-    if (!glx_context) 
+    if (!glx_context)
         ERROR ("can't make an OpenGL context");
 
     // set the window title
@@ -196,10 +196,10 @@ void COpenGLRender::StartGraphics()
     XMapWindow (display,win);
     XSync (display,win);
     glXMakeCurrent (display, win, glx_context);
-  
+
     m_fCurrentFrame = 1;
-        
-    int frame = 1;        
+
+    int frame = 1;
     gc = XCreateGC(display, win, 0,0);
 
 #ifdef WITHSBOTTRACE
@@ -232,7 +232,7 @@ void COpenGLRender::StopGraphics()
 void COpenGLRender::SimulationStep(unsigned int un_step_number)
 {
     XEvent event;
-    while (XPending (display)) 
+    while (XPending (display))
     {
         XNextEvent (display,&event);
         HandleEvent (event);
@@ -241,7 +241,7 @@ void COpenGLRender::SimulationStep(unsigned int un_step_number)
     m_fCurrentFrame -= 1;
 
     while (m_fCurrentFrame <= 0)
-    {    
+    {
 #ifdef WITHSBOTTRACE
         m_pcSbotTrace->StartNewFrame(un_step_number);
 #endif // WITHSBOTTRACE
@@ -252,11 +252,11 @@ void COpenGLRender::SimulationStep(unsigned int un_step_number)
             OutputStatistics(un_step_number);
         }
         
-        if (writeframes) 
+        if (writeframes)
         {
             m_nCurrentFileFrame++;
             CaptureFrame(m_nCurrentFileFrame);
-        }        
+        }
         
         glFlush();
         glXSwapBuffers (display,win);
@@ -277,11 +277,11 @@ void COpenGLRender::DrawFrame()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Set the drawing color
-	glColor3f(1.0, 1.0, 1.0);
+    glColor3f(1.0, 1.0, 1.0);
     
-	// Specify which primitive type is to be drawn
+    // Specify which primitive type is to be drawn
     DrawAllAgents();
-//  DrawConcentrations();
+    //  DrawConcentrations();
 }
 
 /******************************************************************************/
@@ -320,7 +320,7 @@ void COpenGLRender::HandleEvent (XEvent &event)
                            &event.xbutton.y_root,&event.xbutton.x,&event.xbutton.y,
                            &mask);
         }
-//        dsMotion (mode, event.xmotion.x - mx, event.xmotion.y - my);
+        //        dsMotion (mode, event.xmotion.x - mx, event.xmotion.y - my);
         mx = event.xmotion.x;
         my = event.xmotion.y;
     }
@@ -330,24 +330,24 @@ void COpenGLRender::HandleEvent (XEvent &event)
         KeySym key;
         XLookupString (&event.xkey,NULL,0,&key,0);
         if ((event.xkey.state & ControlMask) == 0) {
-            if (key >= ' ' && key <= 126) 
+            if (key >= ' ' && key <= 126)
             {
-                switch (key) 
+                switch (key)
                 {
                 case '+': m_fFrameRate *= 1.25; break;
                 case '-': m_fFrameRate /= 1.20; break;
                 case 'i': m_bOutputStatistics = !m_bOutputStatistics; break;
                 }
             }
-                ;
+            ;
         }
         else if (event.xkey.state & ControlMask) {
             switch (key) {
             case 't': case 'T':
-//                dsSetTextures (dsGetTextures() ^ 1);
+                //                dsSetTextures (dsGetTextures() ^ 1);
                 break;
             case 's': case 'S':
-//                dsSetShadows (dsGetShadows() ^ 1);
+                //                dsSetShadows (dsGetShadows() ^ 1);
                 break;
             case 'x': case 'X':
                 CSimulator::GetInstance()->EndSimulation();
@@ -356,15 +356,15 @@ void COpenGLRender::HandleEvent (XEvent &event)
 #endif // WITHSBOTTRACE
                 break;
             case 'p': case 'P':
-//                pause ^= 1;
+                //                pause ^= 1;
                 singlestep = 0;
                 break;
             case 'o': case 'O':
-//                if (pause) singlestep = 1;
+                //                if (pause) singlestep = 1;
                 break;
             case 'v': case 'V': {
                 float xyz[3],hpr[3];
-//                dsGetViewpoint (xyz,hpr);
+                //                dsGetViewpoint (xyz,hpr);
                 printf ("Viewpoint = (%.4f,%.4f,%.4f,%.4f,%.4f,%.4f)\n",
                         xyz[0],xyz[1],xyz[2],hpr[0],hpr[1],hpr[2]);
                 break;
@@ -386,8 +386,8 @@ void COpenGLRender::HandleEvent (XEvent &event)
 
     case ClientMessage:
         if (event.xclient.message_type == wm_protocols_atom &&
-            event.xclient.format == 32 &&
-            Atom(event.xclient.data.l[0]) == wm_delete_window_atom) {
+                event.xclient.format == 32 &&
+                Atom(event.xclient.data.l[0]) == wm_delete_window_atom) {
             run = 0;
             return;
         }
@@ -410,12 +410,12 @@ void COpenGLRender::HandleEvent (XEvent &event)
 // return the index of the highest bit
 static int getHighBitIndex (unsigned int x)
 {
-  int i = 0;
-  while (x) {
-    i++;
-    x >>= 1;
-  }
-  return i-1;
+    int i = 0;
+    while (x) {
+        i++;
+        x >>= 1;
+    }
+    return i-1;
 }
 
 /******************************************************************************/
@@ -423,34 +423,34 @@ static int getHighBitIndex (unsigned int x)
 
 void COpenGLRender::CaptureFrame (int num)
 {
-  fprintf (stderr,"capturing frame %04d\n", num);
+    fprintf (stderr,"capturing frame %04d\n", num);
 
-  char s[100];
-  sprintf (s,"frame/frame%04d.ppm", num);
-  FILE *f = fopen (s,"wb");
-  if (!f) 
-      ERROR1("Can't open \"%s\" for writing",s);
-  fprintf (f,"P6\n%d %d\n255\n", m_nWindowWidth, m_nWindowHeight);
-  XImage *image = XGetImage (display, win, 0, 0, m_nWindowWidth, m_nWindowHeight, ~0, ZPixmap);
+    char s[100];
+    sprintf (s,"frame/frame%04d.ppm", num);
+    FILE *f = fopen (s,"wb");
+    if (!f)
+        ERROR1("Can't open \"%s\" for writing",s);
+    fprintf (f,"P6\n%d %d\n255\n", m_nWindowWidth, m_nWindowHeight);
+    XImage *image = XGetImage (display, win, 0, 0, m_nWindowWidth, m_nWindowHeight, ~0, ZPixmap);
 
-  int rshift = 7 - getHighBitIndex (image->red_mask);
-  int gshift = 7 - getHighBitIndex (image->green_mask);
-  int bshift = 7 - getHighBitIndex (image->blue_mask);
+    int rshift = 7 - getHighBitIndex (image->red_mask);
+    int gshift = 7 - getHighBitIndex (image->green_mask);
+    int bshift = 7 - getHighBitIndex (image->blue_mask);
 
-  for (int y = 0; y < m_nWindowHeight; y++) 
-  {
-    for (int x = 0; x < m_nWindowWidth; x++) 
+    for (int y = 0; y < m_nWindowHeight; y++)
     {
-      unsigned long pixel = XGetPixel (image, x, y);
-      unsigned char b[3];
-      b[0] = SHIFTL(pixel & image->red_mask, rshift);
-      b[1] = SHIFTL(pixel & image->green_mask, gshift);
-      b[2] = SHIFTL(pixel & image->blue_mask, bshift);
-      fwrite (b, 3, 1, f);
+        for (int x = 0; x < m_nWindowWidth; x++)
+        {
+            unsigned long pixel = XGetPixel (image, x, y);
+            unsigned char b[3];
+            b[0] = SHIFTL(pixel & image->red_mask, rshift);
+            b[1] = SHIFTL(pixel & image->green_mask, gshift);
+            b[2] = SHIFTL(pixel & image->blue_mask, bshift);
+            fwrite (b, 3, 1, f);
+        }
     }
-  }
-  fclose (f);
-  XDestroyImage (image);
+    fclose (f);
+    XDestroyImage (image);
 }
 
 /******************************************************************************/
@@ -462,25 +462,40 @@ void COpenGLRender::DrawAllAgents()
     TAgentVectorIterator i;
     m_unNumberOfRobotAgents    = 0;
     m_unNumberOfLightAgents    = 0;
-            
+    m_unNumberOfForagingTokenAgents    = 0;
+    m_unNumberOfNestSiteAgents    = 0;
+
     m_unNumberOfAgents = ptAllAgents->size();
     
     for (i = ptAllAgents->begin(); i != ptAllAgents->end(); i++)
-    {
-        if ((*i)->GetType() == LIGHT) {
+        if ((*i)->GetType() == LIGHT)
+        {
             DrawAgent(*i, m_unNumberOfLightAgents);
             m_unNumberOfLightAgents++;
-        }            
-    }
+        }
+
 
     for (i = ptAllAgents->begin(); i != ptAllAgents->end(); i++)
-    {
-        if ((*i)->GetType() == ROBOT) 
+        if ((*i)->GetType() == ROBOT)
         {
             DrawAgent(*i, m_unNumberOfRobotAgents);
-            m_unNumberOfRobotAgents++;            
-        } 
-    }
+            m_unNumberOfRobotAgents++;
+        }
+
+    for (i = ptAllAgents->begin(); i != ptAllAgents->end(); i++)
+        if ((*i)->GetType() == FORAGINGTOKEN)
+        {
+            DrawAgent(*i, m_unNumberOfForagingTokenAgents);
+            m_unNumberOfForagingTokenAgents++;
+        }
+
+    for (i = ptAllAgents->begin(); i != ptAllAgents->end(); i++)
+        if ((*i)->GetType() == NESTSITE)
+        {
+            DrawAgent(*i, m_unNumberOfNestSiteAgents);
+            m_unNumberOfNestSiteAgents++;
+        }
+
 }
 
 /******************************************************************************/
@@ -510,7 +525,7 @@ void COpenGLRender::DrawAllAgents()
 
     CSimulator::GetInstance()->GetArena()->GetSize(&fArenaSizeX, &fArenaSizeY);
 
-    if (pc_agent->GetType() == ROBOT) 
+    if (pc_agent->GetType() == ROBOT)
     {
 
         glPointSize((GLfloat) pc_agent->GetSize());
@@ -534,19 +549,18 @@ void COpenGLRender::DrawAllAgents()
         glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
 
         glVertex2f(fCenterX, fCenterY);
-        for (double fAngle = PI / 4.0; fAngle <= PI * 3.0 + 0.1; fAngle += PI / 2.0) 
+        for (double fAngle = PI / 4.0; fAngle <= PI * 3.0 + 0.1; fAngle += PI / 2.0)
         {
             glVertex2f(fCenterX + sin(fAngle) * fRadius, fCenterY + cos(fAngle) * fRadius);
         }
 
         glEnd();
-    }    
+    }
 }*/
 
 
 void COpenGLRender::DrawAgent(CAgent* pc_agent, unsigned int un_agent_number)
 {
-
     const TVector2d* ptPosition = pc_agent->GetPosition();
 
     double fArenaSizeX;
@@ -578,7 +592,7 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent, unsigned int un_agent_number)
                 tColor.fGreen = 1.0;
                 tColor.fBlue  = 1.0;
                 glColor3f(1.0, 1.0, 1.0);
-            } 
+            }
             else if (m_ppunColors[unStep][un_agent_number] == ATTACKED)
             {
                 tColor.fRed   = 1.0;
@@ -631,30 +645,65 @@ void COpenGLRender::DrawAgent(CAgent* pc_agent, unsigned int un_agent_number)
         ptState->unGripperAperture = 0;
         double fLeft, fRight;
         
-        m_pcSbotTrace->AddSbotStateDescription(ptState);  
+        m_pcSbotTrace->AddSbotStateDescription(ptState);
 #endif //WITHSBOTTRACE
-
-
     }
+    else if (pc_agent->GetType() == FORAGINGTOKEN)
+    {
+        unsigned int unColor = pc_agent->GetColor();
+        TColor3f tColor      = GetColorFromIndex(unColor);
+        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
 
-    else if (pc_agent->GetType() == LIGHT) {
-           glBegin(GL_TRIANGLE_FAN);
-           double fCenterX = 2.0 * ptPosition->x / fArenaSizeX;
-           double fCenterY = 2.0 * ptPosition->y / fArenaSizeY;
-           double fRadius  = 0.0015 *  pc_agent->GetSize();
+        double fCenterX = 2.0 * ptPosition->x / fArenaSizeX;
+        double fCenterY = 2.0 * ptPosition->y / fArenaSizeY;
 
-           unsigned int unColor = pc_agent->GetColor();
-           TColor3f tColor      = GetColorFromIndex(unColor);
-           glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+        glColor3f(0.005, 0.005, 0.005);
+        DrawSolidCircle(fCenterX + 0.005, fCenterY - 0.005, CAgent::RADIUS/10.0 * .6);
 
-           glVertex2f(fCenterX, fCenterY);
-           for (double fAngle = PI / 4.0; fAngle <= PI * 3.0 + 0.1; fAngle += PI / 2.0)
-           {
-               glVertex2f(fCenterX + sin(fAngle) * fRadius, fCenterY + cos(fAngle) * fRadius);
-           }
+        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+        DrawSolidCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0 * .6);
+        glColor3f(1.0, 1.0, 1.0);
+        DrawCircle(fCenterX, fCenterY, CAgent::RADIUS/10.0 * .6);
 
-           glEnd();
-       }
+        glEnd();
+    }
+    else if (pc_agent->GetType() == NESTSITE)
+    {
+        unsigned int unColor = pc_agent->GetColor();
+        TColor3f tColor      = GetColorFromIndex(unColor);
+        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+
+        double fCenterX = 2.0 * ptPosition->x / fArenaSizeX;
+        double fCenterY = 2.0 * ptPosition->y / fArenaSizeY;
+
+        glColor3f(0.005, 0.005, 0.005);
+        DrawSolidCircle(fCenterX + 0.005, fCenterY - 0.005, (CAgent::RADIUS/10.0)*1.5);
+
+        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+        DrawSolidCircle(fCenterX, fCenterY, (CAgent::RADIUS/10.0)*1.5);
+        glColor3f(1.0, 1.0, 1.0);
+        DrawCircle(fCenterX, fCenterY, (CAgent::RADIUS/10.0)*1.5);
+        glEnd();
+    }
+    else if (pc_agent->GetType() == LIGHT)
+    {
+        glBegin(GL_TRIANGLE_FAN);
+        double fCenterX = 2.0 * ptPosition->x / fArenaSizeX;
+        double fCenterY = 2.0 * ptPosition->y / fArenaSizeY;
+        double fRadius  = 0.0015 *  pc_agent->GetSize();
+
+        unsigned int unColor = pc_agent->GetColor();
+        TColor3f tColor      = GetColorFromIndex(unColor);
+        glColor3f(tColor.fRed, tColor.fGreen, tColor.fBlue);
+
+        glVertex2f(fCenterX, fCenterY);
+        for (double fAngle = PI / 4.0; fAngle <= PI * 3.0 + 0.1; fAngle += PI / 2.0)
+        {
+            glVertex2f(fCenterX + sin(fAngle) * fRadius, fCenterY + cos(fAngle) * fRadius);
+        }
+
+        glEnd();
+    }
 }
 
 /******************************************************************************/
@@ -670,8 +719,8 @@ void COpenGLRender::DrawCircle(double f_center_x, double f_center_y, double f_ra
         double vectorX1 = f_center_x + (f_radius * (float) sin ((double) angle));
         double vectorY1 = f_center_y + (f_radius * (float) cos ((double) angle));
         glVertex2d(vectorX1, vectorY1);
-//        vectorY1 = vectorY;
-//        vectorX1 = vectorX;
+        //        vectorY1 = vectorY;
+        //        vectorX1 = vectorX;
     }
     glEnd();
 }
@@ -700,17 +749,58 @@ void COpenGLRender::DrawSolidCircle(double f_center_x, double f_center_y, double
 /******************************************************************************/
 /******************************************************************************/
 
+void COpenGLRender::DrawSolidRectangle(double f_center_x, double f_center_y, double f_size_x, double f_size_y, double f_angle)
+{
+    // consider center of square at 0,0
+    TVector2d vCorner1 = { -(f_size_x / 2), -(f_size_y / 2) };
+    TVector2d vCorner2 = { -(f_size_x / 2), +(f_size_y / 2) };
+    TVector2d vCorner3 = { +(f_size_x / 2), +(f_size_y / 2) };
+    TVector2d vCorner4 = { +(f_size_x / 2), -(f_size_y / 2) };
+
+    // rotating square if needed
+    Vec2dRotate(f_angle, vCorner1);
+    Vec2dRotate(f_angle, vCorner2);
+    Vec2dRotate(f_angle, vCorner3);
+    Vec2dRotate(f_angle, vCorner4);
+
+
+    // translating square to actual center
+    vCorner1.x += f_center_x;
+    vCorner2.x += f_center_x;
+    vCorner3.x += f_center_x;
+    vCorner4.x += f_center_x;
+
+    vCorner1.y += f_center_y;
+    vCorner2.y += f_center_y;
+    vCorner3.y += f_center_y;
+    vCorner4.y += f_center_y;
+
+    glBegin(GL_TRIANGLES);
+
+    glVertex2d(vCorner1.x, vCorner1.y);
+    glVertex2d(vCorner2.x, vCorner2.y);
+    glVertex2d(vCorner3.x, vCorner3.y);
+
+    glVertex2d(vCorner3.x, vCorner3.y);
+    glVertex2d(vCorner4.x, vCorner4.y);
+    glVertex2d(vCorner1.x, vCorner1.y);
+    glEnd();
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
 void COpenGLRender::OutputStatistics(unsigned int un_step_number)
 {
-    printf("\rStep number: %4d, Frame-rate: %2.2f, Agents: (Robots: %d, lights: %d), links: %d, average degree: %2.2f, max. degree: %d   ", 
-           un_step_number, 
-           m_fFrameRate, 
-           m_unNumberOfRobotAgents, 
-           m_unNumberOfLightAgents, 
-           m_unNumberOfPhysicalLinks / 2,  
-           (double) m_unNumberOfPhysicalLinks / (double) m_unNumberOfAgents,          
+    printf("\rStep number: %4d, Frame-rate: %2.2f, Agents: (Robots: %d, lights: %d), links: %d, average degree: %2.2f, max. degree: %d   ",
+           un_step_number,
+           m_fFrameRate,
+           m_unNumberOfRobotAgents,
+           m_unNumberOfLightAgents,
+           m_unNumberOfPhysicalLinks / 2,
+           (double) m_unNumberOfPhysicalLinks / (double) m_unNumberOfAgents,
            m_unMaximumNumberOfPhysicalLinks);
-   
+
 
     CArena* pcArena = CSimulator::GetInstance()->GetArena();
 }
@@ -757,7 +847,7 @@ void COpenGLRender::GenerateColors()
     m_ptColors[YELLOW].fGreen = 1.0;
     m_ptColors[YELLOW].fBlue  = 0.0;
 
-    for (int i = YELLOW + 1; i < m_unNumberOfColors; i++) 
+    for (int i = YELLOW + 1; i < m_unNumberOfColors; i++)
     {
         m_ptColors[i].fRed   = Random::nextDouble(0.1, 1);
         m_ptColors[i].fGreen = m_ptColors[i].fRed;

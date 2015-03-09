@@ -36,7 +36,7 @@ public:
     
     virtual inline EAgentType   GetType() {return FORAGINGTOKEN;}
 
-    virtual void Sense();
+    //virtual void Sense();
     virtual inline unsigned int GetColor() {return YELLOW;}
 
 protected:

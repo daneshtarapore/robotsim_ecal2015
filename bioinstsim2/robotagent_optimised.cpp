@@ -241,7 +241,7 @@ CRobotAgentOptimised* CRobotAgentOptimised::GetRandomRobotWithWeights(unsigned i
 {
     TAgentVector tSortedAgents;
 
-    SortAllAgentsAccordingToDistance(&tSortedAgents);
+    SortAllAgentsAccordingToDistance(&tSortedAgents, ROBOT);
 
     double fWeightSum = 0.0;
     // 1-11 if u_nearestnbrs is 10, because agent at index 0 is ourselves:
@@ -279,7 +279,7 @@ CRobotAgentOptimised* CRobotAgentOptimised::GetRandomRobotWithMasterWeights(unsi
 {
     TAgentVector tSortedAgents;
 
-    SortAllAgentsAccordingToDistance(&tSortedAgents);
+    SortAllAgentsAccordingToDistance(&tSortedAgents, ROBOT);
 
     double fWeightSum = 0.0;
     // 1-11 if u_nearestnbrs is 10, because agent at index 0 is ourselves:
@@ -369,7 +369,7 @@ void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
     listFVsSensed.clear();
 
     TAgentVector tSortedAgents;
-    SortAllAgentsAccordingToDistance(&tSortedAgents);
+    SortAllAgentsAccordingToDistance(&tSortedAgents, ROBOT);
 
     // 1-11 because agent at index 0 is ourselves:
     for (int i = 1; i < u_nearestnbrs+1; i++)
@@ -419,7 +419,7 @@ void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
 {
     listFVsSensed.clear();
     TAgentVector tSortedAgents;
-    SortAllAgentsAccordingToDistance(&tSortedAgents);
+    SortAllAgentsAccordingToDistance(&tSortedAgents, ROBOT);
 
     // 1-11 because agent at index 0 is ourselves:
     for (int i = 1; i < u_nearestnbrs+1; i++)
@@ -599,7 +599,7 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
 
     TAgentVector tSortedAgents;
 
-    SortAllAgentsAccordingToDistance(&tSortedAgents);
+    SortAllAgentsAccordingToDistance(&tSortedAgents, ROBOT);
 
     // 1-11 because agent at index 0 is ourselves:
     bool m_battackeragentlog=true, m_btolerateragentlog=true, m_bsuspectoragentlog=true;

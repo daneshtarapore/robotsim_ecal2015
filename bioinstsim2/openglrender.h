@@ -47,6 +47,7 @@ protected:
 
     virtual void DrawCircle(double f_center_x, double f_center_y, double f_radius);
     virtual void DrawSolidCircle(double f_center_x, double f_center_y, double f_radius);
+    virtual void DrawSolidRectangle(double f_center_x, double f_center_y, double f_size_x, double f_size_y, double f_angle);
 
     virtual void OutputStatistics(unsigned int un_step_number);
 
@@ -71,6 +72,8 @@ protected:
 
     unsigned int m_unNumberOfRobotAgents;
     unsigned int m_unNumberOfLightAgents;
+    unsigned int m_unNumberOfForagingTokenAgents;
+    unsigned int m_unNumberOfNestSiteAgents;
     
     unsigned int        m_unNumberOfColors;
     TColor3f*           m_ptColors;

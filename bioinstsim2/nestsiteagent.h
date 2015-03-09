@@ -25,7 +25,7 @@ using namespace std;
 class CNestSiteAgent : public CAgent
 {
 public: 
-    CNestSiteAgent(const char* pch_name, unsigned int un_identification, float f_numTokensCollected, CArguments *pc_arguments);
+    CNestSiteAgent(const char* pch_name, unsigned int un_identification, float f_numTokensInNest, CArguments *pc_arguments);
 
     virtual ~CNestSiteAgent();
     
@@ -36,11 +36,13 @@ public:
     
     virtual inline EAgentType   GetType() {return NESTSITE;}
 
-    virtual void Sense();
+    //virtual void Sense();
     virtual inline unsigned int GetColor() {return GREY;}
 
+    inline float GetNumTokensCollected() {return f_numTokensInNest;}
+
 protected:
-    float f_numTokensCollected;
+    float f_numTokensInNest;
 
 };
 
