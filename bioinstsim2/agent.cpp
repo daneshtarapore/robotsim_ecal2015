@@ -266,30 +266,30 @@ void CAgent::SimulationStepUpdatePosition()
 
     if (pcCollidingAgent)
     {
-        //CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tOldPosition);
+        CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tOldPosition);
 
-        {
-            TVector2d vecCollidingAgentPos = *(pcCollidingAgent->GetPosition());
-            TVector2d vecTemp = vecCollidingAgentPos;
+//        {
+//            TVector2d vecCollidingAgentPos = *(pcCollidingAgent->GetPosition());
+//            TVector2d vecTemp = vecCollidingAgentPos;
 
-            vecTemp.x = vecTemp.x - GetPosition()->x;
-            vecTemp.y = vecTemp.y - GetPosition()->y;
+//            vecTemp.x = vecTemp.x - GetPosition()->x;
+//            vecTemp.y = vecTemp.y - GetPosition()->y;
 
-            Vec2dNormalize(vecTemp);
+//            Vec2dNormalize(vecTemp);
 
-            vecTemp.x = (-vecTemp.x * RADIUS * 2.0 + vecCollidingAgentPos.x);
-            vecTemp.y = (-vecTemp.y * RADIUS * 2.0 + vecCollidingAgentPos.y);
+//            vecTemp.x = (-vecTemp.x * RADIUS * 2.0 + vecCollidingAgentPos.x);
+//            vecTemp.y = (-vecTemp.y * RADIUS * 2.0 + vecCollidingAgentPos.y);
 
-            if(std::isnan(vecTemp.x) || std::isnan(vecTemp.y))
-            {
-                printf("\nnans showing up in colliding agents. Pehaps a lot of agents are in the institution waiting queue\n");
-                vecTemp.x = 3.0;
-                vecTemp.y = 3.0;
-            }
+//            if(std::isnan(vecTemp.x) || std::isnan(vecTemp.y))
+//            {
+//                printf("\nnans showing up in colliding agents. Pehaps a lot of agents are in the institution waiting queue\n");
+//                vecTemp.x = 3.0;
+//                vecTemp.y = 3.0;
+//            }
 
-            if(this->GetType() == ROBOT)
-                MoveTowards(vecTemp, GetMaximumSpeed());
-        }
+//            if(this->GetType() == ROBOT)
+//                MoveTowards(vecTemp, GetMaximumSpeed());
+//        }
     }
 }
 
@@ -506,25 +506,25 @@ void CAgent::MoveTowards(TVector2d t_position, double f_max_speed)
     }
 
 
-    {
-     TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x,
-                                m_tPosition.y + m_tVelocity.y };
+//    {
+//     TVector2d tNewPosition = { m_tPosition.x + m_tVelocity.x,
+//                                m_tPosition.y + m_tVelocity.y };
     
-     if (tNewPosition.x >= fArenaWidth / 2.0)
-         tNewPosition.x -= fArenaWidth;
+//     if (tNewPosition.x >= fArenaWidth / 2.0)
+//         tNewPosition.x -= fArenaWidth;
 
-     if (tNewPosition.x <= -fArenaWidth / 2.0)
-         tNewPosition.x += fArenaWidth;
+//     if (tNewPosition.x <= -fArenaWidth / 2.0)
+//         tNewPosition.x += fArenaWidth;
 
-     if (tNewPosition.y >= fArenaHeight / 2.0)
-         tNewPosition.y -= fArenaHeight;
+//     if (tNewPosition.y >= fArenaHeight / 2.0)
+//         tNewPosition.y -= fArenaHeight;
 
-     if (tNewPosition.x <= -fArenaHeight / 2.0)
-         tNewPosition.x += fArenaHeight;
+//     if (tNewPosition.x <= -fArenaHeight / 2.0)
+//         tNewPosition.x += fArenaHeight;
 
-     //if (!CSimulator::GetInstance()->GetArena()->IsObstacle(&tNewPosition))
-         CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);
-    }
+//     //if (!CSimulator::GetInstance()->GetArena()->IsObstacle(&tNewPosition))
+//         CSimulator::GetInstance()->GetArena()->MoveAgent(this, &tNewPosition);
+//    }
 }
 
 /******************************************************************************/
