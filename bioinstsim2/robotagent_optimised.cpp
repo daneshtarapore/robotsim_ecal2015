@@ -408,7 +408,7 @@ void CRobotAgentOptimised::Sense(unsigned int u_nearestnbrs)
 
     //Issue with  intermediary regulatory T-cells (with FV between abnormal and normal FVs) resulting in tolerance of abnromal FVs.
     //Solution1: Normalize so max sum is 0.02
-    //Solution2: curtail affinity between T-cells and affinity
+    //Solution2: curtail affinity between T-cells and APCs
     //Normalization does not always solve the problem. So we use solution 2
 
 
@@ -595,6 +595,7 @@ void CRobotAgentOptimised::CheckNeighborsResponseToMyFV(unsigned int* pun_number
     (*pun_number_of_attackers)   = 0;
     (*pun_number_of_suspectors)  = 0;
     (*pun_number_of_neighborsinsensoryrange) = 0;
+
 
 
     TAgentVector tSortedAgents;

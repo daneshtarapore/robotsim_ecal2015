@@ -599,7 +599,8 @@ void CTestExperiment::SimulationStep(unsigned int un_step_number)
             bool dbgflag = false;
 
             tmp_robotagent->CheckNeighborsResponseToMyFV(&unToleraters, &unAttackers, &unSuspectors, &unNbrsInSensoryRange, dbgflag);
-            printf("\nResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, susp: %d, neighboursinsensoryrange: %d", un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unSuspectors, unNbrsInSensoryRange);
+            printf("\nResponsestoAllAgents: Step: %d, Id: %d, FV: %d, tol: %d, att: %d, susp: %d, neighboursinsensoryrange: %d",
+                   un_step_number, tmp_robotagent->GetIdentification(), tmp_fv->GetValue(), unToleraters, unAttackers, unSuspectors, unNbrsInSensoryRange);
             i++;
         }
         printf("\n");

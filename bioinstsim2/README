@@ -1,0 +1,7 @@
+See help on command line options
+bioinstsim2 --help
+
+Example: The robot swarm switches behavior from Aggregation to Dispersion. 
+bioinstsim2 -a sizex=50,sizey=50,resx=10,resy=10,help -e name=TEST,swarmbehav=AGGREGATION,errorbehav=DISPERSION,misbehavestep=1000000,tracknormalagent=1,trackabnormalagent=15,switchnormalbehav=0,firstswitchat=5000,durationofswitch=1250,slowspread_enabled=1,help -T maxspeed=0.1,count=20,featuresenserange=6,selectnumnearestnbrs=10 -M,numberoffeatures=6,exchangeprob=0.5,cross-affinity=0.15,fvapcscaling=2.0e-3,seedE=10.0,seedR=10.0,kon=0.1,koff=0.1,kpe=1.0e-3,kpr=0.7e-3,kde=1.0e-6,kdr=1.0e-6,sourceE=10.0,sourceR=10.0,sourcerateE=0.0,sourcerateR=0.0,integrationtime=5.0e+7,seedfv-hd-range=0,hist_ts=5000,susp_th=0.95,newfvsusp_incr=0.95,help -s 111,help -n 15000,help -z
+
+For any questions contact: daneshtarapore@gmail.com 

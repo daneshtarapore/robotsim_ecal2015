@@ -40,7 +40,7 @@ CRMinRobotAgentOptimised::CRMinRobotAgentOptimised(CRobotAgentOptimised* ptr_rob
 {
     robotAgent = ptr_robotAgent;
 
-    m_fWeight         = 1.0;
+    m_fWeight  = 1.0;
     static bool bHelpDisplayed = false;
 
     CFeatureVector::NUMBER_OF_FEATURES = m_crmArguments->GetArgumentAsIntOr("numberoffeatures", 6);
@@ -1811,6 +1811,10 @@ void CRMinRobotAgentOptimised::UpdateState()
                 //                FOR FV:12 how many dont knows, how many attack, and how many tolerate? dont knows may have to contribute to raise suspicion
 
                 suspicioncounter = suspicioncounter / listlistTcells.size();
+
+                //if(this->robotAgent->GetIdentification() == 9)
+                   //std::cerr << "\n\nsuspicioncounter  =  " << suspicioncounter;
+
                 //suspicioncounter = suspicioncounter / totalcounter;
                 robotAgent->SetSuspicion(&it_fvsensed, suspicioncounter); // set suspicion
                 if (suspicioncounter < m_fSuspicionThreshold)
